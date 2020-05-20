@@ -11,7 +11,7 @@ newPackage(
        },
       HomePage => "https://sites.google.com/wisc.edu/jwg/home",
       Headline => "spectral sequences by Massey's method of exact couples",
-  AuxiliaryFiles => false, -- set to true if package comes with auxiliary files
+  AuxiliaryFiles => true, -- set to true if package comes with auxiliary files
       DebuggingMode => true,     -- set to true only during development
   PackageImports => {"Elimination"}
       )
@@ -65,7 +65,10 @@ externalDegreeIndices(Ring) := List => R -> (
 
 -- TODO: make this match declareCouple.  { ... , var => degree, ... }
 declareGenerators = method()
-declareGenerators(Ring, List, List) := Module => (R, varnames, degs) -> (
+declareGenerators(Ring, List) := Module => (R, genList) -> (
+    h := hashTable genList;
+    degs := values h;
+    varnames := keys h;
     free := R^(-degs);
     apply(numgens free, i -> globalAssign(varnames_i, free_i));
     free
@@ -1396,8 +1399,8 @@ doc ///
             In fact, under the isomorphisms M_{2,p} = $H^p A$ and M_{0,p} = $H^{p-1} B$, this map coincides with $H^p m : H^p A \to H^p B$.
 
         Example
-            R = QQ[x]; S = R[d] / ideal(d^2); declareGenerators(S, {a}, {{0,0}}); A = cospan(x^2*a, d*x*a)
-            declareGenerators(S, {b}, {{0,0}}); B = cospan(x^2*b, d*b)
+            R = QQ[x]; S = R[d] / ideal(d^2); declareGenerators(S, {a => {0,0}}); A = cospan(x^2*a, d*x*a)
+            declareGenerators(S, {b => {0,0}}); B = cospan(x^2*b, d*b)
             m = map(B, A, matrix {b}); LES = longExactSequence m;
             excerptLES(0,2,LES)
     Caveat
@@ -1410,18 +1413,16 @@ doc ///
 doc ///
     Key
         declareGenerators
-        (declareGenerators,Ring,List,List)
+        (declareGenerators,Ring,List)
     Headline
         Builds a free module and names its generators
     Usage
-        declareGenerators(R,variableNames,degs)
+        declareGenerators(R,genList)
     Inputs
         R:Ring
             the coefficients
-        variableNames:List
-            symbols that will serve as generator names
-        degs:List
-            multidegrees for each generator
+        genList:List
+            of the form \{ ... , x => deg, ... \} where x is a symbol and deg is a degree
     Outputs
         :Module
             free on the generating set of variables in their various degrees, and with coefficients drawn from R
@@ -1432,7 +1433,7 @@ doc ///
         Text
             Useful for declaring many variables at once.
         Example
-          declareGenerators(ZZ[x],{a,b,c},{1,2,3})
+          declareGenerators(ZZ[x],{a => 1,b => 2,c => 3})
           cospan(x*a-2*b,x*b-2*c)
     SeeAlso
         cospan
@@ -1458,8 +1459,11 @@ doc ///
         Text
             Useful for building modules by generators and relations
         Example
-            declareGenerators(ZZ[x],{a,b,c},{1,2,3})
+            declareGenerators(ZZ[x],{a => 1, b => 2, c => 3})
             cospan(x*a-2*b,x*b-2*c)
+    Caveat
+        In M2, multiplication of ring elements by module elements happens on the left, so use
+        x*a, not a*x.
     SeeAlso
         declareGenerators
 ///
@@ -1582,7 +1586,7 @@ doc ///
             is a circle, so the cohomology is QQ^1 in degrees 0 and 1.
         Example
             C = QQ[d]/d^2;
-            declareGenerators(C,{a,b,c,ab,ac,bc},{0,0,0,1,1,1});
+            declareGenerators(C,{a=>0,b=>0,c=>0,ab=>1,ac=>1,bc=>1});
             M = cospan(d*a+ab+ac, d*b-ab+bc, d*c-ac-bc, d*ab, d*ac, d*bc);
             apply(5,i->prune evaluateInDegree({i},M))
             H = chainModuleHomology(M);
@@ -1630,7 +1634,7 @@ doc ///
             is annihilated in row 7.
         Example
             R = QQ[d,t,Degrees=>{{0,1},{1,0}}]/d^2;
-            declareGenerators(R,{a,b,c,ab,ac,bc},{{0,0},{0,0},{0,0},{0,1},{0,1},{0,1}});
+            declareGenerators(R,{a=>{0,0},b=>{0,0},c=>{0,0},ab=>{0,1},ac=>{0,1},bc=>{0,1}});
             M = cospan(d*a+ab+ac, d*b-ab+bc, d*c-ac-bc, d*ab, d*ac, d*bc,
                        t*bc, t^2*ac, t^3*ab, t^4*c, t^5*b, t^6*a);
 
@@ -1697,7 +1701,7 @@ doc ///
             the user would be expected to supply a degree that doubles to the degree of f.
         Example
             R = QQ[d,t,Degrees=>{{0,1},{1,0}}]/d^2;
-            declareGenerators(R,{a,b,c,ab,ac,bc},{{0,0},{0,0},{0,0},{0,1},{0,1},{0,1}});
+            declareGenerators(R,{a=>{0,0},b=>{0,0},c=>{0,0},ab=>{0,1},ac=>{0,1},bc=>{0,1}});
             M = cospan(d*a+ab+ac, d*b-ab+bc, d*c-ac-bc, d*ab, d*ac, d*bc,
                        t*bc, t^2*ac, t^3*ab, t^4*c, t^5*b, t^6*a);
             Q = QQ[e_1,f_1,Degrees=>{{-1,1},{2,0}}];
@@ -1741,7 +1745,7 @@ doc ///
 
         Example
             R = QQ[d,t,Degrees=>{{0,1},{1,0}}]/d^2;
-            declareGenerators(R,{a,b,c,ab,ac,bc},{{0,0},{0,0},{0,0},{0,1},{0,1},{0,1}});
+            declareGenerators(R,{a=>{0,0},b=>{0,0},c=>{0,0},ab=>{0,1},ac=>{0,1},bc=>{0,1}});
             M = cospan(d*a+ab+ac, d*b-ab+bc, d*c-ac-bc, d*ab, d*ac, d*bc,
                        t*bc, t^2*ac, t^3*ab, t^4*c, t^5*b, t^6*a);
             netList table(7,4,(i,j)->hilbertFunction({6-i,j},M))
@@ -1853,7 +1857,7 @@ doc ///
             every generator g has t*g = 2*g):
         Example
             Q = ZZ[d, f, Degrees => {1,0}]/d^2;
-            declareGenerators(Q, {p0, p1, p2, p3}, {0,1,2,3});
+            declareGenerators(Q, {p0 => 0, p1 => 1, p2 => 2, p3 => 3});
             C = cospan(d*p0, d*p1-2*p2, d*p2, d*p3) ** Q^1/(f-2); C
             isHomogeneous C
         Text
@@ -3156,7 +3160,38 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 
 
 restart
-needs "/Users/jwiltshiregordon/Dropbox/Programming/Macaulay2/ExactCouples.m2"
+needs "/Users/jwiltshiregordon/Dropbox/Programming/Macaulay2/ExactCouples/ExactCouples.m2"
+R = QQ[x,y]
+M = R^1/(x^2,x*y)
+degree(M ** R^1/(x,y))
+degree(M ** R^1/(x,y-1))
+degree(M ** R^1/(x-1,y-1))
+apply(primaryDecomposition annihilator M, p->saturate(0_M,p))
+
+degree(M ** R^1/(x,y))
+degree(M ** R^1/(x,y-1))
+degree(M ** R^1/(x-1,y-1))
+
+
+
+
+declareGenerators(R,{a,b},{0,0})
+M = cospan(y*a,x*b)
+minimalPrimes annihilator M
+
+
+
+
+
+
+R = QQ[x,y,Degrees=>{{},{}}]
+declareGenerators(R,{a,b,c},{{},{},{}})
+M = cospan((y-1)*a,y*b,(y-x^2)*c,(x-1)*(y-x^2)*a-(x-1)*(y-1)*c,(x+1)*(y-x^2)*a-(x+1)*(y-1)*c)
+prune M -- this gives a non-isomorphic module?
+
+
+
+
 
 
             R = QQ[x]
