@@ -63,7 +63,6 @@ externalDegreeIndices(Ring) := List => R -> (
     toList(0..(-1 + dlr - dls))
     )
 
--- TODO: make this match declareCouple.  { ... , var => degree, ... }
 declareGenerators = method()
 declareGenerators(Ring, List) := Module => (R, genList) -> (
     h := hashTable genList;
@@ -93,13 +92,8 @@ oneEntry(List, List, RingElement) := Matrix => (rowdeg, coldeg, x) -> (
     map(R^{-rowdeg}, R^{-coldeg}, {{x}})
     )
 
-
---TODO: ZZ behavior should be changed to multiple of element degree
 oneEntry(List, Nothing, RingElement) := Matrix => (rowdeg, null, x) -> oneEntry(rowdeg, rowdeg + degree x, x)
 oneEntry(Nothing, List, RingElement) := Matrix => (null, coldeg, x) -> oneEntry(coldeg - degree x, coldeg, x)
---oneEntry(ZZ, ZZ, RingElement) := Matrix => (rowdeg, coldeg, x) -> oneEntry({rowdeg},{coldeg},x)
---oneEntry(ZZ, Nothing, RingElement) := Matrix => (rowdeg, null, x) -> oneEntry({rowdeg},,x)
---oneEntry(Nothing, ZZ, RingElement) := Matrix => (null, coldeg, x) -> oneEntry(,{coldeg},x)
 oneEntry(ZZ, ZZ, RingElement) := Matrix => (rowdeg, coldeg, x) -> oneEntry(rowdeg*(degree x),coldeg*(degree x),x)
 oneEntry(ZZ, Nothing, RingElement) := Matrix => (rowdeg, null, x) -> oneEntry(rowdeg*(degree x),,x)
 oneEntry(Nothing, ZZ, RingElement) := Matrix => (null, coldeg, x) -> oneEntry(,coldeg*(degree x),x)
@@ -181,7 +175,6 @@ applyLawToMatrix(FunctionClosure, Matrix) := Matrix => (law, f) -> (
 
 applyLawToChainComplex = method()
 applyLawToChainComplex(Ring, FunctionClosure, ChainComplex) := ChainComplex => (Q, law, C) -> (
-    --o := apply((min C)..(max C), i -> applyLawToModule(law, C_i));
     i := local i;
     ret := new ChainComplex;
     for i from min C to max C do (
@@ -349,10 +342,6 @@ expectCoupleRing(Ring) := Nothing => Q -> (
     if df % 2 != 0 * df then (
         error(title | "degree of f must be divisible by two");
         );
-
-    --hdf := apply(df / 2, v -> sub(v, ZZ));
-    --hdf := df // 2;
-    --Q.HalfDegf = hdf; -- TODO: (degree f) // 2 is easier and clearer
     external := externalDegreeIndices Q;
     evenDegrees := image matrix transpose {2*de_external, df_external};
 
@@ -399,14 +388,7 @@ chainModule(ChainComplex) := Module => X -> (
     chainModule(Q, X)
     )
 
-
-
--- Given a module over a chain ring, build
--- the corresponding chain complex (start at degree 0 and build out)
--- TODO:
--- maybe excerptChainComplex would be better?
--- and require origin to be given?
--- at least have a different method with origin
+-- origin is always at zero
 toChainComplex = method()
 toChainComplex(Module) := ChainComplex => M -> (
     if not (isHomogeneous M) then (
@@ -536,7 +518,6 @@ forceAction(Matrix, Matrix) := Module => (f, m) -> (
     coker matrix {{f ** (id_(source m))}, {-(id_(source f)) ** m}}
     )
 
-
 longExactSequence = method()
 longExactSequence(Matrix) := Module => m -> (
     C := ring m;
@@ -549,7 +530,7 @@ longExactSequence(Matrix) := Module => m -> (
     zeds := toList((degreeLength R):0);
     evencols := forceAction(oneEntry({1,0}|zeds,,F_1),phi**m);
     g := getSymbol "e";
-    h := getSymbol "f"; -- TODO: am I supposed to do getSymbol for this?
+    h := getSymbol "f";
     Q := coupleRing(R, 1, g, h);
     exactCouple(Q, evencols)
     )
@@ -1602,12 +1583,12 @@ doc ///
         (exactCouple,Ring,Module)
         (exactCouple,Module)
     Headline
-        builds an exact couple from a R[d,t]/d^2-module
+        builds an exact couple from a R[d,f]/d^2-module
     Usage
         exactCouple(Q, M)
     Inputs
         M:Module
-            over a ring of the form R[d,t]/d^2 for
+            over a ring of the form R[d,f]/d^2 for
             some coefficient ring R
         Q:Ring
             a couple ring with the same coefficient ring R.  If this argument is omitted,
