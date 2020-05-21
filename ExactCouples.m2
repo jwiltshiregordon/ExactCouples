@@ -11,7 +11,7 @@ newPackage(
        },
       HomePage => "https://sites.google.com/wisc.edu/jwg/home",
       Headline => "spectral sequences by Massey's method of exact couples",
-  AuxiliaryFiles => true, -- set to true if package comes with auxiliary files
+  AuxiliaryFiles => false, -- set to true if package comes with auxiliary files
       DebuggingMode => true,     -- set to true only during development
   PackageImports => {"Elimination"}
       )
@@ -590,11 +590,12 @@ excerptCouple = method()
 excerptCouple(List, ZZ, Module) := Net => (startDegree, rotations, M) -> (
     Q := ring M;
     expectCoupleRing Q;
-    if not Q.isOddDegree(startDegree) then (
-        msg := "Start degree must be odd.  Try ";
-        error(msg | toString(startDegree + degree((ring M)_0)) | "?");
+    if not Q.isEvenDegree(startDegree) then (
+        error("Start degree must be even");
         );
-    ch := prune longExactSequenceToChainComplex(startDegree, rotations, M);
+    -- longExactSequenceToChainComplex is not recommended
+    external := externalDegreeIndices Q;
+    ch := prune longExactSequenceToChainComplex(startDegree - (degree Q_0)_external, rotations, M);
     leftArt := " .- -> " || "(      " || " \\     ";
     rightArt := ("    \\ " || " - -' ")^1;
     o := {{(net ch.dd_1)^(-1), leftArt, ch_0, , , , , }};
@@ -609,7 +610,7 @@ excerptCouple(List, ZZ, Module) := Net => (startDegree, rotations, M) -> (
 
 excerptLES = method()
 -- Here, we assume that M is an exact couple produced by longExactSequence
-excerptLES(ZZ, ZZ, Module) := Net => (k, l, M) -> excerptCouple({-1,0},l-k+1,M);
+excerptLES(ZZ, ZZ, Module) := Net => (k, l, M) -> excerptCouple({0,0},l-k+1,M);
 
 excerptLES(ZZ, Module) := Net => (k, M) -> excerptLES(k, k, M)
 
@@ -1056,7 +1057,7 @@ contravariantExtLES = method()
 contravariantExtLES(ZZ, Module, Module, Module) := Net => (k, X, A, Y) -> (
     expectFiltrationList {A,X};
     E1 := contravariantExtCouple({A,X},Y);
-    excerptCouple({-3,1},k,E1)
+    excerptCouple({-2,0},k,E1)
     )
 
 -- TODO: allow user to supply output ring
@@ -1085,7 +1086,7 @@ covariantExtLES = method()
 covariantExtLES(ZZ, Module, Module, Module) := Net => (k, W, X, A) -> (
     expectFiltrationList {A,X};
     E1 := covariantExtCouple(W,{A,X});
-    excerptCouple({-3,3},k,E1)
+    excerptCouple({-2,2},k,E1)
     );
 
 -- TODO: allow user to supply output ring
@@ -1117,7 +1118,7 @@ TorLES(ZZ, Module, Module, Module) := Net => (k, W, X, A) -> (
     Q := ring E1;
     external := externalDegreeIndices Q;
     rotDeg := (2 * (degree Q_0) + (degree Q_1))_external;
-    startDeg := {3,3} - (k - 2) * rotDeg;
+    startDeg := {2,2} - (k - 2) * rotDeg;
     excerptCouple(startDeg,k,E1)
     );
 
@@ -2415,8 +2416,9 @@ doc ///
         C:Module
             an exact couple given as a module for a couple ring Q
         deg:List
-            an exterior multidegree of C, the starting degree; should be an odd degree
-            in the sense of Q.isOddDegree(deg).
+            an exterior multidegree of C, the starting degree; should be an even degree
+            in the sense of Q.isEvenDegree(deg).  This degree appears at the bottom of
+            the middle column in the displayed long exact sequence
         k:ZZ
             the number of winds of the long exact sequence to display
     Outputs
@@ -2436,16 +2438,18 @@ doc ///
             couple = prune covariantExtCouple(W,A)
             expectExactCouple couple
         Text
-            We check that \{-1,5} is an odd degree, and then use excerptCouple
+            We check that \{0,4} is an even degree, and then use excerptCouple
         Example
             Q = ring couple
-            Q.isOddDegree({-1,5})
-            excerptCouple({-1,5},2,couple)
+            Q.isEvenDegree({0,4})
+            excerptCouple({0,4},2,couple)
         Text
             The middle column of the displayed long exact sequence is in even degrees; in other
-            words, its entries appear on the E_1 page of the couple.  Specifically, $E_1^{pq} = Ext^p(W,A_q/A_{q-1})$
-            can be found in degree \{2p,2q}.  Since the degree of Q_0 is \{1,-1\}, the bottom element of the middle
-            column is degree \{0,4}, which is then $Ext^0(W,A_2/A_1)$.  The top element of the middle column is $Ext^1$.
+            words, its entries appear on the E_1 page of the couple.  Specifically, 
+            $E_1^{pq} = Ext^p(W,A_q/A_{q-1})$
+            can be found in degree \{2p,2q}.  The bottom element of the middle
+            column is degree \{0,4}, which is then $Ext^0(W,A_2/A_1)$.  
+            The top element of the middle column is $Ext^1(W,A_2/A_1)$.
         Example
             prune Ext^0(W,A_2/A_1)
             prune Ext^1(W,A_2/A_1)
@@ -3129,8 +3133,8 @@ end--
 
 check ExactCouples
 
-installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Programming/Macaulay2/ExactCouples.m2")
-installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Programming/Macaulay2/ExactCouples.m2", RerunExamples=>true)
+installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Programming/Macaulay2/ExactCouples/ExactCouples.m2")
+installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Programming/Macaulay2/ExactCouples/ExactCouples.m2", RerunExamples=>true)
 
 -- Local Variables:
 -- compile-command: "make -C $M2BUILDDIR/Macaulay2/packages PACKAGES=ExactCouples pre-install"
