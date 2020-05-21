@@ -3,7 +3,7 @@
 newPackage(
   "ExactCouples",
       Version => "0.5",
-      Date => "May 19, 2020",
+      Date => "May 20, 2020",
       Authors => {
        {
        Name => "John D. Wiltshire-Gordon",
@@ -347,11 +347,20 @@ expectCoupleRing(Ring) := Nothing => Q -> (
 
     gsd := matrix transpose {de_external, df_external};
     projDeg := deg -> ((matrix transpose {deg_external}) // gsd);
+    deglen := #external;
     Q.isEvenDegree = deg -> (
+        if #deg != deglen then (
+            error("deg has wrong length; should be " | toString(deglen));
+            );
         imDeg := image matrix (gsd * projDeg(deg));
 	      isSubset(imDeg, evenDegrees)
         );
-    Q.isOddDegree = deg -> (not Q.isEvenDegree deg);
+    Q.isOddDegree = deg -> (
+        if #deg != deglen then (
+            error("deg has wrong length; should be " | toString(deglen));
+            );
+        not Q.isEvenDegree deg
+        );
     );
 
 
@@ -581,20 +590,17 @@ arrowBelow(Matrix) := Net => m -> (
     (sp | n)^(1 + depth n) || ar
     )
 
-
--- TODO: check that starting degree makes sense for the couple
--- TODO: longExactSequenceToChainComplex ring problem
 -- TODO: expectCoupleRing should install isOddDegree with checks for degreeLength
--- TODO: make it start in even degree.
 excerptCouple = method()
 excerptCouple(List, ZZ, Module) := Net => (startDegree, rotations, M) -> (
     Q := ring M;
     expectCoupleRing Q;
+    external := externalDegreeIndices Q;
+    assert(#startDegree == #external);
     if not Q.isEvenDegree(startDegree) then (
         error("Start degree must be even");
         );
     -- longExactSequenceToChainComplex is not recommended
-    external := externalDegreeIndices Q;
     ch := prune longExactSequenceToChainComplex(startDegree - (degree Q_0)_external, rotations, M);
     leftArt := " .- -> " || "(      " || " \\     ";
     rightArt := ("    \\ " || " - -' ")^1;
@@ -677,7 +683,8 @@ enforceCoupleRelations(Module) := Module => M -> (
     (e, f) := (Q_0, Q_1);
     pageRels := pdeg -> map(Q^{-pdeg},, {{e^3, f}});
     auxRels := adeg -> map(Q^{-adeg},, {{e^2, e*f}});
-    rels := deg -> if Q.isEvenDegree deg then pageRels(deg) else auxRels(deg);
+    external := externalDegreeIndices Q;
+    rels := deg -> if Q.isEvenDegree(deg_external) then pageRels(deg) else auxRels(deg);
     P := presentation M;
     -- directSum fails if (degrees target P) == {}; that's the reason for id_(Q^{})
     coker(P | directSum({id_(Q^{})} | apply(degrees target P, rels)))
@@ -733,9 +740,9 @@ expectExactCouple(Module) := Nothing => M -> (
     e := Q_0;
     f := Q_1;
     dz := 0 * (degree e);
-
-    gensEven := N -> all(degrees N, Q.isEvenDegree);
-    gensOdd := N ->  all(degrees N, Q.isOddDegree);
+    external := externalDegreeIndices Q;
+    gensEven := N -> all(degrees N, deg -> Q.isEvenDegree(deg_external));
+    gensOdd := N ->  all(degrees N, deg -> Q.isOddDegree(deg_external));
     if not gensEven(prune image(M ** oneEntry(dz,,e^2))) then (
         error "e^2 fails to annihilate aux";
         );
@@ -803,7 +810,7 @@ derivedCouple(Module) := Module => M -> (
     imf := target iso;
 
     keree := kernel(oneEntry(,dz,e^2) ** id_M);
-    pushEven := deg -> if Q.isEvenDegree(deg) then 1_Q else e;
+    pushEven := deg -> if Q.isEvenDegree(deg_external) then 1_Q else e;
     toEven := diagonalMatrix(Q, apply(degrees cover keree, pushEven));
 
     cocycles := image map(keree,, toEven);
@@ -873,7 +880,7 @@ pageModule(ZZ, IndexedVariableTable, Module) := Module => (r, dVariable, E) -> (
     d := D_0;
 
     degreeLaw := deg -> (
-        if Q.isEvenDegree(deg) then (
+        if Q.isEvenDegree(deg_external) then (
             hd := ((deg_external) // 2) | deg_internal;
             D^{-hd}
             ) else (
@@ -886,14 +893,14 @@ pageModule(ZZ, IndexedVariableTable, Module) := Module => (r, dVariable, E) -> (
         row := first degrees target m;
         col := first degrees source m;
         ent := m_(0,0);
-        nent := if Q.isEvenDegree(row) then (
-            if Q.isEvenDegree(col) then (
+        nent := if Q.isEvenDegree(row_external) then (
+            if Q.isEvenDegree(col_external) then (
                 ent
                 ) else (
                 e*ent
                 )
             ) else (
-            if Q.isEvenDegree(col) then (
+            if Q.isEvenDegree(col_external) then (
                 ent // e
                 ) else (
                 ent
@@ -947,10 +954,10 @@ declareCouple(Ring, List, List) := Module => (Q, pageGens, auxGens) -> (
     tabE := hashTable pageGens;
     internal := internalDegreeIndices Q;
     external := externalDegreeIndices Q;
-    if not all(values tabE, Q.isEvenDegree) then (
+    if not all(values tabE, deg -> Q.isEvenDegree(deg_external)) then (
         error "page generators must be even";
         );
-    if not all(values tabA, Q.isOddDegree) then (
+    if not all(values tabA, deg -> Q.isOddDegree(deg_external)) then (
         error "aux generators must be odd";
         );
     degs := values tabA | values tabE;
@@ -1254,7 +1261,9 @@ doc ///
             over the ring Q, encoding a distinguished triangle
     Description
         Text
-            There are a lot of details to record.
+            There are a lot of details to record.  (The following is actually describing 
+                distinguishedTriangleLaw, and I've since decided that it is too technical
+                to be useful to ordinary users)
 
             Suppose $R$ is a ring of coefficients, and that the triangle ring Q takes
             the form $Q = R[d,e,f]/(d^2,e^3)$.  Write $Even$ for the subgroup generated
@@ -1631,7 +1640,7 @@ doc ///
             plotPages((0..7,-2..2,1..7),prune @@ evaluateInDegree,E1)
     Caveat
     SeeAlso
-        "Exact couples and spectral sequences"
+        "Conventions and first examples"
         expectExactCouple
         derivedCouple
 ///
