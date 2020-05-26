@@ -1078,7 +1078,9 @@ covariantExtCouple(Module, List) := Module => (W, submods) -> (
     d := local d;
     t := local t;
     Co := R[d]/d^2;
-    rW := Hom(res W, R^1);
+    -- workaround res bug
+    {R', theta} := flattenRing R;
+    rW := (theta^(-1))( Hom(res(theta ** W), R^1));
     M := chainModule(Co, rW);
     S := R[d,t,Degrees=>{{1,0},{0,1}}]/d^2;
     phi := map(S,Co,DegreeMap=>deg->{deg_0,0,deg_1});
@@ -3153,12 +3155,19 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- End:
 
 
+-- TODO: explain 
+
 restart
 needsPackage "ExactCouples"
 kk = ZZ/32003
 S = kk[w,x,y,z]
 I = monomialCurveIdeal(S, {1,3,4})
-contravariantExtLES(3, S^1, module I, S^1)
+covariantExtLES(4, module I, S^1, module I)
+apply(4,p->prune Ext^p(module I, S^1))
+apply(4,p->prune Ext^p(module I, module I))
+apply(4,p->prune Ext^p(module I, S^1/I))
+
+contravariantExtLES(4, S^1, module I, S^1)
 
 xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
 flattenModule := m -> ((flattenRing ring m)#1) ** m;
