@@ -1038,6 +1038,17 @@ canonicalFiltration(Ring, Module) := Module => (Q, M) -> (
     )
 
 -- TODO: let user supply output ring
+-- algorithm:
+-- Left Kan extend Y to the sequence ring, and then right Kan to chain ring.
+-- call the resulting thing Y'.  Resolve sumbods by frees.  Call the resulting
+-- chain sequence module M.
+-- claim: exactCouple Hom(M, Y') is the correct couple
+-- Pf: Hom(M, Y') = Hom(M, Ran Lan Y) = Hom(Res M, Lan Y).
+-- Since M is a resolution, Res M is free, say Res M = Lan G.
+-- Hom(Lan G, Lan Y) = Hom(G, Res Lan Y).  And this thing is
+-- the chain sequence module that defines the couple.
+-- It would be mathematically similar to start with the cofiltration instead
+-- this could be faster at least some of the time.
 contravariantExtCouple = method()
 contravariantExtCouple(List, Module) := Module => (submods, Y) -> (
     R := ring last submods;
@@ -1080,7 +1091,7 @@ covariantExtCouple(Module, List) := Module => (W, submods) -> (
     Co := R[d]/d^2;
     -- workaround res bug
     {R', theta} := flattenRing R;
-    rW := (theta^(-1))( Hom(res(theta ** W), R^1));
+    rW := (theta^(-1))(Hom(res(theta ** W), R'^1));
     M := chainModule(Co, rW);
     S := R[d,t,Degrees=>{{1,0},{0,1}}]/d^2;
     phi := map(S,Co,DegreeMap=>deg->{deg_0,0,deg_1});
@@ -1093,6 +1104,45 @@ covariantExtCouple(Module, List) := Module => (W, submods) -> (
     Q := R[e_1,f_1,Degrees=>{{1,-1},{0,2}}]; -- TODO: use coupleRing here
     exactCouple(Q, C)
     )
+
+TEST ///
+    plausibleIso = (M, M') -> (
+    checkDegs = {-1,0,1,2,3,4,5,10,20,100,200};
+    Mdims = apply(checkDegs, d->hilbertFunction(d,M));
+    M'dims = apply(checkDegs, d->hilbertFunction(d,M'));
+    print(Mdims);
+    print(M'dims);
+    if Mdims != M'dims then (
+        error "modules are not isomorphic";
+        );
+    );
+    R = (ZZ/17)[x,y,z]
+    randomFilteredModule = () -> (
+        genmod := R^(apply(5,p->-random(3)));
+        relmod := R^(apply(2,p->-random(4)));
+        pres := random(genmod, relmod);
+        X := coker pres;
+        A0 := image map(X,,(id_genmod)_{0,1});
+        A1 := image map(X,,(id_genmod)_{0,1,2,3});
+        {A0,A1,X}
+        );
+    submods = randomFilteredModule();
+    expectFiltrationList submods
+    Y = prune(submods#1);
+    couple = prune covariantExtCouple(Y,submods);
+    -- check numerics of several entries on first page
+    plausibleIso(evaluateInDegree({0,0},couple),Hom(Y,submods#0))
+    plausibleIso(evaluateInDegree({0,2},couple),Hom(Y,(submods#1)/(submods#0)))
+    plausibleIso(evaluateInDegree({0,4},couple),Hom(Y,(submods#2)/(submods#1)))
+    plausibleIso(evaluateInDegree({2,0},couple),Ext^1(Y,submods#0))
+    plausibleIso(evaluateInDegree({2,2},couple),Ext^1(Y,(submods#1)/(submods#0)))
+    plausibleIso(evaluateInDegree({2,4},couple),Ext^1(Y,(submods#2)/(submods#1)))
+    plausibleIso(evaluateInDegree({-1,1},couple),Hom(Y,submods#0))
+    plausibleIso(evaluateInDegree({1,1},couple),Ext^1(Y,submods#0))
+    plausibleIso(evaluateInDegree({3,1},couple),Ext^2(Y,submods#0))
+    plausibleIso(evaluateInDegree({-1,3},couple),Hom(Y,submods#1))
+    plausibleIso(evaluateInDegree({1,3},couple),Ext^1(Y,submods#1))
+///
 
 covariantExtLES = method()
 covariantExtLES(ZZ, Module, Module, Module) := Net => (k, W, X, A) -> (
@@ -1109,7 +1159,9 @@ TorCouple(Module, List) := Module => (W, submods) -> (
     d := local d;
     t := local t;
     Ch := R[d,Degrees=>{-1}]/d^2;
-    rW := res W;
+    -- workaround res bug
+    {R', theta} := flattenRing R;
+    rW := (theta^(-1))(res(theta ** W));
     M := chainModule(Ch, rW);
     S := R[d,t,Degrees=>{{-1,0},{0,1}}]/d^2;
     phi := map(S,Ch,DegreeMap=>deg->{deg_0,0,deg_1});
@@ -3155,10 +3207,54 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- End:
 
 
--- TODO: explain 
-
+-- TODO: explain pruning lemma
+-- TODO: explain algorithms for (co/contra)variantExtCouple and TorCouple
+-- 
+-- TODO: p, q labels for plotPages
+-- TODO: Test cases for couples
+-- TODO: long exact sequence of a triple
 restart
 needsPackage "ExactCouples"
+
+
+
+
+plausibleIso = (M, M') -> (
+    checkDegs = {-1,0,1,2,3,4,5,10,20,100,200};
+    if any(checkDegs, d->hilbertFunction(d,M) != hilbertFunction(d,M')) then (
+        error "modules are not isomorphic";
+        );
+    );
+R = (ZZ/17)[x,y,z]
+randomFilteredModule = () -> (
+    genmod := R^(apply(5,p->-random(3)));
+    relmod := R^(apply(2,p->-random(4)));
+    pres := random(genmod, relmod);
+    X := coker pres;
+    A0 := image map(X,,(id_genmod)_{0,1});
+    A1 := image map(X,,(id_genmod)_{0,1,2,3});
+    {A0,A1,X}
+    );
+submods = randomFilteredModule();
+expectFiltrationList submods
+Y = prune(submods#1);
+couple = prune covariantExtCouple(Y,submods);
+couple
+plotPages((-1..3,-1..3,1..4),prune@@evaluateInDegree,couple)
+
+randomCouple = () -> (
+    Q := R[d,f,Degrees=>{{1,0},{0,1}}]/(d^2);
+    {Q', theta} := flattenRing Q;
+    tar := Q'^(-apply(3,p->{random(4),random(4),random(4)}));
+    src := Q'^(-apply(6,p->{random(6),random(7),random(8)}));
+    exactCouple coker (theta^(-1))(random(tar,src))
+    );
+couple = prune randomCouple()
+expectExactCouple couple
+
+plausibleIso(coker matrix {{x^5}}, coker matrix {{x^3}})
+
+
 kk = ZZ/32003
 S = kk[w,x,y,z]
 I = monomialCurveIdeal(S, {1,3,4})
