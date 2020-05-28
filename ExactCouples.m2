@@ -1137,12 +1137,17 @@ covariantExtCouple(Module, List) := Module => (W, submods) -> (
     d := local d;
     t := local t;
     Co := R[d]/d^2;
-    -- workaround res bug
+    -- workaround res tower ring bug
     {R', theta} := flattenRing R;
-    -- this line still fails sometimes because of a Hom(ChainComplex,Module) bug
+    -- the following line fails sometimes because of a Hom(ChainComplex,Module) bug
+    -- specifically, when W is a free module
     --rW := (theta^(-1))(Hom(res(theta ** W), R'^1));
-    cW := chainModule(Co, res(theta ** W));
     --M := chainModule(Co, rW);
+    --
+    -- This way uses Hom(Module,Module) instead
+    cW := chainModule(Co, res(theta ** W)); -- this goes in two steps for (maybe)
+    -- no reason.  Currently, we dualize and then tensor with fm, but we could
+    -- just hom to Ran fm.
     M := Hom(cW, Co^{degree(Co_0)});
     S := R[d,t,Degrees=>{{1,0},{0,1}}]/d^2;
     phi := map(S,Co,DegreeMap=>deg->{deg_0,0,deg_1});
@@ -1176,6 +1181,7 @@ TEST ///
     C = flattenModule couple;
     gr = q -> if q == 0 then submods#0 else (submods#q)/(submods#(q-1));
     entropy = 0;
+    -- check page
     for p from 0 to 3 do (
         for q from 0 to 2 do (
             M = Ext^p(W,gr q);
@@ -1236,6 +1242,57 @@ TorCouple(Module, List) := Module => (W, submods) -> (
     Q := R[e_1,f_1,Degrees=>{{-1,-1},{0,2}}]; -- TODO: use coupleRing here
     exactCouple(Q, C)
     )
+
+TEST ///
+    R = (ZZ/17)[x,y,z]
+    randomFilteredModule = () -> (
+        genmod := R^(apply(5,p->-random(3)));
+        relmod := R^(apply(2,p->-random(4)));
+        pres := random(genmod, relmod);
+        X := coker pres;
+        A0 := image map(X,,(id_genmod)_{0});
+        A1 := image map(X,,(id_genmod)_{0,1,2});
+        {A0,A1,X}
+        );
+    submods = randomFilteredModule();
+    expectFiltrationList submods
+    W = prune(submods#1);
+    couple = prune TorCouple(W,submods);
+    expectExactCouple couple
+    flattenModule = m -> ((flattenRing ring m)#1) ** m;
+    C = flattenModule couple;
+    gr = q -> if q == 0 then submods#0 else (submods#q)/(submods#(q-1));
+    entropy = 0;
+    -- check page
+    for p from 0 to 3 do (
+        for q from 0 to 2 do (
+            M = Tor_p(W,gr q);
+            for n from 0 to 20 do (
+                direct = hilbertFunction({n},M);
+                indirect = hilbertFunction({2*p,2*q,n},C);
+                assert(direct == indirect);
+                if direct != 0 then (
+                    entropy = entropy + size2(direct);
+                    );
+                );
+            );
+        );
+    -- check aux
+    for p from 0 to 3 do (
+        for q from 0 to 2 do (
+            M = Tor_p(W,submods#q);
+            for n from 0 to 20 do (
+                direct = hilbertFunction({n},M);
+                indirect = hilbertFunction({2*p+1,1+2*q,n},C);
+                assert(direct == indirect);
+                if direct != 0 then (
+                    entropy = entropy + size2(direct);
+                    );
+                );
+            );
+        );
+    print("total assertion entropy " | (toString entropy));
+///
 
 TorLES = method()
 TorLES(ZZ, Module, Module, Module) := Net => (k, W, X, A) -> (
