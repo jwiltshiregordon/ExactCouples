@@ -1085,18 +1085,33 @@ TEST ///
     submods = randomFilteredModule();
     expectFiltrationList submods
     W = prune(submods#1);
-    couple = prune contravariantExtCouple(submods,W)
+    couple = prune contravariantExtCouple(submods,W);
     expectExactCouple couple
-    flattenModule := m -> ((flattenRing ring m)#1) ** m;
+    flattenModule = m -> ((flattenRing ring m)#1) ** m;
     C = flattenModule couple;
     gr = q -> if q == 0 then submods#0 else (submods#q)/(submods#(q-1));
     entropy = 0;
+    -- check page
     for p from 0 to 3 do (
         for q from 0 to 2 do (
             M = Ext^p(gr q, W);
             for n from 0 to 20 do (
                 direct = hilbertFunction({n},M);
                 indirect = hilbertFunction({2*p,-2*q,n},C);
+                assert(direct == indirect);
+                if direct != 0 then (
+                    entropy = entropy + size2(direct);
+                    );
+                );
+            );
+        );
+    -- check aux
+    for p from 0 to 3 do (
+        for q from 0 to 2 do (
+            M = Ext^p(submods#q, W);
+            for n from 0 to 20 do (
+                direct = hilbertFunction({n},M);
+                indirect = hilbertFunction({2*p+1,-1-2*q,n},C);
                 assert(direct == indirect);
                 if direct != 0 then (
                     entropy = entropy + size2(direct);
@@ -1124,8 +1139,11 @@ covariantExtCouple(Module, List) := Module => (W, submods) -> (
     Co := R[d]/d^2;
     -- workaround res bug
     {R', theta} := flattenRing R;
-    rW := (theta^(-1))(Hom(res(theta ** W), R'^1));
-    M := chainModule(Co, rW);
+    -- this line still fails sometimes because of a Hom(ChainComplex,Module) bug
+    --rW := (theta^(-1))(Hom(res(theta ** W), R'^1));
+    cW := chainModule(Co, res(theta ** W));
+    --M := chainModule(Co, rW);
+    M := Hom(cW, Co^{degree(Co_0)});
     S := R[d,t,Degrees=>{{1,0},{0,1}}]/d^2;
     phi := map(S,Co,DegreeMap=>deg->{deg_0,0,deg_1});
     F := R[t];
@@ -1139,43 +1157,53 @@ covariantExtCouple(Module, List) := Module => (W, submods) -> (
     )
 
 TEST ///
-    plausibleIso = (M, M') -> (
-        checkDegs = {-1,0,1,2,3,4,5,10,20,100,200};
-        Mdims = apply(checkDegs, d->hilbertFunction(d,M));
-        M'dims = apply(checkDegs, d->hilbertFunction(d,M'));
-        print(Mdims);
-        print(M'dims);
-        if Mdims != M'dims then (
-            error "modules are not isomorphic";
-            );
-        );
     R = (ZZ/17)[x,y,z]
     randomFilteredModule = () -> (
         genmod := R^(apply(5,p->-random(3)));
         relmod := R^(apply(2,p->-random(4)));
         pres := random(genmod, relmod);
         X := coker pres;
-        A0 := image map(X,,(id_genmod)_{0,1});
-        A1 := image map(X,,(id_genmod)_{0,1,2,3});
+        A0 := image map(X,,(id_genmod)_{0});
+        A1 := image map(X,,(id_genmod)_{0,1,2});
         {A0,A1,X}
         );
     submods = randomFilteredModule();
     expectFiltrationList submods
-    Y = prune(submods#1);
-    couple = prune covariantExtCouple(Y,submods);
-    -- check numerics of several entries on first page
-    plausibleIso(evaluateInDegree({0,0},couple),Hom(Y,submods#0))
-    plausibleIso(evaluateInDegree({0,2},couple),Hom(Y,(submods#1)/(submods#0)))
-    plausibleIso(evaluateInDegree({0,4},couple),Hom(Y,(submods#2)/(submods#1)))
-    plausibleIso(evaluateInDegree({2,0},couple),Ext^1(Y,submods#0))
-    plausibleIso(evaluateInDegree({2,2},couple),Ext^1(Y,(submods#1)/(submods#0)))
-    plausibleIso(evaluateInDegree({2,4},couple),Ext^1(Y,(submods#2)/(submods#1)))
-    -- and several entries on first aux
-    plausibleIso(evaluateInDegree({-1,1},couple),Hom(Y,submods#0))
-    plausibleIso(evaluateInDegree({1,1},couple),Ext^1(Y,submods#0))
-    plausibleIso(evaluateInDegree({3,1},couple),Ext^2(Y,submods#0))
-    plausibleIso(evaluateInDegree({-1,3},couple),Hom(Y,submods#1))
-    plausibleIso(evaluateInDegree({1,3},couple),Ext^1(Y,submods#1))
+    W = prune(submods#1);
+    couple = prune covariantExtCouple(W,submods);
+    expectExactCouple couple
+    flattenModule = m -> ((flattenRing ring m)#1) ** m;
+    C = flattenModule couple;
+    gr = q -> if q == 0 then submods#0 else (submods#q)/(submods#(q-1));
+    entropy = 0;
+    for p from 0 to 3 do (
+        for q from 0 to 2 do (
+            M = Ext^p(W,gr q);
+            for n from 0 to 20 do (
+                direct = hilbertFunction({n},M);
+                indirect = hilbertFunction({2*p,2*q,n},C);
+                assert(direct == indirect);
+                if direct != 0 then (
+                    entropy = entropy + size2(direct);
+                    );
+                );
+            );
+        );
+    -- check aux
+    for p from 0 to 3 do (
+        for q from 0 to 2 do (
+            M = Ext^p(W,submods#q);
+            for n from 0 to 20 do (
+                direct = hilbertFunction({n},M);
+                indirect = hilbertFunction({2*p-1,1+2*q,n},C);
+                assert(direct == indirect);
+                if direct != 0 then (
+                    entropy = entropy + size2(direct);
+                    );
+                );
+            );
+        );
+    print("total assertion entropy " | (toString entropy));
 ///
 
 covariantExtLES = method()
