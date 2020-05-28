@@ -590,7 +590,6 @@ arrowBelow(Matrix) := Net => m -> (
     (sp | n)^(1 + depth n) || ar
     )
 
--- TODO: expectCoupleRing should install isOddDegree with checks for degreeLength
 excerptCouple = method()
 excerptCouple(List, ZZ, Module) := Net => (startDegree, rotations, M) -> (
     Q := ring M;
@@ -630,40 +629,40 @@ restackRing(List, Ring) := RingMap => (l, R) -> (
     tI := ideal presentation F;
     dls := {};  --record the degree lengths along the tower
     for i to q - 1 do (
-      try coefficientRing S then (
-        dls = {degreeLength S} | dls;
-        S = coefficientRing S;
-      ) else (
-        error ("Input ring must be a tower of height at least #l = " | q);
-      );
-  );
+        try coefficientRing S then (
+            dls = {degreeLength S} | dls;
+            S = coefficientRing S;
+            ) else (
+                error ("Input ring must be a tower of height at least #l = " | q);
+            );
+        );
     dls = {0} | dls;
     idls := reverse apply(-1 + #dls, i -> -dls_i + dls_(i+1));
     S = R;
     batches := {};
     for i to q - 1 do (
-  external := toList(0..<(idls_i));
-  batches = {{gens S, apply(degrees S, deg -> deg_external)}} | batches;
-  S = coefficientRing S;
-  );
+        external := toList(0..<(idls_i));
+        batches = {{gens S, apply(degrees S, deg -> deg_external)}} | batches;
+        S = coefficientRing S;
+        );
     rels := {};
     for i to q - 1 do (
-  ovars := flatten (apply(i,j->batches_j_0) | apply(toList((i+1)..<q),j->batches_j_0));
+        ovars := flatten (apply(i,j->batches_j_0) | apply(toList((i+1)..<q),j->batches_j_0));
         ovars =  apply(ovars, v -> (
-  psi := map(FF, ring v);
-  psi(v)
-  ));
-  rels = rels | {eliminate(ovars, tI)};
-  );
+            psi := map(FF, ring v);
+            psi(v)
+            ));
+        rels = rels | {eliminate(ovars, tI)};
+        );
     ll := apply(l, i -> i - 1);
     batches = batches_ll;
     rels = rels_ll;
     T := S;
     for i to q - 1 do (
-  T = T[batches_i_0, Degrees => batches_i_1];
-  psi := map(T,ring (rels_i));
-  T = T / ideal(psi ** (gens rels_i));
-  );
+        T = T[batches_i_0, Degrees => batches_i_1];
+        psi := map(T,ring (rels_i));
+        T = T / ideal(psi ** (gens rels_i));
+        );
     ie := apply(q, i -> toList((dls_i)..<(dls_(i+1))));
     perm := inversePermutation flatten ie_ll;
     regrade := deg -> deg_perm;
@@ -708,7 +707,6 @@ exactCouple(Module) := Module => (M) -> (
     )
 
 -- TODO: fix error messages
--- TODO: left this a mess
 -- no way to omit Q since it contains page information
 -- exactCouple(coupleRing(?), M) is pretty easy, though
 -- TODO: do examples in documentation.
@@ -801,7 +799,7 @@ derivedCouple(Module) := Module => M -> (
 
     de := (degree e);
     df := (degree f);
-    hdf := first entries sub(matrix {df/2}, ZZ);
+    hdf := df // 2;
     dz := 0 * de;
 
     ff := f ** id_M;
@@ -968,8 +966,6 @@ declareCouple(Ring, List, List) := Module => (Q, pageGens, auxGens) -> (
     );
 
 
--- TODO: omit output ring
--- TODO: done?
 sequenceModule = method()
 sequenceModule(Ring, List) := (Q, L) -> (
     l := #L;
@@ -1040,14 +1036,15 @@ canonicalFiltration(Ring, Module) := Module => (Q, M) -> (
 -- TODO: let user supply output ring
 -- algorithm:
 -- Left Kan extend Y to the sequence ring, and then right Kan to chain ring.
--- call the resulting thing Y'.  Resolve sumbods by frees.  Call the resulting
+-- call the resulting thing Y'.  
+-- Put a zero at the end of submods, and resolve by frees.  Call the resulting
 -- chain sequence module M.
 -- claim: exactCouple Hom(M, Y') is the correct couple
 -- Pf: Hom(M, Y') = Hom(M, Ran Lan Y) = Hom(Res M, Lan Y).
 -- Since M is a resolution, Res M is free, say Res M = Lan G.
 -- Hom(Lan G, Lan Y) = Hom(G, Res Lan Y).  And this thing is
 -- the chain sequence module that defines the couple.
--- It would be mathematically similar to start with the cofiltration instead
+-- It would be mathematically similar to start with the cofiltration instead;
 -- this could be faster at least some of the time.
 contravariantExtCouple = method()
 contravariantExtCouple(List, Module) := Module => (submods, Y) -> (
@@ -1056,23 +1053,54 @@ contravariantExtCouple(List, Module) := Module => (submods, Y) -> (
     t := local t;
     F := R[t];
     l := #submods;
-    submods' := submods | {coker relations last submods};
+    submods' := submods | {(last submods)/(last submods)};
     fm := sequenceModule(F, apply(l, k -> inducedMap(submods'#(k+1), submods'#k)));
     -- only use res over flat rings due to M2 bug
     flattenModule := m -> ((flattenRing ring m)#1) ** m;
     fm = flattenModule fm;
-    rfm := Hom(res fm, map(ring fm, ring Y) ** Y);
     d := local d;
-    Ch := F[d, Degrees=>{-1}]/d^2;
-    Co := F[d]/d^2;
-    M := chainModule(Co, rfm);
+    ch := ((ring fm)[d])/d^2;
+    rfm := flattenModule chainModule(ch, res fm);
     S := R[d,t,Degrees=>{{1,0},{0,1}}]/d^2;
-    C := map(S,ring M,{d,t}) ** M;
-    e := local e;
-    f := local f;
-    Q := R[e_1,f_1,Degrees=>{{1,-1},{0,2}}]; -- TODO: use coupleRing
-    exactCouple(Q, C)
+    why := map(ring rfm, ring Y,DegreeMap=>(deg->{0,0}|deg));
+    Y' := why ** Y;
+    hm := Hom(rfm,Y');
+    exactCouple((map(S,ring hm)) ** hm)
     )
+
+TEST ///
+    plausibleIso = (M, M') -> (
+        checkDegs = {-1,0,1,2,3,4,5,10,20,100,200};
+        Mdims = apply(checkDegs, d->hilbertFunction(d,M));
+        M'dims = apply(checkDegs, d->hilbertFunction(d,M'));
+        print(Mdims);
+        print(M'dims);
+        if Mdims != M'dims then (
+            error "modules are not isomorphic";
+            );
+        );
+    R = (ZZ/17)[x,y,z]
+    randomFilteredModule = () -> (
+        genmod := R^(apply(5,p->-random(3)));
+        relmod := R^(apply(2,p->-random(4)));
+        pres := random(genmod, relmod);
+        X := coker pres;
+        A0 := image map(X,,(id_genmod)_{0});
+        A1 := image map(X,,(id_genmod)_{0,1,2});
+        {A0,A1,X}
+        );
+    submods = randomFilteredModule();
+    expectFiltrationList submods
+    W = prune(submods#1);
+    couple = prune contravariantExtCouple(submods,W)
+    expectExactCouple couple
+    -- check numerics of several entries on first page
+    -- TODO: switch to hilbertFunction
+    plausibleIso(evaluateInDegree({2,-2},couple),Ext^0((submods#1)/(submods#0),W))
+    plausibleIso(evaluateInDegree({4,-2},couple),Ext^1((submods#1)/(submods#0),W))
+    plausibleIso(evaluateInDegree({4,-4},couple),Ext^1((submods#2)/(submods#1),W))
+    -- TODO: put the rest of these in place.  Reindex first?
+///
 
 contravariantExtLES = method()
 contravariantExtLES(ZZ, Module, Module, Module) := Net => (k, X, A, Y) -> (
@@ -1107,15 +1135,15 @@ covariantExtCouple(Module, List) := Module => (W, submods) -> (
 
 TEST ///
     plausibleIso = (M, M') -> (
-    checkDegs = {-1,0,1,2,3,4,5,10,20,100,200};
-    Mdims = apply(checkDegs, d->hilbertFunction(d,M));
-    M'dims = apply(checkDegs, d->hilbertFunction(d,M'));
-    print(Mdims);
-    print(M'dims);
-    if Mdims != M'dims then (
-        error "modules are not isomorphic";
+        checkDegs = {-1,0,1,2,3,4,5,10,20,100,200};
+        Mdims = apply(checkDegs, d->hilbertFunction(d,M));
+        M'dims = apply(checkDegs, d->hilbertFunction(d,M'));
+        print(Mdims);
+        print(M'dims);
+        if Mdims != M'dims then (
+            error "modules are not isomorphic";
+            );
         );
-    );
     R = (ZZ/17)[x,y,z]
     randomFilteredModule = () -> (
         genmod := R^(apply(5,p->-random(3)));
@@ -1137,6 +1165,7 @@ TEST ///
     plausibleIso(evaluateInDegree({2,0},couple),Ext^1(Y,submods#0))
     plausibleIso(evaluateInDegree({2,2},couple),Ext^1(Y,(submods#1)/(submods#0)))
     plausibleIso(evaluateInDegree({2,4},couple),Ext^1(Y,(submods#2)/(submods#1)))
+    -- and several entries on first aux
     plausibleIso(evaluateInDegree({-1,1},couple),Hom(Y,submods#0))
     plausibleIso(evaluateInDegree({1,1},couple),Ext^1(Y,submods#0))
     plausibleIso(evaluateInDegree({3,1},couple),Ext^2(Y,submods#0))
@@ -3215,32 +3244,24 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- TODO: long exact sequence of a triple
 restart
 needsPackage "ExactCouples"
+R = (ZZ/17)[x,y,z];
+submods = {subquotient(map(R^{{-2}, {-1}},R^{{-2}},{{1}, {0}}),map(R^{{-2}, {-1}},R^{{-3}},{{-6*x-y-5*z}, {4*x^2-7*x*y-y^2-8*x*z-7*y*z-4*z^2}})),cokernel(map(R^{{-2}, {-1}},R^{{-3}},{{-6*x-y-5*z}, {4*x^2-7*x*y-y^2-8*x*z-7*y*z-4*z^2}}))};
+Y = cokernel(map(R^{{-2}, {-1}},R^{{-3}},{{7*x+4*y+3*z}, {x^2-6*x*y+4*y^2-2*x*z-6*y*z-z^2}}));
+Y = R^1;
+couple = prune contravariantExtCouple(submods,Y)
+expectExactCouple couple
+evaluateInDegree({0,0},couple)
+prune Hom(submods#0,Y)
+prune Hom(submods#1,Y)
+prune Hom((submods#1)/(submods#0),Y)
+prune Ext^1(submods#0,Y)
+prune Ext^1(submods#1,Y)
+prune Ext^1((submods#1)/(submods#0),Y)
+xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
 
 
 
 
-plausibleIso = (M, M') -> (
-    checkDegs = {-1,0,1,2,3,4,5,10,20,100,200};
-    if any(checkDegs, d->hilbertFunction(d,M) != hilbertFunction(d,M')) then (
-        error "modules are not isomorphic";
-        );
-    );
-R = (ZZ/17)[x,y,z]
-randomFilteredModule = () -> (
-    genmod := R^(apply(5,p->-random(3)));
-    relmod := R^(apply(2,p->-random(4)));
-    pres := random(genmod, relmod);
-    X := coker pres;
-    A0 := image map(X,,(id_genmod)_{0,1});
-    A1 := image map(X,,(id_genmod)_{0,1,2,3});
-    {A0,A1,X}
-    );
-submods = randomFilteredModule();
-expectFiltrationList submods
-Y = prune(submods#1);
-couple = prune covariantExtCouple(Y,submods);
-couple
-plotPages((-1..3,-1..3,1..4),prune@@evaluateInDegree,couple)
 
 randomCouple = () -> (
     Q := R[d,f,Degrees=>{{1,0},{0,1}}]/(d^2);
