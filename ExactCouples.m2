@@ -1065,20 +1065,13 @@ contravariantExtCouple(List, Module) := Module => (submods, Y) -> (
     why := map(ring rfm, ring Y,DegreeMap=>(deg->{0,0}|deg));
     Y' := why ** Y;
     hm := Hom(rfm,Y');
-    exactCouple((map(S,ring hm)) ** hm)
+    couple := exactCouple((map(S,ring hm)) ** hm);
+    Q := ring couple;
+    sh := Q^{2*degree(Q_0)+degree(Q_1)};
+    couple ** sh
     )
 
 TEST ///
-    plausibleIso = (M, M') -> (
-        checkDegs = {-1,0,1,2,3,4,5,10,20,100,200};
-        Mdims = apply(checkDegs, d->hilbertFunction(d,M));
-        M'dims = apply(checkDegs, d->hilbertFunction(d,M'));
-        print(Mdims);
-        print(M'dims);
-        if Mdims != M'dims then (
-            error "modules are not isomorphic";
-            );
-        );
     R = (ZZ/17)[x,y,z]
     randomFilteredModule = () -> (
         genmod := R^(apply(5,p->-random(3)));
@@ -1094,12 +1087,24 @@ TEST ///
     W = prune(submods#1);
     couple = prune contravariantExtCouple(submods,W)
     expectExactCouple couple
-    -- check numerics of several entries on first page
-    -- TODO: switch to hilbertFunction
-    plausibleIso(evaluateInDegree({2,-2},couple),Ext^0((submods#1)/(submods#0),W))
-    plausibleIso(evaluateInDegree({4,-2},couple),Ext^1((submods#1)/(submods#0),W))
-    plausibleIso(evaluateInDegree({4,-4},couple),Ext^1((submods#2)/(submods#1),W))
-    -- TODO: put the rest of these in place.  Reindex first?
+    flattenModule := m -> ((flattenRing ring m)#1) ** m;
+    C = flattenModule couple;
+    gr = q -> if q == 0 then submods#0 else (submods#q)/(submods#(q-1));
+    entropy = 0;
+    for p from 0 to 3 do (
+        for q from 0 to 2 do (
+            M = Ext^p(gr q, W);
+            for n from 0 to 20 do (
+                direct = hilbertFunction({n},M);
+                indirect = hilbertFunction({2*p,-2*q,n},C);
+                assert(direct == indirect);
+                if direct != 0 then (
+                    entropy = entropy + size2(direct);
+                    );
+                );
+            );
+        );
+    print("total assertion entropy " | (toString entropy));
 ///
 
 contravariantExtLES = method()
@@ -3609,3 +3614,6 @@ doc ///
 @ TO expectCoupleRing @
 
 (see @ TO expectCoupleRing @)
+
+
+-- Ongoing bugs here:
