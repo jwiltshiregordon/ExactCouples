@@ -1053,6 +1053,9 @@ contravariantExtCouple(List, Module) := Module => (submods, Y) -> (
     t := local t;
     F := R[t];
     l := #submods;
+    -- TODO: this couple always converges to zero now!  Is adding that last module
+    -- really needed to get correct answers in lower degrees?  It makes the current
+    -- documentation incorrect, BTW.
     submods' := submods | {(last submods)/(last submods)};
     fm := sequenceModule(F, apply(l, k -> inducedMap(submods'#(k+1), submods'#k)));
     -- only use res over flat rings due to M2 bug
@@ -1126,7 +1129,7 @@ contravariantExtLES = method()
 contravariantExtLES(ZZ, Module, Module, Module) := Net => (k, X, A, Y) -> (
     expectFiltrationList {A,X};
     E1 := contravariantExtCouple({A,X},Y);
-    excerptCouple({-2,0},k,E1)
+    excerptCouple({0,-2},k,E1)
     )
 
 -- TODO: allow user to supply output ring
@@ -1239,7 +1242,7 @@ TorCouple(Module, List) := Module => (W, submods) -> (
     C := (phi ** M) ** (psi ** fm);
     e := local e;
     f := local f;
-    Q := R[e_1,f_1,Degrees=>{{-1,-1},{0,2}}]; -- TODO: use coupleRing here
+    Q := R[e_1,f_1,Degrees=>{{-1,-1},{0,2}}]; -- note non-default degrees
     exactCouple(Q, C)
     )
 
@@ -2321,16 +2324,30 @@ doc ///
             an exact couple
     Description
         Text
-            The E_1 page is given by the formula
+            If $W$ and the $A_i$ are $R$-modules, the returned couple is a module over 
+            the ring R[e_1,f_1,Degrees=>\{\{1,-1},\{0,2}}].
+            
+            The returned couple has the following description.  In bidegrees with both
+            coordinates even, we have
+            
+            $Ext^p(W, A_q/A_{q-1})$ in degree \{2p, 2q\}
+            
+            where we set $A_{-1} = 0$.  In bidegrees with both coordinates odd, we have
+            
+            $Ext^p(W, A_q)$ in degree \{2p-1,2q+1\}.
+            
+            Bidegrees with one coordinate even and the other odd are zero.
+            
+            {\bf Associated spectral sequence}
+            
+            The spectral sequence associated to this couple has
+            
+            $E^{pq}_1 = Ext^p(W,A_q/A_{q-1})$.
+            
+            The differential on page $r$ has bidegree \{1,-r}.
 
-
-            $E^{pq}_1 = Ext^p(W,A_q/A_{q-1})$
-
-
-            where we set $A_{-1}=0$.  The spectral sequence converges to
-
-
-            $E^{pq}_{\infty} = \frac{im Ext^p(W,A_q) \to Ext^p(W,X)}{im Ext^p(W,A_{q-1}) \to Ext^p(W,X)}$.
+            Setting $X=A_m$, it converges to $Ext^p(W,X)$ filtered by
+            the images of the natural maps $Ext^p(W,A_q) \to Ext^p(W,X)$.
         Example
             R = QQ[x]
             X = R^1 / x^9
@@ -2362,22 +2379,36 @@ doc ///
         Y:Module
             giving a functor Hom(-,Y)
         submods:List
-            of submodules {A_0, A_1, ..., A_m} with each A_i inside A_(i+1)
+            of submodules {A_0, A_1, ..., A_m} with each A_i inside A_{i+1}
     Outputs
         :Module
             an exact couple
     Description
         Text
-            The E_1 page is given by the formula
+            If $Y$ and the $A_i$ are $R$-modules, the returned couple is a module over 
+            the ring R[e_1,f_1,Degrees=>\{\{1,-1},\{0,2}}].
+            
+            The returned couple has the following description.  In bidegrees with both
+            coordinates even, we have
+            
+            $Ext^p(A_q/A_{q-1},Y)$ in degree \{2p, -2q\}
+            
+            where we set $A_{-1} = 0$.  In bidegrees with both coordinates odd, we have
+            
+            $Ext^p(A_q,Y)$ in degree \{2p+1,-2q-1\}.
+            
+            Bidegrees with one coordinate even and the other odd are zero.
+            
+            {\bf Associated spectral sequence}
+            
+            The spectral sequence associated to this couple has
+            
+            $E^{pq}_1 = Ext^p(A_q/A_{q-1},Y)$.
+            
+            The differential on page $r$ has bidegree \{1,-r}.
 
-
-            $E^{pq}_1 = Ext^p(A_q/A_{q-1},Y)$
-
-
-            where we set $A_{-1}=0$.  Setting $X=A_m$, the spectral sequence converges to
-
-
-            $E^{pq}_{\infty} = \frac{im Ext^p(X/A_q,Y) \to Ext^p(X,Y)}{im Ext^p(X/A_{q-1},Y) \to Ext^p(X,Y)}$.
+            Setting $X=A_m$, it converges to $Ext^p(X,Y)$ filtered by
+            the images of the natural maps $Ext^p(X/A_q,Y) \to Ext^p(X,Y)$.
         Example
             R = QQ[x]
             X = R^1 / x^9
@@ -3066,16 +3097,30 @@ doc ///
             an exact couple
     Description
         Text
-            The E^1 page is given by the formula
+            If $W$ and the $A_i$ are $R$-modules, the returned couple is a module over 
+            the ring R[e_1,f_1,Degrees=>\{\{-1,-1},\{0,2}}].
+            
+            The returned couple has the following description.  In bidegrees with both
+            coordinates even, we have
+            
+            $Tor_p(W,A_q/A_{q-1})$ in degree \{2p, 2q\}
+            
+            where we set $A_{-1} = 0$.  In bidegrees with both coordinates odd, we have
+            
+            $Tor_p(W,A_q)$ in degree \{2p+1,2q+1\}.
+            
+            Bidegrees with one coordinate even and the other odd are zero.
+            
+            {\bf Associated spectral sequence}
+            
+            The spectral sequence associated to this couple has
+            
+            $E^{pq}_1 = Tor_p(W,A_q/A_{q-1})$.
+            
+            The differential on page $r$ has bidegree \{-1,-r}.
 
-
-            $E_{pq}^1 = Tor_p(W,A_q/A_{q-1})$
-
-
-            where we set $A_{-1}=0$.  Setting $X=A_m$, the spectral sequence converges to
-
-
-            $E_{pq}^{\infty} = \frac{im Tor_p(W,A_q) \to Tor_p(W,X)}{im Tor_p(W,A_{q-1}) \to Tor_p(W,X)}$.
+            Setting $X=A_m$, it converges to $Tor_p(W,X)$ filtered by
+            the images of the natural maps $Tor_p(W,A_q) \to Tor_p(W,X)$.
         Example
             R = QQ[x]
             X = R^1 / x^9
@@ -3330,10 +3375,26 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- TODO: explain algorithms for (co/contra)variantExtCouple and TorCouple
 -- 
 -- TODO: p, q labels for plotPages
--- TODO: Test cases for couples
+-- TODO: Test cases for couples -- DONE
 -- TODO: long exact sequence of a triple
+-- TODO: map of filtered modules gives induced map on LES "functoriality" page for docs
 restart
 needsPackage "ExactCouples"
+kk = ZZ/32003
+S = kk[a..d]
+I = monomialCurveIdeal(S, {1,3,4})
+contravariantExtLES(4,S^1,module I, S^1)
+covariantExtLES(4,module I, S^1, module I)
+TorLES(4,module I, S^1, module I)
+
+couple = contravariantExtCouple({module I, S^1}, S^1)
+expectExactCouple couple
+xyplot(-4..4,-4..4,couple)
+
+
+
+
+
 R = (ZZ/17)[x,y,z];
 submods = {subquotient(map(R^{{-2}, {-1}},R^{{-2}},{{1}, {0}}),map(R^{{-2}, {-1}},R^{{-3}},{{-6*x-y-5*z}, {4*x^2-7*x*y-y^2-8*x*z-7*y*z-4*z^2}})),cokernel(map(R^{{-2}, {-1}},R^{{-3}},{{-6*x-y-5*z}, {4*x^2-7*x*y-y^2-8*x*z-7*y*z-4*z^2}}))};
 Y = cokernel(map(R^{{-2}, {-1}},R^{{-3}},{{7*x+4*y+3*z}, {x^2-6*x*y+4*y^2-2*x*z-6*y*z-z^2}}));
@@ -3485,6 +3546,9 @@ apply(10,d->prune evaluateInDegree({d-5},D))
 kk = ZZ/32003
 S = kk[a..d]
 I = monomialCurveIdeal(S, {1,3,4})
+couple = contravariantExtCouple({module I, S^1}, S^1)
+expectExactCouple couple
+xyplot(-4..4,-4..4,couple)
 -- Hom(-, S)
 -- I --> S --> S^1/I
 --contravariantExtLES(4, S^1, module I, S^1)
@@ -3492,6 +3556,10 @@ xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluat
 apply(4,p->prune Ext^p(module I, S^1))
 apply(4,p->prune Ext^p(S^1, S^1))
 apply(4,p->prune Ext^p(S^1/I, S^1))
+
+
+
+
 submods = {module I, S^1};
 submods' = {module I, S^1, S^1};
 F = S[t];
