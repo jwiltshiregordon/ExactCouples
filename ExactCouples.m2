@@ -1139,67 +1139,6 @@ TEST ///
     print("total assertion entropy " | (toString entropy));
 ///
 
-TEST ///
-    R = (ZZ/17)[x,y,z]
-    randomFilteredModule = () -> (
-        genmod := R^(apply(5,p->-random(3)));
-        relmod := R^(apply(2,p->-random(4)));
-        pres := random(genmod, relmod);
-        X := coker pres;
-        A0 := image map(X,,(id_genmod)_{0});
-        A1 := image map(X,,(id_genmod)_{0,1,2});
-        {A0,A1,X}
-        );
-    -- TODO: make this all one loop.  Make notation match docs.
-    submods = randomFilteredModule();
-    expectFiltrationList submods
-    W = prune(submods#1);
-    couple = prune contravariantExtCouple(submods,W);
-    expectExactCouple couple
-    flattenModule = m -> ((flattenRing ring m)#1) ** m;
-
-    -- check aux
-    cofil = q -> if q < 0 then image(0 * id_(last submods)) else
-                 if q == 0 then last submods else 
-                 (last submods)/(submods#(q-1));
-    for p from 0 to 3 do (
-        for q from 0 to 2 do (
-            M = Ext^p(cofil q, W);
-            for n from 0 to 20 do (
-                direct = hilbertFunction({n},M);
-                indirect = hilbertFunction({2*p-1,2*q-1,n},C);
-                --print(p,q,direct,indirect);
-                assert(direct == indirect);
-                if direct != 0 then (
-                    entropy = entropy + size2(direct);
-                    );
-                );
-            );
-        );
-    -- check infinity page
-    C' = flattenModule derivedCouple(5,couple);
-    X = last submods;
-    A = i -> if i < 0 then image(0*id_X) else if i >= #submods then X else submods#i;
-    proj = q -> inducedMap(X/A(q),X);
-    filt = (p,q) -> image Ext^p(proj q,W);
-    Einfty = (p,q) -> prune(filt(p,q-1)/filt(p,q));
-    for p from 0 to 3 do (
-        for q from 0 to 2 do (
-            M = Einfty(p,q);
-            for n from 0 to 20 do (
-                direct = hilbertFunction({n},M);
-                indirect = hilbertFunction({2*p,2*q,n},C');
-                --print(p,q,direct,indirect);
-                assert(direct == indirect);
-                if direct != 0 then (
-                    entropy = entropy + size2(direct);
-                    );
-                );
-            );
-        );
-    print("total assertion entropy " | (toString entropy));
-///
-
 contravariantExtLES = method()
 contravariantExtLES(ZZ, Module, Module, Module) := Net => (k, X, A, Y) -> (
     expectFiltrationList {A,X};
@@ -1257,33 +1196,31 @@ TEST ///
     expectExactCouple couple
     flattenModule = m -> ((flattenRing ring m)#1) ** m;
     C = flattenModule couple;
-    gr = q -> if q == 0 then submods#0 else (submods#q)/(submods#(q-1));
+    C' = flattenModule derivedCouple(5,couple);
+    X = last submods;
+    A = i -> if i < 0 then image(0*id_X) else if i >= #submods then X else submods#i;
+    E1 = (p,q) -> Ext^p(W,A(q)/A(q-1));
+    A1 = (p,q) -> Ext^p(W,A(q));
+    inc = q -> inducedMap(X,A(q));
+    filt = (p,q) -> image Ext^p(W, inc q);
+    Einfty = (p,q) -> prune(filt(p,q)/filt(p,q-1));
     entropy = 0;
-    -- check page
-    for p from 0 to 3 do (
-        for q from 0 to 2 do (
-            M = Ext^p(W,gr q);
-            for n from 0 to 20 do (
-                direct = hilbertFunction({n},M);
-                indirect = hilbertFunction({2*p,2*q,n},C);
-                assert(direct == indirect);
-                if direct != 0 then (
-                    entropy = entropy + size2(direct);
-                    );
-                );
+    expectEqual = (x,y) -> (
+        assert(x == y);
+        if x != 0 then (
+            entropy = entropy + size2(x);
             );
         );
-    -- check aux
-    for p from 0 to 3 do (
-        for q from 0 to 2 do (
-            M = Ext^p(W,submods#q);
+    hf = hilbertFunction;
+    for p from 0 to 2 do (
+        for q from 0 to 3 do (
+            page1 = E1(p,q);
+            aux1 = A1(p,q);
+            pageInfty = Einfty(p,q);
             for n from 0 to 20 do (
-                direct = hilbertFunction({n},M);
-                indirect = hilbertFunction({2*p-1,1+2*q,n},C);
-                assert(direct == indirect);
-                if direct != 0 then (
-                    entropy = entropy + size2(direct);
-                    );
+                expectEqual(hf({n},page1),     hf({2*p,   2*q,   n}, C));
+                expectEqual(hf({n},aux1),      hf({2*p-1, 2*q+1, n}, C));
+                expectEqual(hf({n},pageInfty), hf({2*p,   2*q,   n}, C'));
                 );
             );
         );
@@ -1339,38 +1276,38 @@ TEST ///
     expectExactCouple couple
     flattenModule = m -> ((flattenRing ring m)#1) ** m;
     C = flattenModule couple;
-    gr = q -> if q == 0 then submods#0 else (submods#q)/(submods#(q-1));
+    C' = flattenModule derivedCouple(5,couple);
+    X = last submods;
+    A = i -> if i < 0 then image(0*id_X) else if i >= #submods then X else submods#i;
+    E1 = (p,q) -> Tor_p(W,A(q)/A(q-1));
+    A1 = (p,q) -> Tor_p(W,A(q));
+    inc = q -> inducedMap(X,A(q));
+    filt = (p,q) -> image Tor_p(W, inc q);
+    Einfty = (p,q) -> prune(filt(p,q)/filt(p,q-1));
     entropy = 0;
-    -- check page
-    for p from 0 to 3 do (
-        for q from 0 to 2 do (
-            M = Tor_p(W,gr q);
-            for n from 0 to 20 do (
-                direct = hilbertFunction({n},M);
-                indirect = hilbertFunction({2*p,2*q,n},C);
-                assert(direct == indirect);
-                if direct != 0 then (
-                    entropy = entropy + size2(direct);
-                    );
-                );
+    expectEqual = (x,y) -> (
+        assert(x == y);
+        if x != 0 then (
+            entropy = entropy + size2(x);
             );
         );
-    -- check aux
-    for p from 0 to 3 do (
-        for q from 0 to 2 do (
-            M = Tor_p(W,submods#q);
+    hf = hilbertFunction;
+    for p from 0 to 2 do (
+        for q from 0 to 3 do (
+            page1 = E1(p,q);
+            aux1 = A1(p,q);
+            --pageInfty = Einfty(p,q); -- No direct check available because M2 is missing
+                                       -- the method Tor(Module,Matrix).
             for n from 0 to 20 do (
-                direct = hilbertFunction({n},M);
-                indirect = hilbertFunction({2*p+1,1+2*q,n},C);
-                assert(direct == indirect);
-                if direct != 0 then (
-                    entropy = entropy + size2(direct);
-                    );
+                expectEqual(hf({n},page1),     hf({2*p,   2*q,   n}, C));
+                expectEqual(hf({n},aux1),      hf({2*p+1, 2*q+1, n}, C));
+                --expectEqual(hf({n},pageInfty), hf({2*p,   2*q,   n}, C'));
                 );
             );
         );
     print("total assertion entropy " | (toString entropy));
 ///
+
 
 TorLES = method()
 TorLES(ZZ, Module, Module, Module) := Net => (k, W, X, A) -> (
@@ -3494,9 +3431,9 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- TODO: explain pruning lemma
 -- TODO: explain algorithms for (co/contra)variantExtCouple and TorCouple
 -- 
--- TODO: p, q labels for plotPages
 -- TODO: long exact sequence of a triple documentation example
 -- TODO: map of filtered modules gives induced map on LES "functoriality" page for docs
+
 -- TODO: fix contravariantExtLES start position.
 -- surj of exact couples has exact kernel
 -- at chain level, any map of chain sequence modules has a cone, also a chain sequence module
@@ -3507,411 +3444,10 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- if A->B->C->A[1]->B[1] is an exact sequence of chain complexes, then it induces a long 
 -- exact sequence in homology.
 -- TODO: clean up couple code
--- TODO: add E infinity test cases to couples
 
 restart
 needsPackage "ExactCouples"
-            R = QQ[x]
-            X = R^1 / x^9
-            submods = apply(5,k->image map(X,,{{x^(8-2*k)}}))
-            Y = coker map(R^1,,{{x^3}})
-            couple = prune contravariantExtCouple(submods,Y)
-            isHomogeneous couple
-            expectExactCouple couple
-            xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
-            xyplot(-2..2,-12..2,couple)
-            plotPages((-1..2,-1..5,1..3), prune @@ evaluateInDegree, couple)
-            plotPages((0..1,0..4,1..3), prune @@ evaluateInDegree, couple)
 
-
-
-R = (ZZ/17)[x,y,z];
-submods = {subquotient(map(R^{{-2}, {-1}},R^{{-2}},{{1}, {0}}),map(R^{{-2}, {-1}},R^{{-3}},{{-6*x-y-5*z}, {4*x^2-7*x*y-y^2-8*x*z-7*y*z-4*z^2}})),cokernel(map(R^{{-2}, {-1}},R^{{-3}},{{-6*x-y-5*z}, {4*x^2-7*x*y-y^2-8*x*z-7*y*z-4*z^2}}))};
-Y = cokernel(map(R^{{-2}, {-1}},R^{{-3}},{{7*x+4*y+3*z}, {x^2-6*x*y+4*y^2-2*x*z-6*y*z-z^2}}));
-Y = R^1;
---couple = prune contravariantExtCouple(submods,Y)
-hm = prune contravariantExtCouple(submods,Y)
-expectExactCouple couple
-evaluateInDegree({0,0},couple)
-prune Hom(submods#0,Y)
-prune Hom(submods#1,Y)
-prune Hom((submods#1)/(submods#0),Y)
-prune Ext^1(submods#0,Y)
-prune Ext^1(submods#1,Y)
-prune Ext^1((submods#1)/(submods#0),Y)
-xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
-
-
-
-kk = ZZ/32003
-S = kk[a..d]
-I = monomialCurveIdeal(S, {1,3,4})
-contravariantExtLES(4,S^1,module I, S^1)
-covariantExtLES(4,module I, S^1, module I)
-TorLES(4,module I, S^1, module I)
-
-couple = contravariantExtCouple({module I, S^1}, S^1)
-expectExactCouple couple
-xyplot(-4..4,-4..4,couple)
-
-
-
-
-
-R = (ZZ/17)[x,y,z];
-submods = {subquotient(map(R^{{-2}, {-1}},R^{{-2}},{{1}, {0}}),map(R^{{-2}, {-1}},R^{{-3}},{{-6*x-y-5*z}, {4*x^2-7*x*y-y^2-8*x*z-7*y*z-4*z^2}})),cokernel(map(R^{{-2}, {-1}},R^{{-3}},{{-6*x-y-5*z}, {4*x^2-7*x*y-y^2-8*x*z-7*y*z-4*z^2}}))};
-Y = cokernel(map(R^{{-2}, {-1}},R^{{-3}},{{7*x+4*y+3*z}, {x^2-6*x*y+4*y^2-2*x*z-6*y*z-z^2}}));
-Y = R^1;
-couple = prune contravariantExtCouple(submods,Y)
-expectExactCouple couple
-evaluateInDegree({0,0},couple)
-prune Hom(submods#0,Y)
-prune Hom(submods#1,Y)
-prune Hom((submods#1)/(submods#0),Y)
-prune Ext^1(submods#0,Y)
-prune Ext^1(submods#1,Y)
-prune Ext^1((submods#1)/(submods#0),Y)
-xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
-
-
-
-
-
-randomCouple = () -> (
-    Q := R[d,f,Degrees=>{{1,0},{0,1}}]/(d^2);
-    {Q', theta} := flattenRing Q;
-    tar := Q'^(-apply(3,p->{random(4),random(4),random(4)}));
-    src := Q'^(-apply(6,p->{random(6),random(7),random(8)}));
-    exactCouple coker (theta^(-1))(random(tar,src))
-    );
-couple = prune randomCouple()
-expectExactCouple couple
-
-plausibleIso(coker matrix {{x^5}}, coker matrix {{x^3}})
-
-
-kk = ZZ/32003
-S = kk[w,x,y,z]
-I = monomialCurveIdeal(S, {1,3,4})
-covariantExtLES(4, module I, S^1, module I)
-apply(4,p->prune Ext^p(module I, S^1))
-apply(4,p->prune Ext^p(module I, module I))
-apply(4,p->prune Ext^p(module I, S^1/I))
-
-contravariantExtLES(4, S^1, module I, S^1)
-
-xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
-flattenModule := m -> ((flattenRing ring m)#1) ** m;
-apply(4,p->prune Ext^p(module I, S^1))
-apply(4,p->prune Ext^p(S^1, S^1))
-apply(4,p->prune Ext^p(S^1/I, S^1))
-F = S[f];
-fm = sequenceModule(F,{inducedMap(S^1,module I)})
-chm = chainModule res flattenModule fm
-R = ring chm
-displayphi=map(S[d,f,Degrees=>{{1,0},{0,1}}]/(d^2),R)
-xyplot(-3..1,-1..3,displayphi**chm)
-chmh = prune chainModuleHomology chm
-xyplot(-3..1,-1..3,displayphi**chmh)
---approxran = coker oneEntry({-1,0,0},,(R_1)^3)
-approxran = R^1;
-xyplot(-3..1,-1..3,displayphi**approxran)
-hm = prune Hom(chm,approxran)
-xyplot(-1..3,-1..3,displayphi**hm)
-couple = exactCouple(displayphi**hm)
---plotPages((0..3,0..8,1..4),prune@@evaluateInDegree,couple)
-expectExactCouple couple
-xyplot(-3..5,3..5,couple)
-
-
-
-
--- generate the monomials.
--- pointwise dual of a chain sequence module
--- pointwise Hom(-,W).  Replace W with something much more complicated
--- W ** (bimod presentation)
-kk = ZZ/32003
-S = kk[w,x,y,z]
-I = monomialCurveIdeal(S, {1,3,4})
--- Hom(-, S)
--- I --> S --> S^1/I
---contravariantExtLES(4, S^1, module I, S^1)
-xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
-flattenModule := m -> ((flattenRing ring m)#1) ** m;
-apply(4,p->prune Ext^p(module I, S^1))
-apply(4,p->prune Ext^p(S^1, S^1))
-apply(4,p->prune Ext^p(S^1/I, S^1))
-submods = {module I, S^1};
-submods' = {module I, S^1, S^1};
-F = S[f];
-fm = sequenceModule(F,{inducedMap(S^1,module I)})
-chm = chainModule res fm
-R = ring chm
-Q = R[d',f',Degrees=>{(degree R_0)_{0,1}, (degree R_1)_{0,1}}]/(d'^2)
-q = 2 -- number of steps in the filtration
-r = 3 -- number of steps in the resolution
--- I have a generator for every degree in this range 1_deg
--- and relations saying that d*1=1*d, f*1=1*f, 
--- and any other relations? 1df = d1f = df1 follows. d1f = f1d follows. 1df = 1fd? Enforced by the ring.
--- easy to check correctness though; evaluate in various degrees.  Should be a free module with monomial basis
-degd = degree(Q_0) - degree(Q_2)
-degf = degree(Q_1) - degree(Q_3)
-genids = flatten apply(q,i->apply(r,j->i*degf+j*degd))
-drels = flatten apply(q,i->apply(r-1,j->i*degf+j*degd))
-frels = flatten apply(q-1,i->apply(r,j->i*degf+j*degd))
-dblock = matrix table(genids,drels,(x,y)->if x == y then d' else if y + degd == x then -d else 0_Q)
-fblock = matrix table(genids,frels,(x,y)->if x == y then f' else if y + degf == x then -f else 0_Q)
-B = coker map(Q^(-genids),,fblock | dblock)
-xyplot(-3..1,-1..3,map(S[d,f,Degrees=>{{1,0},{0,1}}],R)**chm)
-hmok = prune Hom(map(Q,R)**chm,B);
-hm00 = prune evaluateInDegree({0,0},hmok); -- quite slow
-hm11 = prune evaluateInDegree({1,1},hmok); -- quite slow
-hmnn = prune evaluateInDegree({-1,-1},hmok); -- quite slow
-hm20 = prune evaluateInDegree({2,0},hmok); -- quite slow
-
-
-xyplot(-4..4,-2..3,map(S[d,f,Degrees=>{{1,0},{0,1}}]/d^2,R)**hm00)
-
-
-
-
-
-
-
-
-xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
-R = QQ[t]
---M = cokernel map(R^(-{{0},{1},{2},{3}}),,{{4,t,0,0},{0,6,t,0},{0,0,8,t},{0,0,0,10}})
-M = R^(-{{0},{1},{1},{1},{2},{2},{2},{2},{2},{3},{3}})
-apply(10,d->prune evaluateInDegree({d},M))
-Q = R[s]
-phi = map(Q,R)
-lanM = phi ** M
---B = cokernel map(Q^(-{{2,0},{1,1},{0,2}}),,{{t,0,0,t^3,0,0,s,0,0},{-s,t,0,0,t^2,0,0,s^2,0},{0,-s,t,0,0,t,0,0,s^3}})
-B = cokernel map(Q^(-{{2,0},{1,1},{0,2}}),,{{t,0,0},{-s,t,0},{0,-s,t}})
-
---xyplot(0..4,0..4,B)
-MtoB = Hom(lanM,B)
---xyplot(-2..6,-2..6,MtoB)
-S = QQ[s][t]
-D = prune evaluateInDegree({2},MtoB)
-apply(10,d->prune evaluateInDegree({d},D))
-apply(10,d->prune evaluateInDegree({d-5},D))
--- So you can take the submodule generated by pushing gens up to degree 0.
-
--- Some kind of pointwise Hom(-,W) operation that gives correct answers in a range
--- Relies on having a presentation for the dual of hom(-,-) as a bimodule
--- So for this application, not so hard, since univariate.  And in general, it is some
--- multigraded Koszul complex.
-
-
-
-kk = ZZ/32003
-S = kk[a..d]
-I = monomialCurveIdeal(S, {1,3,4})
-couple = contravariantExtCouple({module I, S^1}, S^1)
-expectExactCouple couple
-xyplot(-4..4,-4..4,couple)
--- Hom(-, S)
--- I --> S --> S^1/I
---contravariantExtLES(4, S^1, module I, S^1)
-xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
-apply(4,p->prune Ext^p(module I, S^1))
-apply(4,p->prune Ext^p(S^1, S^1))
-apply(4,p->prune Ext^p(S^1/I, S^1))
-
-
-
-
-submods = {module I, S^1};
-submods' = {module I, S^1, S^1};
-F = S[t];
-fm = sequenceModule(F,{inducedMap(S^1,module I)})
-rfm = Hom(res fm, map(ring fm, S) ** S^1)
-
-
-couple = contravariantExtCouple({module I, S^1}, S^1)
-expectExactCouple couple
-xyplot(-4..4,-4..4,couple)
-
-ring couple
-degrees ring couple
-degrees first flattenRing ring couple
-
-couple = prune couple
-
-
-restart
-needs "/Users/jwiltshiregordon/Dropbox/Programming/Macaulay2/ExactCouples/ExactCouples.m2"
-R = QQ[x,y]
-M = R^1/(x^2,x*y)
-degree(M ** R^1/(x,y))
-degree(M ** R^1/(x,y-1))
-degree(M ** R^1/(x-1,y-1))
-apply(primaryDecomposition annihilator M, p->saturate(0_M,p))
-
-degree(M ** R^1/(x,y))
-degree(M ** R^1/(x,y-1))
-degree(M ** R^1/(x-1,y-1))
-
-
-
-
-declareGenerators(R,{a,b},{0,0})
-M = cospan(y*a,x*b)
-minimalPrimes annihilator M
-
-
-
-
-
-
-R = QQ[x,y,Degrees=>{{},{}}]
-declareGenerators(R,{a,b,c},{{},{},{}})
-M = cospan((y-1)*a,y*b,(y-x^2)*c,(x-1)*(y-x^2)*a-(x-1)*(y-1)*c,(x+1)*(y-x^2)*a-(x+1)*(y-1)*c)
-prune M -- this gives a non-isomorphic module?
-
-
-
-
-
-
-            R = QQ[x]
-            X = R^1 / x^9
-            A = image map(X,,{{x^7}})
-            W = coker map(R^1,,{{x^3}})
-            TorLES(4,W,X,A)
-            apply(2, p -> prune Tor_p(W,X))
-            apply(2, p -> prune Tor_p(W,X/A))
-            apply(2, p -> prune Tor_p(W,A))
-
-expectFiltrationList {A,X}
-E1 := TorCouple(W,{A,X});
-Q = ring E1;
-external = externalDegreeIndices Q;
-rotDeg = (2 * (degree Q_0) + (degree Q_1))_external;
-k = 4;
-startDeg = {3,3} - k * rotDeg;
-excerptCouple({3,3},k,E1)
-
--- TODO: allow user to supply output ring
-TorCouple = method()
-TorCouple(Module, List) := Module => (W, submods) -> (
-    R := ring last submods;
-    expectFiltrationList submods;
-    d := local d;
-    t := local t;
-    Ch := R[d,Degrees=>{-1}]/d^2;
-    rW := res W;
-    M := chainModule(Ch, rW);
-    S := R[d,t,Degrees=>{{-1,0},{0,1}}]/d^2;
-    phi := map(S,Ch,DegreeMap=>deg->{deg_0,0,deg_1});
-    F := R[t];
-    fm := filtrationModule(F,submods);
-    psi := map(S,F,DegreeMap=>deg->{0,deg_0,deg_1});
-    C := (phi ** M) ** (psi ** fm);
-    e := local e;
-    f := local f;
-    Q := R[e_1,f_1,Degrees=>{{-1,-1},{0,2}}]; -- TODO: use coupleRing here
-    exactCouple(Q, C)
-    )
-
-            R = QQ[x]
-            X = R^1 / x^9
-            submods = apply(5,k->image map(X,,{{x^(8-2*k)}}))
-            W = coker map(R^1,,{{x^3}})
-            couple = prune TorCouple(W,submods)
-            expectExactCouple couple
-            plotPages((-1..2,-1..5,1..3), prune @@ evaluateInDegree, couple)
-            s = {image map(X,R^0,{})} | submods; -- put a zero at the front of submods
-            gr = q -> s_(q+1)/s_q;
-            apply(5,q->prune Tor_0(W, gr q)) -- p=0 column of E^1
-            apply(5,q->prune Tor_1(W, gr q)) -- p=1 column of E^1
-            apply(4,q->prune coker (W ** inducedMap(s_(q+1),s_q))) -- p=0 column of E^\infty
-            --filt1 = q -> image Tor_1(W, inducedMap(X, s_(q+1))) -- filtration on Tor_1(W,X)
-            --apply(5,q->prune((filt1 q)/filt1(q-1))) -- p=1 column of E^\infty
-
-
-
-
-
-
-R=QQ[x]
-M=R^1/x^9++R^1/(x-1)^2++R^1/(x-5)++R^1
-I=ideal(x)
-prune(saturate(0_M,I) ** R/I)
-
-
-
-
-
-
-
--- Come back to this... must use formal nbhd for some sheaves
--- Tubular descent.
-R=QQ[a,b,Degrees=>{{1,-1,0},{0,1,-1}}]
-S=R[X,Y,Z,Degrees=>{{1,0,0},{0,1,0},{0,0,1}}]
--- assume negative k
-lineBundle = k -> coker map(S^{{-1,0,0,-k,0,0},{0,-1,0,0,-k,0},{0,0,-1,0,0,-k}},,{{Y*a^(-k),0,Z*(a*b)^(-k)},{-X,Z*b^(-k),0},{0,-Y,-X}})
-my = (dual res lineBundle(0)) ** lineBundle(-5)
-ev = evaluateInDegree({0,0,0},my);
-
-
-
-phi=map(S^{{-1,0,0,10},{0,-1,0,5},{0,0,-1,0}},,{{Y*a^5,0,Z*(a*b)^5},{-X,Z*b^5,0},{0,-Y,-X}})
-rr = res coker phi;
-
-
-
-R=QQ[a,b]
-S=R[X,Y,Z,Degrees=>{{1,0,0},{0,1,0},{0,0,1}}]
-phi=map(S^{{-1,0,0,10},{0,-1,0,5},{0,0,-1,0}},,{{Y*a^5,0},{-X,Z*b^5},{0,-Y}})
-
-
-
-R=QQ[xy,xz,yz,Degrees=>{{1,-1,0},{1,0,-1},{0,1,-1}}]/(xy*yz-yz)
-S=R[X,Y,Z,Degrees=>{{1,0,0},{0,1,0},{0,0,1}}]
-m = map(S^{{-1,0,0,5,0,-5},{0,-1,0,0,5,-5},{0,0,-1,0,0,0}},,{{Y*xy^5,Z*xz^5,0},{-X,0,Z*yz^5},{0,-X,-Y}})
-
-
-
-
-R=QQ[xy,xz,yx,yz,zx,zy,Degrees=>{{},{},{},{},{},{}}]/(xy*yx-1,xz*zx-1,yz*zy-1,xy*yz-xz,yz*zx-yx,zx*xy-zy)
-xz*zy
-S=R[X,Y,Z,Degrees=>{{1,0,0},{0,1,0},{0,0,1}}]
-map(S^{{-1,0,0},{0,-1,0},{0,0,-1}},,{{Y*xy^5,Z*xz^5,0},{-X,0,Z*yz^5},{0,-X,-Y}})
-
-
-R = QQ[x] / x^2;
-Q = R[t, Degrees=>{{4}}]/t^2;
---C = chainComplex({ matrix {{x}}, matrix {{x}}, matrix {{x,0}} })[8]
---C = chainComplex({matrix {{0},{x},{x}}, matrix {{x,0}}})[8]
-C = chainComplex({matrix {{0,x},{0,0}}})
-M = chainModule(Q, C)
-prune toChainComplex M
-C
-
-
-
-
-R = QQ[x]; S = R[d] / ideal(d^2); declareGenerators(S, {a}, {{0,0}}); A = cospan(x^2*a, d*x*a)
-            declareGenerators(S, {b}, {{0,0}}); B = cospan(x^2*b, d*b)
-            m = map(B, A, matrix {b}); LES = longExactSequence m;
-            excerptLES(0,2,LES)
-
-
-R = QQ[x]
-X = R^1 / x^9
-A = image map(X,,{{x^7}})
-expectFiltrationList {A,X,A}
-
-
-            Y = coker map(R^1,,{{x^3}})
-E1 := contravariantExtCouple({A,X},Y);
-E1
-xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
-xyplot(-4..4,-4..4,E1)
-contravariantExtLES(3,X,A,Y)
 
 
 doc ///
