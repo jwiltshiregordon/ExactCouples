@@ -1050,8 +1050,8 @@ contravariantExtCouple = method()
 contravariantExtCouple(List, Module) := Module => (submods, Y) -> (
     R := ring last submods;
     expectFiltrationList submods;
-    t := local t;
-    F := R[t];
+    f := local f;
+    F := R[f, Degrees=>{{-1}}];
     l := #submods;
     -- the next commented line leads to many correct entries, but converges to zero
     -- so it is incorrect.
@@ -1063,23 +1063,22 @@ contravariantExtCouple(List, Module) := Module => (submods, Y) -> (
     flattenModule := m -> ((flattenRing ring m)#1) ** m;
     fm = flattenModule fm;
     d := local d;
-    ch := ((ring fm)[d])/d^2;
+    ringfm := ring fm;
+    ch := ringfm[d]/d^2;
     rfm := flattenModule chainModule(ch, res fm);
-    S := R[d,t,Degrees=>{{1,0},{0,1}}]/d^2;
+    S := R[d,f,Degrees=>{{1,0},{0,-1}}]/d^2;
     why := map(ring rfm, ring Y,DegreeMap=>(deg->{0,0}|deg));
     Y' := why ** Y;
     hm := Hom(rfm,Y');
-    --error "break here";
-    xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
-    --print(xyplot(0..3,-3..3,(map(S,ring hm)) ** hm));
     pres := presentation hm;
+    -- Must remove certain rows and columns from pres
+    -- because our chain sequence module is only correct in certain degrees;
+    -- we had truncated to keep it fg
     dtp := degrees target pres;
-    rowselect := select(#dtp,k->((dtp#k)#1)<0);
+    rowselect := select(#dtp,k->((dtp#k)#1)>0);
     dsp := degrees source pres;
-    colselect := select(#dsp,k->((dsp#k)#1)<0);
+    colselect := select(#dsp,k->((dsp#k)#1)>0);
     hm = coker(pres_colselect^rowselect);
-    --return hm;
-    --print(xyplot(0..3,-3..3,(map(S,ring hm)) ** hm));
     couple := exactCouple((map(S,ring hm)) ** hm);
     Q := ring couple;
     sh := Q^{4*degree(Q_0)+1*degree(Q_1)};
@@ -1112,7 +1111,7 @@ TEST ///
             M = Ext^p(gr q, W);
             for n from 0 to 20 do (
                 direct = hilbertFunction({n},M);
-                indirect = hilbertFunction({2*p,-2*q,n},C);
+                indirect = hilbertFunction({2*p,2*q,n},C);
                 assert(direct == indirect);
                 if direct != 0 then (
                     entropy = entropy + size2(direct);
@@ -1129,7 +1128,7 @@ TEST ///
             M = Ext^p(cofil q, W);
             for n from 20 to 20 do (
                 direct = hilbertFunction({n},M);
-                indirect = hilbertFunction({2*p-1,1-2*q,n},C);
+                indirect = hilbertFunction({2*p-1,2*q-1,n},C);
                 --print(p,q,direct,indirect);
                 assert(direct == indirect);
                 if direct != 0 then (
@@ -2393,9 +2392,9 @@ doc ///
         contravariantExtCouple(submods, Y)
     Inputs
         Y:Module
-            giving a functor Hom(-,Y)
+            for some ring R, giving a functor Hom(-,Y)
         submods:List
-            of modules {A_0, A_1, ..., A_m} with each A_i inside A_{i+1}
+            of R-modules {A_0, A_1, ..., A_m} with each A_i inside A_{i+1}
     Outputs
         M:Module
             an exact couple
@@ -2405,19 +2404,17 @@ doc ///
             extend the sequence $A_i$ to all $i \in \ZZ$
             by setting $A_i = 0$ for $i < 0$, and $A_i = X$ for $i > m$.  
             
-            
-            The modules $Y$ and the $A_i$ must share a common ring, say $R$.
-            The returned couple $M$ is then a module for  
-            the ring R[e_1,f_1,Degrees=>\{\{1,-1},\{0,2}}].  
+            The returned couple $M$ is a module for  
+            the ring R[e_1,f_1,Degrees=>\{\{1,1},\{0,-2}}].  
             We describe the module $M$ in every bidegree $\{s,t}$.  The description
             depends on the parity of $s$ and $t$.
             
             
-            If $s$ and $t$ are both even, say $\{s,t} = \{2p -2q}$, then
+            If $s$ and $t$ are both even, say $\{s,t} = \{2p 2q}$, then
     
             $M_{s,t} = Ext^p(A_q / A_{q-1}, Y)$;
             
-            if $s$ and $t$ are both odd, say $\{s,t} = \{2p-1,-2q+1}$, then
+            if $s$ and $t$ are both odd, say $\{s,t} = \{2p-1,2q-1}$, then
     
             $M_{s,t} = Ext^p(X / A_{q-1}, Y)$;
             
@@ -2432,28 +2429,29 @@ doc ///
             {\bf Associated spectral sequence}
             
             The spectral sequence associated to this couple converges to $Ext^p(X,Y)$.
-            The differential on page $r$ has bidegree \{1,-r}.  The first page has
+            The differential on page $r$ has bidegree \{1,r}.  The first page has
             
-            $E^{p,-q}_1 = Ext^p(A_q/A_{q-1},Y)$.
+            $E^{p,q}_1 = Ext^p(A_q/A_{q-1},Y)$.
             
             Setting $F^p_q = image(Ext^p((X/A_q),Y) \to Ext^p(X,Y))$, the infinity page has
             
-            $E^{p,-q}_{\infty} = F^p_{q-1} / F^p_q$.
+            $E^{p,q}_{\infty} = F^p_{q-1} / F^p_q$.
         Example
             R = QQ[x]
             X = R^1 / x^9
-            submods = apply(5,k->image map(X,,{{x^(8-2*k)}}))
+            submods = apply(5,k->image map(X,,{{x^(8-2*k)}}));
+            for m in submods do print m;
             Y = coker map(R^1,,{{x^3}})
             couple = prune contravariantExtCouple(submods,Y)
-            expectExactCouple couple
-            plotPages((-1..2,-5..1,1..3), prune @@ evaluateInDegree, couple)
+            expectExactCouple couple;
+            plotPages((-1..2,-1..5,1..3), prune @@ evaluateInDegree, couple)
             A = i -> if i < 0 then image(0*id_X) else if i >= #submods then X else submods#i;
-            E1 = (q,p) -> prune Ext^p(A(q)/A(q-1),Y)
-            netList table(5,2,E1)
+            E1 = (q,p) -> prune Ext^p(A(q)/A(q-1),Y);
+            netList reverse table(5,2,E1)
             proj = q -> inducedMap(X/A(q),X);
             filt = (p,q) -> image Ext^p(proj q,Y);
             Einfty = (q,p) -> prune(filt(p,q-1)/filt(p,q));
-            netList table(5,2,Einfty)
+            netList reverse table(5,2,Einfty)
         Text
             It seems to me that this is the same spectral sequence as the one you would get
             from the couple
@@ -3424,6 +3422,7 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- if A->B->C->A[1]->B[1] is an exact sequence of chain complexes, then it induces a long 
 -- exact sequence in homology.
 -- TODO: clean up couple code
+-- TODO: get rid of minus signs in contravariantExtCouple
 
 restart
 needsPackage "ExactCouples"
@@ -3432,10 +3431,11 @@ needsPackage "ExactCouples"
             submods = apply(5,k->image map(X,,{{x^(8-2*k)}}))
             Y = coker map(R^1,,{{x^3}})
             couple = prune contravariantExtCouple(submods,Y)
+            isHomogeneous couple
             expectExactCouple couple
             xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
             xyplot(-2..2,-12..2,couple)
-            plotPages((-1..3,-8..1,1..1), prune @@ evaluateInDegree, couple)
+            plotPages((-1..2,-1..5,1..3), prune @@ evaluateInDegree, couple)
 
 
 
