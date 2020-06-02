@@ -1037,8 +1037,8 @@ canonicalFiltration(Ring, Module) := Module => (Q, M) -> (
 -- algorithm:
 -- Left Kan extend Y to the sequence ring, and then right Kan to chain ring.
 -- call the resulting thing Y'.  
--- Put a zero at the end of submods, and resolve by frees.  Call the resulting
--- chain sequence module M.
+-- Take the cofiltration of (submods | {0}), and resolve by frees.  
+-- Call the resulting chain sequence module M.
 -- claim: exactCouple Hom(M, Y') is the correct couple
 -- Pf: Hom(M, Y') = Hom(M, Ran Lan Y) = Hom(Res M, Lan Y).
 -- Since M is a resolution, Res M is free, say Res M = Lan G.
@@ -1053,10 +1053,11 @@ contravariantExtCouple(List, Module) := Module => (submods, Y) -> (
     t := local t;
     F := R[t];
     l := #submods;
-    -- TODO: this couple always converges to zero now!  Is adding that last module
-    -- really needed to get correct answers in lower degrees?  It makes the current
-    -- documentation incorrect, BTW.
-    submods' := submods | {(last submods)/(last submods)};
+    -- the next commented line leads to many correct entries, but converges to zero
+    -- so it is incorrect.
+    -- It could be a prototype for implementing edge homomorphisms, though.
+    --submods' := submods | {(last submods)/(last submods)};
+    submods' := {last submods} | apply(submods, m->(last submods)/m);
     fm := sequenceModule(F, apply(l, k -> inducedMap(submods'#(k+1), submods'#k)));
     -- only use res over flat rings due to M2 bug
     flattenModule := m -> ((flattenRing ring m)#1) ** m;
@@ -1068,9 +1069,20 @@ contravariantExtCouple(List, Module) := Module => (submods, Y) -> (
     why := map(ring rfm, ring Y,DegreeMap=>(deg->{0,0}|deg));
     Y' := why ** Y;
     hm := Hom(rfm,Y');
+    --error "break here";
+    xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
+    --print(xyplot(0..3,-3..3,(map(S,ring hm)) ** hm));
+    pres := presentation hm;
+    dtp := degrees target pres;
+    rowselect := select(#dtp,k->((dtp#k)#1)<0);
+    dsp := degrees source pres;
+    colselect := select(#dsp,k->((dsp#k)#1)<0);
+    hm = coker(pres_colselect^rowselect);
+    --return hm;
+    --print(xyplot(0..3,-3..3,(map(S,ring hm)) ** hm));
     couple := exactCouple((map(S,ring hm)) ** hm);
     Q := ring couple;
-    sh := Q^{2*degree(Q_0)+degree(Q_1)};
+    sh := Q^{4*degree(Q_0)+1*degree(Q_1)};
     couple ** sh
     )
 
@@ -1109,12 +1121,16 @@ TEST ///
             );
         );
     -- check aux
+    cofil = q -> if q < 0 then image(0 * id_(last submods)) else
+                 if q == 0 then last submods else 
+                 (last submods)/(submods#(q-1));
     for p from 0 to 3 do (
         for q from 0 to 2 do (
-            M = Ext^p(submods#q, W);
-            for n from 0 to 20 do (
+            M = Ext^p(cofil q, W);
+            for n from 20 to 20 do (
                 direct = hilbertFunction({n},M);
-                indirect = hilbertFunction({2*p+1,-1-2*q,n},C);
+                indirect = hilbertFunction({2*p-1,1-2*q,n},C);
+                --print(p,q,direct,indirect);
                 assert(direct == indirect);
                 if direct != 0 then (
                     entropy = entropy + size2(direct);
@@ -2379,36 +2395,50 @@ doc ///
         Y:Module
             giving a functor Hom(-,Y)
         submods:List
-            of submodules {A_0, A_1, ..., A_m} with each A_i inside A_{i+1}
+            of modules {A_0, A_1, ..., A_m} with each A_i inside A_{i+1}
     Outputs
-        :Module
+        M:Module
             an exact couple
     Description
         Text
-            If $Y$ and the $A_i$ are $R$-modules, the returned couple is a module over 
-            the ring R[e_1,f_1,Degrees=>\{\{1,-1},\{0,2}}].
+            For notational convenience, set $X = A_m$, and
+            extend the sequence $A_i$ to all $i \in \ZZ$
+            by setting $A_i = 0$ for $i < 0$, and $A_i = X$ for $i > m$.  
             
-            The returned couple has the following description.  In bidegrees with both
-            coordinates even, we have
             
-            $Ext^p(A_q/A_{q-1},Y)$ in degree \{2p, -2q\}
+            The modules $Y$ and the $A_i$ must share a common ring, say $R$.
+            The returned couple $M$ is then a module for  
+            the ring R[e_1,f_1,Degrees=>\{\{1,-1},\{0,2}}].  
+            We describe the module $M$ in every bidegree $\{s,t}$.  The description
+            depends on the parity of $s$ and $t$.
             
-            where we set $A_{-1} = 0$.  In bidegrees with both coordinates odd, we have
             
-            $Ext^p(A_q,Y)$ in degree \{2p+1,-2q-1\}.
+            If $s$ and $t$ are both even, say $\{s,t} = \{2p -2q}$, then
+    
+            $M_{s,t} = Ext^p(A_q / A_{q-1}, Y)$;
             
-            Bidegrees with one coordinate even and the other odd are zero.
+            if $s$ and $t$ are both odd, say $\{s,t} = \{2p-1,-2q+1}$, then
+    
+            $M_{s,t} = Ext^p(X / A_{q-1}, Y)$;
+            
+            and otherwise, if $s$ and $t$ sum to an odd number, then $M_{s,t} = 0$.  
+            
+            The variables $e_1$ and $f_1$ act by the maps in the 
+            various long exact sequences
+            
+            $Ext^p((X / A_q), Y) \to Ext^p((X / A_{q-1}), Y) \to 
+             Ext^p((A_q / A_{q-1}), Y) \to Ext^{p+1}((X / A_q), Y)$.
             
             {\bf Associated spectral sequence}
             
-            The spectral sequence associated to this couple has
+            The spectral sequence associated to this couple converges to $Ext^p(X,Y)$.
+            The differential on page $r$ has bidegree \{1,-r}.  The first page has
             
-            $E^{pq}_1 = Ext^p(A_q/A_{q-1},Y)$.
+            $E^{p,-q}_1 = Ext^p(A_q/A_{q-1},Y)$.
             
-            The differential on page $r$ has bidegree \{1,-r}.
-
-            Setting $X=A_m$, it converges to $Ext^p(X,Y)$ filtered by
-            the images of the natural maps $Ext^p(X/A_q,Y) \to Ext^p(X,Y)$.
+            Setting $F^p_q = image(Ext^p((X/A_q),Y) \to Ext^p(X,Y))$, the infinity page has
+            
+            $E^{p,-q}_{\infty} = F^p_{q-1} / F^p_q$.
         Example
             R = QQ[x]
             X = R^1 / x^9
@@ -2417,15 +2447,21 @@ doc ///
             couple = prune contravariantExtCouple(submods,Y)
             expectExactCouple couple
             plotPages((-1..2,-5..1,1..3), prune @@ evaluateInDegree, couple)
-            zeroModule = subquotient(map(cover X, R^0, {}), relations X);
-            s = {zeroModule} | submods; -- put a zero at the front of submods
-            gr = q -> s#(q+1)/s#q;
-            apply(5,q->prune Ext^0(gr q,Y)) -- p=0 column of E_1
-            apply(5,q->prune Ext^1(gr q,Y)) -- p=1 column of E_1
-            proj = q -> inducedMap(X/(s#q),X);
+            A = i -> if i < 0 then image(0*id_X) else if i >= #submods then X else submods#i;
+            E1 = (q,p) -> prune Ext^p(A(q)/A(q-1),Y)
+            netList table(5,2,E1)
+            proj = q -> inducedMap(X/A(q),X);
             filt = (p,q) -> image Ext^p(proj q,Y);
-            apply(5,q->prune(filt(0,q)/filt(0,q+1))) -- p=0 column of E_infty
-            apply(5,q->prune(filt(1,q)/filt(1,q+1))) -- p=1 column of E_infty
+            Einfty = (q,p) -> prune(filt(p,q-1)/filt(p,q));
+            netList table(5,2,Einfty)
+        Text
+            It seems to me that this is the same spectral sequence as the one you would get
+            from the couple
+            
+            $Ext^p((A_q), Y) \to Ext^p((A_{q-1}), Y) \to 
+             Ext^p((A_q / A_{q-1}), Y) \to Ext^{p+1}((A_q), Y)$;
+            
+            If I learn of a proof of this fact, then I will put the reference here.
     SeeAlso
         covariantExtCouple
 ///
@@ -3375,11 +3411,52 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- TODO: explain algorithms for (co/contra)variantExtCouple and TorCouple
 -- 
 -- TODO: p, q labels for plotPages
--- TODO: Test cases for couples -- DONE
+-- TODO: fix contravariantExtCouple to converge to Ext instead of 0.
 -- TODO: long exact sequence of a triple
 -- TODO: map of filtered modules gives induced map on LES "functoriality" page for docs
+-- TODO: fix contravariantExtLES start position.
+-- surj of exact couples has exact kernel
+-- at chain level, any map of chain sequence modules has a cone, also a chain sequence module
+-- if this thing has no homology, then the original map is q.i. and gives identical couples
+-- so you can prove two chain sequence modules give the same couple by comparing with a map,
+-- taking the cone, and proving that couple is zero.
+-- What if you only want isos on the page? Proof idea relies on new lemma:
+-- if A->B->C->A[1]->B[1] is an exact sequence of chain complexes, then it induces a long 
+-- exact sequence in homology.
+-- TODO: clean up couple code
+
 restart
 needsPackage "ExactCouples"
+            R = QQ[x]
+            X = R^1 / x^9
+            submods = apply(5,k->image map(X,,{{x^(8-2*k)}}))
+            Y = coker map(R^1,,{{x^3}})
+            couple = prune contravariantExtCouple(submods,Y)
+            expectExactCouple couple
+            xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
+            xyplot(-2..2,-12..2,couple)
+            plotPages((-1..3,-8..1,1..1), prune @@ evaluateInDegree, couple)
+
+
+
+R = (ZZ/17)[x,y,z];
+submods = {subquotient(map(R^{{-2}, {-1}},R^{{-2}},{{1}, {0}}),map(R^{{-2}, {-1}},R^{{-3}},{{-6*x-y-5*z}, {4*x^2-7*x*y-y^2-8*x*z-7*y*z-4*z^2}})),cokernel(map(R^{{-2}, {-1}},R^{{-3}},{{-6*x-y-5*z}, {4*x^2-7*x*y-y^2-8*x*z-7*y*z-4*z^2}}))};
+Y = cokernel(map(R^{{-2}, {-1}},R^{{-3}},{{7*x+4*y+3*z}, {x^2-6*x*y+4*y^2-2*x*z-6*y*z-z^2}}));
+Y = R^1;
+--couple = prune contravariantExtCouple(submods,Y)
+hm = prune contravariantExtCouple(submods,Y)
+expectExactCouple couple
+evaluateInDegree({0,0},couple)
+prune Hom(submods#0,Y)
+prune Hom(submods#1,Y)
+prune Hom((submods#1)/(submods#0),Y)
+prune Ext^1(submods#0,Y)
+prune Ext^1(submods#1,Y)
+prune Ext^1((submods#1)/(submods#0),Y)
+xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
+
+
+
 kk = ZZ/32003
 S = kk[a..d]
 I = monomialCurveIdeal(S, {1,3,4})
