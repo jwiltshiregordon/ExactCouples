@@ -2336,53 +2336,66 @@ doc ///
         covariantExtCouple(W, submods)
     Inputs
         W:Module
-            giving a functor Hom(W,-)
+            for some ring R, giving a functor Hom(W,-)
         submods:List
-            of submodules {A_0, A_1, ..., A_m} with each A_i inside A_(i+1)
+            of R-modules \{A_0, A_1, ..., A_m} with each A_i inside A_{i+1}
     Outputs
-        :Module
+        M:Module
             an exact couple
     Description
         Text
-            If $W$ and the $A_i$ are $R$-modules, the returned couple is a module over 
+            For notational convenience, set $X = A_m$, and
+            extend the sequence $A_i$ to all $i \in \ZZ$
+            by setting $A_i = 0$ for $i < 0$, and $A_i = X$ for $i > m$.  
+            
+            The returned couple $M$ is a module for  
             the ring R[e_1,f_1,Degrees=>\{\{1,-1},\{0,2}}].
+            We describe the module $M$ in every bidegree $\{s,t}$.  The description
+            depends on the parity of $s$ and $t$.
             
-            The returned couple has the following description.  In bidegrees with both
-            coordinates even, we have
             
-            $Ext^p(W, A_q/A_{q-1})$ in degree \{2p, 2q\}
+            If $s$ and $t$ are both even, say $\{s,t} = \{2p 2q}$, then
+    
+            $M_{s,t} = Ext^p(W, A_q/A_{q-1})$;
             
-            where we set $A_{-1} = 0$.  In bidegrees with both coordinates odd, we have
+            if $s$ and $t$ are both odd, say $\{s,t} = \{2p-1,2q+1}$, then
+    
+            $M_{s,t} = Ext^p(W, A_q)$;
             
-            $Ext^p(W, A_q)$ in degree \{2p-1,2q+1\}.
+            and otherwise, if $s$ and $t$ sum to an odd number, then $M_{s,t} = 0$.  
             
-            Bidegrees with one coordinate even and the other odd are zero.
+            The variables $e_1$ and $f_1$ act by the maps in the 
+            various long exact sequences
+            
+            $Ext^p(W, A_{q-1}) \to Ext^p(W, A_q) \to 
+             Ext^p(W, A_q / A_{q-1}) \to Ext^{p+1}(W, A_{q-1})$.
             
             {\bf Associated spectral sequence}
             
-            The spectral sequence associated to this couple has
+            The spectral sequence associated to this couple converges to $Ext^p(W,X)$.
+            The differential on page $r$ has bidegree \{1,-r}.  The first page has
             
             $E^{pq}_1 = Ext^p(W,A_q/A_{q-1})$.
             
-            The differential on page $r$ has bidegree \{1,-r}.
-
-            Setting $X=A_m$, it converges to $Ext^p(W,X)$ filtered by
-            the images of the natural maps $Ext^p(W,A_q) \to Ext^p(W,X)$.
+            Setting $F^p_q = image(Ext^p(W,A_q) \to Ext^p(W,X))$, the infinity page has
+            
+            $E^{p,q}_{\infty} = F^p_{q} / F^p_{q-1}$.
         Example
             R = QQ[x]
             X = R^1 / x^9
-            submods = apply(5,k->image map(X,,{{x^(8-2*k)}}))
+            submods = apply(5,k->image map(X,,{{x^(8-2*k)}}));
+            for m in submods do print m;
             W = coker map(R^1,,{{x^3}})
             couple = prune covariantExtCouple(W,submods)
             expectExactCouple couple
             plotPages((-1..2,-1..5,1..3), prune @@ evaluateInDegree, couple)
-            s = {image map(X,R^0,{})} | submods; -- put a zero at the front of submods
-            gr = q -> s_(q+1)/s_q;
-            apply(5,q->prune Ext^0(W, gr q)) -- p=0 column of E_1
-            apply(5,q->prune Ext^1(W, gr q)) -- p=1 column of E_1
-            apply(4,q->prune coker Hom(W,inducedMap(s_(q+1),s_q))) -- p=0 column of E_\infty
-            filt1 = q -> image Ext^1(W, inducedMap(X, s_(q+1))) -- filtration on Ext^1(W,X)
-            apply(5,q->prune((filt1 q)/filt1(q-1))) -- p=1 column of E_\infty
+            A = i -> if i < 0 then image(0*id_X) else if i >= #submods then X else submods#i;
+            E1 = (q,p) -> prune Ext^p(W,A(q)/A(q-1));
+            netList reverse table(5,2,E1)
+            inc = q -> inducedMap(X,A(q));
+            filt = (p,q) -> image Ext^p(W,inc q);
+            Einfty = (q,p) -> prune(filt(p,q)/filt(p,q-1));
+            netList reverse table(5,2,Einfty)
     SeeAlso
         contravariantExtCouple
 ///
@@ -2399,7 +2412,7 @@ doc ///
         Y:Module
             for some ring R, giving a functor Hom(-,Y)
         submods:List
-            of R-modules {A_0, A_1, ..., A_m} with each A_i inside A_{i+1}
+            of R-modules \{A_0, A_1, ..., A_m} with each A_i inside A_{i+1}
     Outputs
         M:Module
             an exact couple
@@ -3128,53 +3141,66 @@ doc ///
         TorCouple(W,submods)
     Inputs
         W:Module
-            giving a functor Tor(W,-)
+            for some ring R, giving a functor Tor(W,-)
         submods:List
-            of submodules \{A_0, A_1, ..., A_m} with each A_i inside A_{i+1}
+            of R-modules \{A_0, A_1, ..., A_m} with each A_i inside A_{i+1}
     Outputs
-        :Module
+        M:Module
             an exact couple
     Description
         Text
-            If $W$ and the $A_i$ are $R$-modules, the returned couple is a module over 
+            For notational convenience, set $X = A_m$, and
+            extend the sequence $A_i$ to all $i \in \ZZ$
+            by setting $A_i = 0$ for $i < 0$, and $A_i = X$ for $i > m$.  
+            
+            The returned couple $M$ is a module for  
             the ring R[e_1,f_1,Degrees=>\{\{-1,-1},\{0,2}}].
+            We describe the module $M$ in every bidegree $\{s,t}$.  The description
+            depends on the parity of $s$ and $t$.
             
-            The returned couple has the following description.  In bidegrees with both
-            coordinates even, we have
             
-            $Tor_p(W,A_q/A_{q-1})$ in degree \{2p, 2q\}
+            If $s$ and $t$ are both even, say $\{s,t} = \{2p 2q}$, then
+    
+            $M_{s,t} = Tor_p(W,A_q/A_{q-1})$;
             
-            where we set $A_{-1} = 0$.  In bidegrees with both coordinates odd, we have
+            if $s$ and $t$ are both odd, say $\{s,t} = \{2p+1,2q+1}$, then
+    
+            $M_{s,t} = Tor_p(W,A_q)$;
             
-            $Tor_p(W,A_q)$ in degree \{2p+1,2q+1\}.
+            and otherwise, if $s$ and $t$ sum to an odd number, then $M_{s,t} = 0$.  
             
-            Bidegrees with one coordinate even and the other odd are zero.
+            The variables $e_1$ and $f_1$ act by the maps in the 
+            various long exact sequences
+            
+            $Tor_p(W, A_{q-1}) \to Tor_p(W, A_q) \to 
+             Tor_p(W, A_q / A_{q-1}) \to Tor_{p-1}(W, A_{q-1})$.
             
             {\bf Associated spectral sequence}
             
-            The spectral sequence associated to this couple has
+            The spectral sequence associated to this couple converges to $Tor_p(W,X)$.
+            The differential on page $r$ has bidegree \{-1,-r}.  The first page has
             
             $E^{pq}_1 = Tor_p(W,A_q/A_{q-1})$.
             
-            The differential on page $r$ has bidegree \{-1,-r}.
-
-            Setting $X=A_m$, it converges to $Tor_p(W,X)$ filtered by
-            the images of the natural maps $Tor_p(W,A_q) \to Tor_p(W,X)$.
+            Setting $F^p_q = image(Tor_p(W,A_q) \to Tor_p(W,X))$, the infinity page has
+            
+            $E^{p,q}_{\infty} = F^p_{q} / F^p_{q-1}$.
         Example
             R = QQ[x]
             X = R^1 / x^9
-            submods = apply(5,k->image map(X,,{{x^(8-2*k)}}))
+            submods = apply(5,k->image map(X,,{{x^(8-2*k)}}));
+            for m in submods do print m;
             W = coker map(R^1,,{{x^3}})
             couple = prune TorCouple(W,submods)
             expectExactCouple couple
             plotPages((-1..2,-1..5,1..3), prune @@ evaluateInDegree, couple)
-            s = {image map(X,R^0,{})} | submods; -- put a zero at the front of submods
-            gr = q -> s_(q+1)/s_q;
-            apply(5,q->prune Tor_0(W, gr q)) -- p=0 column of E^1
-            apply(5,q->prune Tor_1(W, gr q)) -- p=1 column of E^1
-            apply(4,q->prune coker (W ** inducedMap(s_(q+1),s_q))) -- p=0 column of E^\infty
-            --filt1 = q -> image Tor_1(W, inducedMap(X, s_(q+1))) -- filtration on Tor_1(W,X)
-            --apply(5,q->prune((filt1 q)/filt1(q-1))) -- p=1 column of E^\infty
+            A = i -> if i < 0 then image(0*id_X) else if i >= #submods then X else submods#i;
+            E1 = (q,p) -> prune Tor_p(W,A(q)/A(q-1));
+            netList reverse table(5,2,E1)
+            inc = q -> inducedMap(X,A(q));
+            filt = (p,q) -> image Tor_p(W,inc q); --no method for this?
+            Einfty = (q,p) -> prune(filt(p,q)/filt(p,q-1));
+            --netList reverse table(5,2,Einfty)
     SeeAlso
         covariantExtCouple
         contravariantExtCouple
@@ -3426,6 +3452,7 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- if A->B->C->A[1]->B[1] is an exact sequence of chain complexes, then it induces a long 
 -- exact sequence in homology.
 -- TODO: clean up couple code
+-- TODO: add E infinity test cases to couples
 
 restart
 needsPackage "ExactCouples"
@@ -3439,7 +3466,7 @@ needsPackage "ExactCouples"
             xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
             xyplot(-2..2,-12..2,couple)
             plotPages((-1..2,-1..5,1..3), prune @@ evaluateInDegree, couple)
-            plotPages((-1..2,-1..2,1..3), prune @@ evaluateInDegree, couple)
+            plotPages((0..1,0..4,1..3), prune @@ evaluateInDegree, couple)
 
 
 
