@@ -940,7 +940,12 @@ plotPages(Sequence, Function, Module) := Nothing => (ranges, dispfunc, E) -> (
         diffDeg := ((degree Q_0) - dr * hdf)_external;
         print("page " | r | ", with differential of degree " | toString(diffDeg) | ":");
         C = derivedCouple(dr, E);
-        print(netList reverse table(qs,ps,(q,p)->dispfunc({2*p,2*q},C)));
+        ents := reverse table(qs,ps,(q,p)->dispfunc({2*p,2*q},C));
+        entsp := ents | {apply(ps,p->"p="|toString(p))};
+        entspq := transpose({reverse(apply(qs,q->"q="|toString(q))) | {""}} | 
+                  {apply(qs,q->"") | {""}} |
+                  transpose(entsp));
+        print(netList entspq);
         print "";
         );
     )
@@ -2443,7 +2448,7 @@ doc ///
             for m in submods do print m;
             Y = coker map(R^1,,{{x^3}})
             couple = prune contravariantExtCouple(submods,Y)
-            expectExactCouple couple;
+            expectExactCouple couple
             plotPages((-1..2,-1..5,1..3), prune @@ evaluateInDegree, couple)
             A = i -> if i < 0 then image(0*id_X) else if i >= #submods then X else submods#i;
             E1 = (q,p) -> prune Ext^p(A(q)/A(q-1),Y);
@@ -3409,8 +3414,7 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- TODO: explain algorithms for (co/contra)variantExtCouple and TorCouple
 -- 
 -- TODO: p, q labels for plotPages
--- TODO: fix contravariantExtCouple to converge to Ext instead of 0.
--- TODO: long exact sequence of a triple
+-- TODO: long exact sequence of a triple documentation example
 -- TODO: map of filtered modules gives induced map on LES "functoriality" page for docs
 -- TODO: fix contravariantExtLES start position.
 -- surj of exact couples has exact kernel
@@ -3422,7 +3426,6 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- if A->B->C->A[1]->B[1] is an exact sequence of chain complexes, then it induces a long 
 -- exact sequence in homology.
 -- TODO: clean up couple code
--- TODO: get rid of minus signs in contravariantExtCouple
 
 restart
 needsPackage "ExactCouples"
@@ -3436,6 +3439,7 @@ needsPackage "ExactCouples"
             xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
             xyplot(-2..2,-12..2,couple)
             plotPages((-1..2,-1..5,1..3), prune @@ evaluateInDegree, couple)
+            plotPages((-1..2,-1..2,1..3), prune @@ evaluateInDegree, couple)
 
 
 
