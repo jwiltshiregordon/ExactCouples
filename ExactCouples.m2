@@ -1103,27 +1103,61 @@ TEST ///
         );
     submods = randomFilteredModule();
     expectFiltrationList submods
+    Y = prune(submods#1);
+    couple = prune contravariantExtCouple(submods,Y);
+    expectExactCouple couple
+    flattenModule = m -> ((flattenRing ring m)#1) ** m;
+    C = flattenModule couple;
+    C' = flattenModule derivedCouple(5,couple);
+    X = last submods;
+    A = i -> if i < 0 then image(0*id_X) else if i >= #submods then X else submods#i;
+    E1 = (p,q) -> Ext^p(A(q)/A(q-1),Y);
+    A1 = (p,q) -> Ext^p(X/A(q-1),Y);
+    proj = q -> inducedMap(X/A(q),X);
+    filt = (p,q) -> image Ext^p(proj q,Y);
+    Einfty = (p,q) -> prune(filt(p,q-1)/filt(p,q));
+    entropy = 0;
+    expectEqual = (x,y) -> (
+        assert(x == y);
+        if x != 0 then (
+            entropy = entropy + size2(x);
+            );
+        );
+    hf = hilbertFunction;
+    for p from 0 to 2 do (
+        for q from 0 to 3 do (
+            page1 = E1(p,q);
+            aux1 = A1(p,q);
+            pageInfty = Einfty(p,q);
+            for n from 0 to 20 do (
+                expectEqual(hf({n},page1),     hf({2*p,   2*q,   n}, C));
+                expectEqual(hf({n},aux1),      hf({2*p-1, 2*q-1, n}, C));
+                expectEqual(hf({n},pageInfty), hf({2*p,   2*q,   n}, C'));
+                );
+            );
+        );
+    print("total assertion entropy " | (toString entropy));
+///
+
+TEST ///
+    R = (ZZ/17)[x,y,z]
+    randomFilteredModule = () -> (
+        genmod := R^(apply(5,p->-random(3)));
+        relmod := R^(apply(2,p->-random(4)));
+        pres := random(genmod, relmod);
+        X := coker pres;
+        A0 := image map(X,,(id_genmod)_{0});
+        A1 := image map(X,,(id_genmod)_{0,1,2});
+        {A0,A1,X}
+        );
+    -- TODO: make this all one loop.  Make notation match docs.
+    submods = randomFilteredModule();
+    expectFiltrationList submods
     W = prune(submods#1);
     couple = prune contravariantExtCouple(submods,W);
     expectExactCouple couple
     flattenModule = m -> ((flattenRing ring m)#1) ** m;
-    C = flattenModule couple;
-    gr = q -> if q == 0 then submods#0 else (submods#q)/(submods#(q-1));
-    entropy = 0;
-    -- check page
-    for p from 0 to 3 do (
-        for q from 0 to 2 do (
-            M = Ext^p(gr q, W);
-            for n from 0 to 20 do (
-                direct = hilbertFunction({n},M);
-                indirect = hilbertFunction({2*p,2*q,n},C);
-                assert(direct == indirect);
-                if direct != 0 then (
-                    entropy = entropy + size2(direct);
-                    );
-                );
-            );
-        );
+
     -- check aux
     cofil = q -> if q < 0 then image(0 * id_(last submods)) else
                  if q == 0 then last submods else 
@@ -1131,9 +1165,30 @@ TEST ///
     for p from 0 to 3 do (
         for q from 0 to 2 do (
             M = Ext^p(cofil q, W);
-            for n from 20 to 20 do (
+            for n from 0 to 20 do (
                 direct = hilbertFunction({n},M);
                 indirect = hilbertFunction({2*p-1,2*q-1,n},C);
+                --print(p,q,direct,indirect);
+                assert(direct == indirect);
+                if direct != 0 then (
+                    entropy = entropy + size2(direct);
+                    );
+                );
+            );
+        );
+    -- check infinity page
+    C' = flattenModule derivedCouple(5,couple);
+    X = last submods;
+    A = i -> if i < 0 then image(0*id_X) else if i >= #submods then X else submods#i;
+    proj = q -> inducedMap(X/A(q),X);
+    filt = (p,q) -> image Ext^p(proj q,W);
+    Einfty = (p,q) -> prune(filt(p,q-1)/filt(p,q));
+    for p from 0 to 3 do (
+        for q from 0 to 2 do (
+            M = Einfty(p,q);
+            for n from 0 to 20 do (
+                direct = hilbertFunction({n},M);
+                indirect = hilbertFunction({2*p,2*q,n},C');
                 --print(p,q,direct,indirect);
                 assert(direct == indirect);
                 if direct != 0 then (
