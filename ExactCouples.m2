@@ -1143,7 +1143,7 @@ contravariantExtLES = method()
 contravariantExtLES(ZZ, Module, Module, Module) := Net => (k, X, A, Y) -> (
     expectFiltrationList {A,X};
     E1 := contravariantExtCouple({A,X},Y);
-    excerptCouple({0,-2},k,E1)
+    excerptCouple({-2,0},k,E1)
     )
 
 -- TODO: allow user to supply output ring
@@ -1339,16 +1339,18 @@ doc ///
         (evaluateInDegree,List,Matrix)
         (evaluateInDegree,List,ChainComplex)
     Headline
-        evaluates a in a particular multidegree
+        evaluates a module in a particular degree
     Usage
         evaluateInDegree(deg, M)
     Inputs
-        deg:List
-            a multidegree for the ring of M
         M:Module
+           over some ring R
+        deg:List
+            an external degree for R
     Outputs
         :Module
-            The degree deg part of M as a module for the coefficient ring
+            the part of M sitting in degree deg, considered as a module for
+            the coefficient ring of R
     Description
         Text
         Example
@@ -1385,7 +1387,7 @@ doc ///
         (chainModule,Ring,ChainComplex)
         (chainModule,ChainComplex)
     Headline
-        Writes a chain complex of R-modules as an R[d]/d^2-module
+        writes a chain complex of R-modules as an R[d]/d^2-module
     Usage
         M = chainModule(Q, X)
     Inputs
@@ -1419,7 +1421,7 @@ doc ///
         (extensionInDegree,List,Ring,Module)
         (extensionInDegree,List,Ring,Matrix)
     Headline
-        Places a copy of a module in a certain degree
+        places a copy of a module in a certain degree
     Usage
         E = extensionInDegree(deg,Q,M)
     Inputs
@@ -1439,7 +1441,7 @@ doc ///
         (distinguishedTriangle,Ring,Module)
         (distinguishedTriangle,Module)
     Headline
-        Constructs the mapping cone along with its inclusion and projection
+        constructs the mapping cone along with its inclusion and projection
     Usage
         distinguishedTriangle(Q, M)
     Inputs
@@ -1544,7 +1546,7 @@ doc ///
         (longExactSequence,Matrix)
         (longExactSequence,Ring,Matrix)
     Headline
-        Finds the long exact sequence associated to a map of R[d]/d^2-modules
+        finds the long exact sequence associated to a map of R[d]/d^2-modules
     Usage
         M = longExactSequence m
     Inputs
@@ -1597,7 +1599,7 @@ doc ///
         declareGenerators
         (declareGenerators,Ring,List)
     Headline
-        Builds a free module and names its generators
+        builds a free module and names its generators
     Usage
         declareGenerators(R,genList)
     Inputs
@@ -1907,7 +1909,7 @@ doc ///
         expectExactCouple M
     Inputs
         M:Module
-            over a couple ring
+            over a couple ring R[e,f]
     Consequences
         Item
             Causes an error if M is not exact.
@@ -2521,7 +2523,7 @@ doc ///
     Description
         Text
             Specifically, Q should have exactly one generator over
-            its coefficient ring, and that generator must square to zero.
+            its coefficient ring, and that generator should square to zero.
             There is no restriction on the degree of the generator.
         Example
             Q = QQ[d]/d^2;
@@ -2861,7 +2863,7 @@ doc ///
         derivedCoupleRing
         (derivedCoupleRing,Ring)
     Headline
-        Forms the ring that acts on a derived couple
+        forms the ring that acts on a derived couple
     Usage
         derivedCoupleRing Q
     Inputs
@@ -3433,8 +3435,10 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- 
 -- TODO: long exact sequence of a triple documentation example
 -- TODO: map of filtered modules gives induced map on LES "functoriality" page for docs
+-- TODO: better links in docs
+--
+-- TODO: clean up couple code
 
--- TODO: fix contravariantExtLES start position.
 -- surj of exact couples has exact kernel
 -- at chain level, any map of chain sequence modules has a cone, also a chain sequence module
 -- if this thing has no homology, then the original map is q.i. and gives identical couples
@@ -3443,12 +3447,10 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- What if you only want isos on the page? Proof idea relies on new lemma:
 -- if A->B->C->A[1]->B[1] is an exact sequence of chain complexes, then it induces a long 
 -- exact sequence in homology.
--- TODO: clean up couple code
+
 
 restart
 needsPackage "ExactCouples"
-
-
 
 doc ///
     Key
