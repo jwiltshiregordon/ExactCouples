@@ -1329,6 +1329,8 @@ doc ///
         spectral sequences by Massey's method of exact couples
     SeeAlso
         "Conventions and first examples"
+        "Bockstein spectral sequence"
+        "Serre spectral sequence in homology"
 ///
 
 
@@ -2001,13 +2003,13 @@ doc ///
             isomorphism theorem.  Some degree confusion can result.  Indeed, the inclusion
             $A' \subseteq A$, which is induced by the identity, is a degree 0 map; in contrast,
             the projection $A / (ker f) \to A'$, which is induced by $f$, has the same degree
-            as $f$ itself.
+            as $f$ itself.  This gives the inverse map $A' \to A / ker(f)$ degree $-deg(f)$.
 
-            In other words, we could have taken A' to be the coimage of f instead of the image, and
+            If we had taken A' to be the coimage of f instead of the image, 
             this would have resulted in completely different degrees.  Either of these conventions
             would have an assymetry: an unjustified preference for image or coimage.
 
-            Our convention avoids assymetry by averaging: we place A' exactly halfway between
+            Our convention avoids this assymetry by averaging: we place A' exactly halfway between
             (image f) and (coimage f).  This has the effect of giving the comparison
             maps $A \to A' \to A$ the same degree, namely, $(degree f)/2$.  (This division-by-two
             accounts for the requirement in @ TO expectCoupleRing @ that the degree of $f$ be even.)
@@ -2023,7 +2025,36 @@ doc ///
 
             The resulting ring $R[e',f']$ is the derived couple ring of $R[e,f]$; it acts on the
             derived couple, and can be obtained using @ TO derivedCoupleRing @.
+        Text
+            {\bf How to determine $deg(e)$ and $deg(f)$}
+            
+            Suppose you have in mind a particular spectral sequence of $R$-modules,
+            starting on page k,
+            and you want to program
+            its exact couple.  What degrees should you use for the couple ring $R[e_k,f_k]$?
+            
+            Think about the degree of $D_k$, the differential on the starting page.  This tells
+            you the degree of $e_k$:
+            
+            $deg(e_k) = deg(D_k)$.
+            
+            Now think about the degree of $D_{k+1}$, the differential on the next page.  This
+            lets you compute the degree of $f_k$:
+            
+            $deg(f_k) = 2 * deg(D_k) - 2 * deg(D_{k+1})$.
+    SeeAlso
+        exactCouple
+        expectExactCouple
+        derivedCouple
+///
 
+doc ///
+    Key
+        "Bockstein spectral sequence"
+    Headline
+        a singly-graded spectral sequence built from the chain self-map "multiplication by p"
+    Description
+        Text
             {\bf Bockstein Spectral Sequence}
 
             Let p be a prime number, and suppose C is a chain complex over the integers; then
@@ -2064,11 +2095,25 @@ doc ///
             P1' = prune(map((ZZ/2)[D_1],ring P1) ** P1)
             P2' = prune(map((ZZ/2)[D_2],ring P1) ** P1)
             P3' = prune(map((ZZ/2)[D_3],ring P1) ** P1)
+    SeeAlso
+        pageModule
+        derivedCouple
+        expectExactCouple
+        "Conventions and first examples"
+        "Serre spectral sequence in homology"
+///
+
+doc ///
+    Key
+        "Serre spectral sequence in homology"
+    Headline
+        exact couple associated to a fibration
+    Description
         Text
             {\bf Homology Serre spectral sequence for the Hopf fibration}
 
-            The Serre spectral sequence is constructed by choosing a cell structure
-            on the base space, and looking at its induced filtration of the total
+            The Serre spectral sequence can be constructed by choosing a cell structure
+            on the base space, and looking at the induced filtration on the total
             space.  In the case of the Hopf fibration $p: S^3 \to S^2$, and making use
             of the easy cell structure on S^2 with only two cells, we obtain the
             following filtration:
@@ -2171,29 +2216,15 @@ doc ///
             spectral sequence determined by C.
         Example
             plotPages((-2..4,-2..3,1..4), prune @@ evaluateInDegree,C)
-        Text
-            Thinking of $S^3$ as the unit vectors in the complex Hilbert space $\mathbb{C}^2$,
-            the Hopf fibration becomes the map to the Riemann sphere $S^2$.
-            Complex conjugation acts on this construction of the Hopf fibration.  Let us redo
-            the construction to carry the action of complex conjugation.  Our cell structure on
-            $S^2$ must be preserved by the action, and the basepoint must be fixed.  This is easily
-            accomplished by choosing a real point to be the basepoint of $S^2 = \mathbb{C}P^1$.
-
-            So the calculation proceeds exactly as before, except we must add relations to enforce
-            the action of conjugation, which is encoded as an action of a new variable c.
-        Example
-            erase(symbol w); erase(symbol x); erase(symbol y); erase(symbol z);
-            R = QQ[c,s,Degrees=>{1,1}]/(c^2-s^2); -- An unknown M2 issue prevents me from using s=1
-            Q = R[e_1,f_1,Degrees=>{{-1,0},{2,-2}}];
-            declareCouple(Q, {z => {4,0,0}}, {x => {1,0,0}, y => {1,2,0}, w => {5,2,0}})
-            C = cospan(e_1*z-f_1*y,c*x-s*x,c*y+s*y,c*z+s*z,c*w-s*w)
-            isHomogeneous C
-            expectExactCouple C
-            plotPages((-2..4,-2..3,1..4), prune @@ evaluateInDegree,C)
     SeeAlso
         exactCouple
         expectExactCouple
         derivedCouple
+        pageModule
+        derivedCouple
+        expectExactCouple
+        "Conventions and first examples"
+        "Bockstein spectral sequence"
 ///
 
 doc ///
@@ -3469,5 +3500,25 @@ doc ///
 
 (see @ TO expectCoupleRing @)
 
+-- Unused doc snippets here:
+        Text
+            {\bf Making the spectral sequence equivariant for an easy action}
+            
+            Thinking of $S^3$ as the unit vectors in the complex Hilbert space $\mathbb{C}^2$,
+            the Hopf fibration becomes the map to the Riemann sphere $S^2$.
+            Complex conjugation acts on this construction of the Hopf fibration.  Let us redo
+            the construction to carry the action of complex conjugation.  Our cell structure on
+            $S^2$ must be preserved by the action, and the basepoint must be fixed.  This is easily
+            accomplished by choosing a real point to be the basepoint of $S^2 = \mathbb{C}P^1$.
 
--- Ongoing bugs here:
+            So the calculation proceeds exactly as before, except we must add relations to enforce
+            the action of conjugation, which is encoded as an action of a new variable c.
+        Example
+            erase(symbol w); erase(symbol x); erase(symbol y); erase(symbol z);
+            R = QQ[c,s,Degrees=>{1,1}]/(c^2-s^2); -- An unknown M2 issue prevents me from using s=1
+            Q = R[e_1,f_1,Degrees=>{{-1,0},{2,-2}}];
+            declareCouple(Q, {z => {4,0,0}}, {x => {1,0,0}, y => {1,2,0}, w => {5,2,0}})
+            C = cospan(e_1*z-f_1*y,c*x-s*x,c*y+s*y,c*z+s*z,c*w-s*w)
+            isHomogeneous C
+            expectExactCouple C
+            plotPages((-2..4,-2..3,1..4), prune @@ evaluateInDegree,C)
