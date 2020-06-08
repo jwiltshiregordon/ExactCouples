@@ -3153,7 +3153,7 @@ doc ///
             depends on the parity of $s$ and $t$.
             
             
-            If $s$ and $t$ are both even, say $\{s,t} = \{2p 2q}$, then
+            If $s$ and $t$ are both even, say $\{s,t} = \{2p, 2q}$, then
     
             $M_{s,t} = Tor_p(W,A_q/A_{q-1})$;
             
