@@ -3469,6 +3469,7 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- TODO: better links in docs
 --
 -- TODO: clean up couple code
+-- TODO: highlight Ext and Tor couples in docs.
 
 -- surj of exact couples has exact kernel
 -- at chain level, any map of chain sequence modules has a cone, also a chain sequence module
