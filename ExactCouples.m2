@@ -45,6 +45,8 @@ export {"applyEntrywise",
   "chainModule", "mapToTriangleRing"}
 exportMutable {}
 
+-- we need to use rawBasis
+debug Core
 
 internalDegreeIndices = method()
 internalDegreeIndices(Ring) := List => R -> (
@@ -204,7 +206,13 @@ evaluateInDegreeLaw = method()
 evaluateInDegreeLaw(List, Ring) := FunctionClosure => (d, R) -> (
     internal := internalDegreeIndices R;
     external := externalDegreeIndices R;
-    unitLaw := x -> basis(d - x_external, R) ** R^{-x};
+    mR := presentation module R;
+    fastBasis := deg -> (
+        degz := deg | (0 * internal);
+        map(R^1,,rawBasis(raw mR, degz, degz, heft R, 0..(-1 + numgens R), false, -1))
+        );
+    unitLaw := x -> fastBasis(d - x_external) ** R^{-x};
+    unitLaw = memoize unitLaw;
     degreeLaw := x -> apply(degrees source unitLaw x, deg -> deg_internal);
     entryLaw := m -> m * unitLaw((first degrees source m)) // unitLaw((first degrees target m));
     m -> applyEntrywise(coefficientRing R, degreeLaw, entryLaw, m)
@@ -3483,6 +3491,16 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 
 restart
 needsPackage "ExactCouples"
+debug Core
+R = QQ[s,t,u]
+    internal := internalDegreeIndices R;
+    external := externalDegreeIndices R;
+mR = presentation module R;
+    fastBasis := deg -> (
+        degz := deg | (0 * internal);
+        map(R^1,,rawBasis(raw mR, degz, degz, heft R, 0..(-1 + numgens R), false, -1))
+        );
+fastBasis({11})
 
 doc ///
     Key
