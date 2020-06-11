@@ -1244,13 +1244,37 @@ covariantExtLES(ZZ, Module, Module, Module) := Net => (k, W, X, A) -> (
 
 -- TODO: allow user to supply output ring
 TorCouple = method()
+TorCouple(Ring, Module, Module) := Module => (Q, W, seqmod) -> (
+    expectCoupleRing Q;
+    expectSequenceRing ring seqmod;
+    if not (coefficientRing ring seqmod) === ring W then (
+        error("last two arguments incompatible: TorCouple(Q, W, seqmod)" + 
+              "requires (coefficientRing ring seqmod) === ring W");
+        );
+    F := ring seqmod;
+    t := baseName(F_0);
+    d := local d;
+    R := ring W;
+    Ch := R[d,Degrees=>{-1}]/d^2;
+    -- work around res bug
+    {R', theta} := flattenRing R;
+    rW := (theta^(-1))(res(theta ** W));
+    M := chainModule(Ch, rW);
+    S := R[d,t,Degrees=>{{-1,0},{0,1}}]/d^2;
+    phi := map(S,Ch,DegreeMap=>deg->{deg_0,0,deg_1});
+    psi := map(S,F,DegreeMap=>deg->{0,deg_0,deg_1});
+    C := (phi ** M) ** (psi ** seqmod);
+    exactCouple(Q, C)
+    )
+    
+    
 TorCouple(Module, List) := Module => (W, submods) -> (
     R := ring last submods;
     expectFiltrationList submods;
     d := local d;
     t := local t;
     Ch := R[d,Degrees=>{-1}]/d^2;
-    -- workaround res bug
+    -- work around res bug
     {R', theta} := flattenRing R;
     rW := (theta^(-1))(res(theta ** W));
     M := chainModule(Ch, rW);
@@ -2011,10 +2035,10 @@ doc ///
             isomorphism theorem.  Some degree confusion can result.  Indeed, the inclusion
             $A' \subseteq A$, which is induced by the identity, is a degree 0 map; in contrast,
             the projection $A / (ker f) \to A'$, which is induced by $f$, has the same degree
-            as $f$ itself.  This gives the inverse map $A' \to A / ker(f)$ degree $-deg(f)$.
+            as $f$ itself.  This forces the inverse map $A' \to A / ker(f)$ to have degree $-deg(f)$.
 
             If we had taken A' to be the coimage of f instead of the image, 
-            this would have resulted in completely different degrees.  Either of these conventions
+            this would have resulted in different degrees.  So either of these conventions
             would have an assymetry: an unjustified preference for image or coimage.
 
             Our convention avoids this assymetry by averaging: we place A' exactly halfway between
@@ -2034,7 +2058,7 @@ doc ///
             The resulting ring $R[e',f']$ is the derived couple ring of $R[e,f]$; it acts on the
             derived couple, and can be obtained using @ TO derivedCoupleRing @.
         Text
-            {\bf How to determine $deg(e)$ and $deg(f)$}
+            {\bf How to determine $deg(e)$ and $deg(f)$ in your example}
             
             Suppose you have in mind a particular spectral sequence of $R$-modules,
             starting on page k,
@@ -2054,6 +2078,11 @@ doc ///
         exactCouple
         expectExactCouple
         derivedCouple
+        contravariantExtCouple
+        covariantExtCouple
+        TorCouple
+        "Bockstein spectral sequence"
+        "Serre spectral sequence in homology"
 ///
 
 doc ///
@@ -3478,6 +3507,8 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 --
 -- TODO: clean up couple code
 -- TODO: highlight Ext and Tor couples in docs.
+-- TODO: longExactSequence probably has doc errors, and anyhow should be rewritten
+-- TODO: test unit-counit formulas for the adjunctions
 
 -- surj of exact couples has exact kernel
 -- at chain level, any map of chain sequence modules has a cone, also a chain sequence module
@@ -3491,16 +3522,59 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 
 restart
 needsPackage "ExactCouples"
-debug Core
-R = QQ[s,t,u]
-    internal := internalDegreeIndices R;
-    external := externalDegreeIndices R;
-mR = presentation module R;
-    fastBasis := deg -> (
-        degz := deg | (0 * internal);
-        map(R^1,,rawBasis(raw mR, degz, degz, heft R, 0..(-1 + numgens R), false, -1))
-        );
-fastBasis({11})
+            R = QQ[x]
+            X = R^1 / x^9
+            submods = apply(5,k->image map(X,,{{x^(8-2*k)}}));
+            for m in submods do print m;
+            W = coker map(R^1,,{{x^3}})
+            Q = coupleRing(R,1,e,f,Degrees=>{{-1, -1}, {0, 2}})
+            seqmod = filtrationModule(R[t],submods)
+            couple = prune TorCouple(Q, W, seqmod)
+            --couple = prune TorCouple(W,submods)
+            expectExactCouple couple
+            plotPages((-1..2,-1..5,1..3), prune @@ evaluateInDegree, couple)
+            
+            
+            
+            
+
+            R = QQ[x]
+            X = R^1 / x^9
+            submods = apply(5,k->image map(X,,{{x^(8-2*k)}}));
+            for m in submods do print m;
+            W = coker map(R^1,,{{x^3}})
+            couple = prune TorCouple(W,submods)
+            expectExactCouple couple
+            plotPages((-1..2,-1..5,1..3), prune @@ evaluateInDegree, couple)
+
+-- What refactoring can I do to my couple code?
+-- submods -> chainModule is filtrationModule
+-- safe res
+-- TorCouple(Module, Module) would be ok? second module would be a sequence module
+-- fm in the code.  Then one method could call the other.
+-- variable t is never used by name.
+-- use coupleRing so that you don't need to name the variables local e or local f
+-- Use getSymbol "e" and getSymbol "f".
+-- For contravariantExtCouple, second module should correspond to the cofiltration
+
+-- Conf(2,X) is space of possible edge attachments
+
+
+S = QQ[s]
+A = S[a,b]
+R = A[f]
+declareGenerators(R, {x=>{0,1,0},y=>{1,0,0}})
+M = cospan(f*x-(a+b)*y,(f*a-f*b)*y,s^3*x,s^4*y)
+isHomogeneous M
+xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
+flattenModule := m -> ((flattenRing ring m)#1) ** m;
+phi = map(S[f,a,b,Degrees=>{{1,0},{0,1},{0,1}}],R,DegreeMap=>deg->deg)
+xyplot(0..2,0..1,phi **  M)
+M0 = evaluateInDegree({0},restackModule({2,1,3},M))
+M1 = evaluateInDegree({1},restackModule({2,1,3},M))
+W = 
+
+
 
 doc ///
     Key
