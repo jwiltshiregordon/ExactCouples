@@ -1244,8 +1244,9 @@ covariantExtLES(ZZ, Module, Module, Module) := Net => (k, W, X, A) -> (
 
 -- TODO: allow user to supply output ring
 TorCouple = method()
-TorCouple(Ring, Module, Module) := Module => (Q, W, seqmod) -> (
-    expectCoupleRing Q;
+TorCouple(Symbol, Module, Module) := Module => (eSymbol, W, seqmod) -> (
+    --expectCoupleRing Q;
+    R := ring W;
     expectSequenceRing ring seqmod;
     if not (coefficientRing ring seqmod) === ring W then (
         error("last two arguments incompatible: TorCouple(Q, W, seqmod)" + 
@@ -1253,17 +1254,25 @@ TorCouple(Ring, Module, Module) := Module => (Q, W, seqmod) -> (
         );
     F := ring seqmod;
     t := baseName(F_0);
+    external := externalDegreeIndices F;
+    degt := (degree F_0)_external;
+    Q := coupleRing(R,1,eSymbol,t,Degrees=>{{-1}|(-degt),{0}|(2*degt)});
+    
+    
     d := local d;
-    R := ring W;
     Ch := R[d,Degrees=>{-1}]/d^2;
     -- work around res bug
     {R', theta} := flattenRing R;
     rW := (theta^(-1))(res(theta ** W));
     M := chainModule(Ch, rW);
-    S := R[d,t,Degrees=>{{-1,0},{0,1}}]/d^2;
-    phi := map(S,Ch,DegreeMap=>deg->{deg_0,0,deg_1});
-    psi := map(S,F,DegreeMap=>deg->{0,deg_0,deg_1});
+    S := R[d,t,Degrees=>{{-1}|(0*degt),{0}|degt}]/d^2;
+    -- TODO: next line is quite wrong for general degrees
+    -- TODO: check other couples for this error as well
+    
+    phi := map(S,Ch,DegreeMap=>deg->{deg_0}|(0*degt)|(deg_{1..<#deg}));
+    psi := map(S,F,DegreeMap=>deg->{0}|deg);
     C := (phi ** M) ** (psi ** seqmod);
+    --error "break here please";
     exactCouple(Q, C)
     )
     
@@ -2880,7 +2889,12 @@ doc ///
         Example
             plotPages((0..3,0..2,1..3), hilbertFunction, C)
     Caveat
+        This function assumes that the couple C is bi-graded so that $deg(e)$ and $deg(f)$ are lists
+        of length two.  If this is not the case, then you can still form derived couples and probe them
+        using evaluateInDegree, but plotPages will not work.
     SeeAlso
+        derivedCouple
+        evaluateInDegree
 
 ///
 
@@ -3519,6 +3533,8 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- if A->B->C->A[1]->B[1] is an exact sequence of chain complexes, then it induces a long 
 -- exact sequence in homology.
 
+-- TODO: sequence modules allow any degrees. So... must allow throughout.  Currently failing
+-- for triangle rings somewhere.
 
 restart
 needsPackage "ExactCouples"
@@ -3527,9 +3543,9 @@ needsPackage "ExactCouples"
             submods = apply(5,k->image map(X,,{{x^(8-2*k)}}));
             for m in submods do print m;
             W = coker map(R^1,,{{x^3}})
-            Q = coupleRing(R,1,e,f,Degrees=>{{-1, -1}, {0, 2}})
-            seqmod = filtrationModule(R[t],submods)
-            couple = prune TorCouple(Q, W, seqmod)
+            --Q = coupleRing(R,1,ee,ff,Degrees=>{{-1, -1}, {0, 2}})
+            seqmod = filtrationModule(R[t,Degrees=>{{2}}],submods)
+            couple = prune TorCouple(e, W, seqmod)
             --couple = prune TorCouple(W,submods)
             expectExactCouple couple
             plotPages((-1..2,-1..5,1..3), prune @@ evaluateInDegree, couple)
