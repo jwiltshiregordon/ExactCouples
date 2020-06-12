@@ -1156,34 +1156,37 @@ contravariantExtLES(ZZ, Module, Module, Module) := Net => (k, X, A, Y) -> (
 
 -- TODO: allow user to supply output ring
 covariantExtCouple = method()
-covariantExtCouple(Module, List) := Module => (W, submods) -> (
-    R := ring last submods;
-    expectFiltrationList submods;
+covariantExtCouple(Symbol, Module, Module) := Module => (eSymbol, W, seqmod) -> (
+    R := ring W;
+    F := ring seqmod;
+    expectSequenceRing F;
+    if not (coefficientRing ring seqmod) === ring W then (
+        error("last two arguments incompatible: covariantExtCouple(eSymbol, W, seqmod) " + 
+              "requires (coefficientRing ring seqmod) === ring W");
+        );
+    t := baseName(F_0);
+    external := externalDegreeIndices F;
+    degt := (degree F_0)_external;
+    Q := coupleRing(R,1,eSymbol,t,Degrees=>{{1}|(-degt),{0}|(2*degt)});
     d := local d;
-    t := local t;
     Co := R[d]/d^2;
-    -- workaround res tower ring bug
     {R', theta} := flattenRing R;
-    -- the following line fails sometimes because of a Hom(ChainComplex,Module) bug
-    -- specifically, when W is a free module
-    --rW := (theta^(-1))(Hom(res(theta ** W), R'^1));
-    --M := chainModule(Co, rW);
-    --
-    -- This way uses Hom(Module,Module) instead
-    cW := chainModule(Co, res(theta ** W)); -- this goes in two steps for (maybe)
-    -- no reason.  Currently, we dualize and then tensor with fm, but we could
-    -- just hom to Ran fm.
+    cW := chainModule(Co, res(theta ** W));
     M := Hom(cW, Co^{degree(Co_0)});
-    S := R[d,t,Degrees=>{{1,0},{0,1}}]/d^2;
-    phi := map(S,Co,DegreeMap=>deg->{deg_0,0,deg_1});
-    F := R[t];
-    fm := filtrationModule(F,submods);
-    psi := map(S,F,DegreeMap=>deg->{0,deg_0,deg_1});
-    C := (phi ** M) ** (psi ** fm);
-    e := local e;
-    f := local f;
-    Q := R[e_1,f_1,Degrees=>{{1,-1},{0,2}}]; -- TODO: use coupleRing here
+    
+    S := R[d,t,Degrees=>{{1}|(0*degt),{0}|degt}]/d^2;
+    phi := map(S,Co,DegreeMap=>deg->{deg_0}|(0*degt)|(deg_{1..<#deg}));
+    psi := map(S,F,DegreeMap=>deg->{0}|deg);
+    C := (phi ** M) ** (psi ** seqmod);
     exactCouple(Q, C)
+    )
+
+covariantExtCouple(Module, List) := Module => (W, submods) -> (
+    expectFiltrationList submods;
+    R := ring last submods;
+    F := R[getSymbol "f"];
+    fm := filtrationModule(F, submods);
+    covariantExtCouple(getSymbol "e", W, fm)
     )
 
 TEST ///
@@ -1249,7 +1252,7 @@ TorCouple(Symbol, Module, Module) := Module => (eSymbol, W, seqmod) -> (
     F := ring seqmod;
     expectSequenceRing F;
     if not (coefficientRing ring seqmod) === ring W then (
-        error("last two arguments incompatible: TorCouple(Q, W, seqmod)" + 
+        error("last two arguments incompatible: TorCouple(eSymbol, W, seqmod) " + 
               "requires (coefficientRing ring seqmod) === ring W");
         );
     t := baseName(F_0);
@@ -1258,7 +1261,8 @@ TorCouple(Symbol, Module, Module) := Module => (eSymbol, W, seqmod) -> (
     Q := coupleRing(R,1,eSymbol,t,Degrees=>{{-1}|(-degt),{0}|(2*degt)});
     d := local d;
     Ch := R[d,Degrees=>{-1}]/d^2;
-    -- work around res bug
+    
+    -- work around res bug for ring towers
     {R', theta} := flattenRing R;
     rW := (theta^(-1))(res(theta ** W));
     M := chainModule(Ch, rW);
