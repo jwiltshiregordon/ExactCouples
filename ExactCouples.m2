@@ -1060,6 +1060,10 @@ canonicalFiltration(Ring, Module) := Module => (Q, M) -> (
 -- It would be mathematically similar to start with the cofiltration instead;
 -- this could be faster at least some of the time.
 contravariantExtCouple = method()
+contravariantExtCouple(Module, Module) := (seqmod, Y) -> (
+    contravariantExtCouple(getSymbol "e", seqmod, Y)
+    )
+
 contravariantExtCouple(Symbol, Module, Module) := (eSymbol, seqmod, Y) -> (
     R := ring Y;
     if not (coefficientRing ring seqmod) === ring Y then (
@@ -1175,6 +1179,10 @@ contravariantExtLES(ZZ, Module, Module, Module) := Net => (k, X, A, Y) -> (
 
 -- TODO: allow user to supply output ring
 covariantExtCouple = method()
+covariantExtCouple(Module, Module) := Module => (W, seqmod) -> (
+    covariantExtCouple(getSymbol "e", W, seqmod)
+    )
+
 covariantExtCouple(Symbol, Module, Module) := Module => (eSymbol, W, seqmod) -> (
     R := ring W;
     F := ring seqmod;
@@ -1266,6 +1274,9 @@ covariantExtLES(ZZ, Module, Module, Module) := Net => (k, W, X, A) -> (
 
 -- TODO: allow user to supply output ring
 TorCouple = method()
+TorCouple(Module, Module) := Module => (W, seqmod) -> (
+    TorCouple(getSymbol "e", W, seqmod)
+    )
 TorCouple(Symbol, Module, Module) := Module => (eSymbol, W, seqmod) -> (
     R := ring W;
     F := ring seqmod;
@@ -1292,8 +1303,7 @@ TorCouple(Symbol, Module, Module) := Module => (eSymbol, W, seqmod) -> (
     C := (phi ** M) ** (psi ** seqmod);
     exactCouple(Q, C)
     )
-    
-    
+
 TorCouple(Module, List) := Module => (W, submods) -> (
     expectFiltrationList submods;
     R := ring last submods;
@@ -1375,6 +1385,7 @@ doc ///
         "Conventions and first examples"
         "Bockstein spectral sequence"
         "Serre spectral sequence in homology"
+        "Exact couples for Tor and Ext"
 ///
 
 
@@ -3280,6 +3291,11 @@ doc ///
             filt = (p,q) -> image Tor_p(W,inc q); --no method for this?
             Einfty = (q,p) -> prune(filt(p,q)/filt(p,q-1));
             --netList reverse table(5,2,Einfty)
+        Text
+            There is also a more-general method available where the argument submods is
+            replaced by a module for a ring of the form R[f].  If f acts by inclusions, we
+            recover the case above, but if not, then we still obtain an exact couple from
+            relative homology.
     SeeAlso
         covariantExtCouple
         contravariantExtCouple
@@ -3466,6 +3482,91 @@ doc ///
         expectCoupleRing
 ///
 
+doc ///
+    Key
+        "Exact couples for Tor and Ext"
+        (TorCouple, Module, Module)
+        (TorCouple, Symbol, Module, Module)
+        (contravariantExtCouple, Module, Module)
+        (contravariantExtCouple, Symbol, Module, Module)
+        (covariantExtCouple, Module, Module)
+        (covariantExtCouple, Symbol, Module, Module)
+    Headline
+        building couples by applying Tor or Ext to a filtered module or a graded R[t]-module
+    Usage
+        TorCouple(W, seqmod)
+        TorCouple(eSymbol, W, seqmod)
+    Inputs
+        W:Module
+            for some ring R
+        seqmod:Module
+            for a ring of the form R[t]
+        eSymbol:Symbol
+            naming the variable usually called "e"; if omitted, this argument is replaced by
+            getSymbol "e"
+    Outputs
+        C:Module
+            for the couple ring R[e_1,t_1], an exact couple
+    Description
+        Text
+            The
+            filtered versions are described in detail at their individual
+            pages @ TO TorCouple @, @ TO contravariantExtCouple @, and
+            @ TO covariantExtCouple @.  We invite the reader to check these first,
+            since the corresponding spectral sequences are easier to describe.
+            
+            The remainder of this page describes an alternative, and more-general way of using these
+            three functions.  Specifically, we
+            explain how to use a graded R[t]-module in place of a filtered module.  
+            
+            The idea is to replace a sequence of inclusions with a general sequence of maps.  The 
+            first page then records homology 
+            of mapping cones instead of homology of the associated graded.
+            In the case of inclusions, the mapping cone is quasi-isomorphic to the
+            associated graded, so this really is a generalization.
+            
+            The schematic for using these generalized versions: replace the "submods" argument, which is
+            an increasing list of submodules of a fixed R-module, with a "seqmod" argument which 
+            is a module for a ring of the form R[t].
+            
+            Such a seqmod can be built directly, or from a sequence of maps using 
+            @ TO sequenceModule @.
+            
+            In the case of contravariantExtCouple, the appropriate sequence module (the one generalizing
+                the filtered case) is not the one corresponding to the filtration, but rather the
+            cofiltration $X/A_i$.  So, in recovering the filtered case, the variable t acts by surjections.
+            
+            These generalized versions also allow a symbol as the first argument, which will be used
+            to name the variable "e" in the resulting couple ring.  (The variable "f" in the couple
+            ring will be named after the variable (ring seqmod)_0).
+        Example
+            R = QQ[x,y,z]
+            A = coker matrix {{x^2+y^2+z^2}};
+            B = coker vars R;
+            toSeqMod = cm -> ( -- This short function converts chain modules to sequence modules
+                amb := ambient ring cm; -- by forgetting that the action of d squares to zero.
+                pres := lift(presentation cm, amb); -- It can be replaced by pushForward once that
+                coker(pres | (id_(target pres) ** (matrix {{(amb_0)^2}}))) -- function is fixed.
+                );
+            B' = toSeqMod chainModule(res B)
+            torCouple = prune TorCouple(A,B')
+            plotPages((-3..3,-3..3,1..3), prune @@ evaluateInDegree, torCouple)
+            covExtCouple = prune covariantExtCouple(A,B')
+            plotPages((-3..3,-3..3,1..3), prune @@ evaluateInDegree, covExtCouple)
+            contraExtCouple = prune contravariantExtCouple(B',A) -- see Caveat
+            plotPages((-3..1,-1..5,1..3), prune @@ evaluateInDegree, contraExtCouple)
+        Text
+            It bears mentioning that there are many other spectral sequences arising from Tor and Ext,
+            perhaps varying both coordinates instead of just one, or composing these functors in various
+            ways.  For such applications, work directly with the function @ TO exactCouple @.  If you
+            obtain any compelling examples this way, the author of this package would appreciate hearing
+            about it!
+    Caveat
+        In the case of @ TO contravariantExtCouple @, the module seqmod should be concentrated in degrees
+        that are positive multiples of $deg(t)$.
+    SeeAlso
+        TorCouple
+///
 
 TEST ///
 S = QQ[s, t, u]; -- TODO: this won't work over ZZ
@@ -3521,6 +3622,8 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- TODO: long exact sequence of a triple documentation example
 -- TODO: map of filtered modules gives induced map on LES "functoriality" page for docs
 -- TODO: better links in docs
+-- TODO: explain external, internal degrees, and how to use evaluateInDegree to obtain a 
+--       desired map.
 --
 -- TODO: clean up couple code
 -- TODO: highlight Ext and Tor couples in docs.
