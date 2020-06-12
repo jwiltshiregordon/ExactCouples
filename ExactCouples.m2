@@ -1052,14 +1052,56 @@ canonicalFiltration(Ring, Module) := Module => (Q, M) -> (
 -- call the resulting thing Y'.  
 -- Take the cofiltration of (submods | {0}), and resolve by frees.  
 -- Call the resulting chain sequence module M.
--- claim: exactCouple Hom(M, Y') is the correct couple
--- Pf: Hom(M, Y') = Hom(M, Ran Lan Y) = Hom(Res M, Lan Y).
+-- claim: exactCouple Hom(M, Y') is the correct couple (after truncating)
+-- Pf sketch: Hom(M, Y') = Hom(M, Ran Lan Y) = Hom(Res M, Lan Y).
 -- Since M is a resolution, Res M is free, say Res M = Lan G.
 -- Hom(Lan G, Lan Y) = Hom(G, Res Lan Y).  And this thing is
 -- the chain sequence module that defines the couple.
 -- It would be mathematically similar to start with the cofiltration instead;
 -- this could be faster at least some of the time.
 contravariantExtCouple = method()
+contravariantExtCouple(Symbol, Module, Module) := (eSymbol, seqmod, Y) -> (
+    R := ring Y;
+    if not (coefficientRing ring seqmod) === ring Y then (
+        error("last two arguments incompatible: contravariantExtCouple(eSymbol, seqmod, Y) " + 
+              "requires (coefficientRing ring seqmod) === ring Y");
+        );
+    F := ring seqmod;
+    expectSequenceRing F;
+    f := F_0;
+    external := externalDegreeIndices F;
+    degf := (degree f)_external;
+    flattenModule := m -> ((flattenRing ring m)#1) ** m;
+    fm := flattenModule seqmod;
+    d := local d;
+    ringfm := ring fm;
+    ch := ringfm[d]/d^2;
+    rfm := flattenModule chainModule(ch, res fm);
+    S := R[d,f,Degrees=>{{1}|(0*degf),{0}|degf}]/d^2;
+    phi := map(ring rfm, ring Y, DegreeMap=>(deg->{0}|(0*degf)|deg));
+    Y' := phi ** Y;
+    hm := Hom(rfm,Y');
+    pres := presentation hm;
+    -- Must remove certain rows and columns from pres
+    -- because our chain sequence module is only correct in certain degrees;
+    -- we had truncated to keep it fg
+    if (degree f) == 0*(degree f) then (
+        error("contravariantExtCouple(eSymbol, seqmod, Y) relies on a nonzero degree for " +
+              "(ring seqmod)_0");
+        );
+    -- TODO: following positivity checks are incorrect since they assume {-1,0,...,0} is a
+    -- heft vector for degf.  Usually, degf is {-1}, so this is ok.
+    dtp := degrees target pres;
+    rowselect := select(#dtp,k->((dtp#k)#1)>0);
+    dsp := degrees source pres;
+    colselect := select(#dsp,k->((dsp#k)#1)>0);
+    hm = coker(pres_colselect^rowselect);
+    couple := exactCouple((map(S,ring hm)) ** hm);
+    Q := ring couple;
+    sh := Q^{4*degree(Q_0)+1*degree(Q_1)};
+    couple ** sh
+    )
+    
 contravariantExtCouple(List, Module) := Module => (submods, Y) -> (
     R := ring last submods;
     expectFiltrationList submods;
@@ -1071,31 +1113,8 @@ contravariantExtCouple(List, Module) := Module => (submods, Y) -> (
     -- It could be a prototype for implementing edge homomorphisms, though.
     --submods' := submods | {(last submods)/(last submods)};
     submods' := {last submods} | apply(submods, m->(last submods)/m);
-    fm := sequenceModule(F, apply(l, k -> inducedMap(submods'#(k+1), submods'#k)));
-    -- only use res over flat rings due to M2 bug
-    flattenModule := m -> ((flattenRing ring m)#1) ** m;
-    fm = flattenModule fm;
-    d := local d;
-    ringfm := ring fm;
-    ch := ringfm[d]/d^2;
-    rfm := flattenModule chainModule(ch, res fm);
-    S := R[d,f,Degrees=>{{1,0},{0,-1}}]/d^2;
-    why := map(ring rfm, ring Y,DegreeMap=>(deg->{0,0}|deg));
-    Y' := why ** Y;
-    hm := Hom(rfm,Y');
-    pres := presentation hm;
-    -- Must remove certain rows and columns from pres
-    -- because our chain sequence module is only correct in certain degrees;
-    -- we had truncated to keep it fg
-    dtp := degrees target pres;
-    rowselect := select(#dtp,k->((dtp#k)#1)>0);
-    dsp := degrees source pres;
-    colselect := select(#dsp,k->((dsp#k)#1)>0);
-    hm = coker(pres_colselect^rowselect);
-    couple := exactCouple((map(S,ring hm)) ** hm);
-    Q := ring couple;
-    sh := Q^{4*degree(Q_0)+1*degree(Q_1)};
-    couple ** sh
+    seqmod := sequenceModule(F, apply(l, k -> inducedMap(submods'#(k+1), submods'#k)));
+    contravariantExtCouple(getSymbol "e", seqmod, Y)
     )
 
 TEST ///
