@@ -1245,58 +1245,38 @@ covariantExtLES(ZZ, Module, Module, Module) := Net => (k, W, X, A) -> (
 -- TODO: allow user to supply output ring
 TorCouple = method()
 TorCouple(Symbol, Module, Module) := Module => (eSymbol, W, seqmod) -> (
-    --expectCoupleRing Q;
     R := ring W;
-    expectSequenceRing ring seqmod;
+    F := ring seqmod;
+    expectSequenceRing F;
     if not (coefficientRing ring seqmod) === ring W then (
         error("last two arguments incompatible: TorCouple(Q, W, seqmod)" + 
               "requires (coefficientRing ring seqmod) === ring W");
         );
-    F := ring seqmod;
     t := baseName(F_0);
     external := externalDegreeIndices F;
     degt := (degree F_0)_external;
     Q := coupleRing(R,1,eSymbol,t,Degrees=>{{-1}|(-degt),{0}|(2*degt)});
-    
-    
     d := local d;
     Ch := R[d,Degrees=>{-1}]/d^2;
     -- work around res bug
     {R', theta} := flattenRing R;
     rW := (theta^(-1))(res(theta ** W));
     M := chainModule(Ch, rW);
-    S := R[d,t,Degrees=>{{-1}|(0*degt),{0}|degt}]/d^2;
-    -- TODO: next line is quite wrong for general degrees
-    -- TODO: check other couples for this error as well
     
+    S := R[d,t,Degrees=>{{-1}|(0*degt),{0}|degt}]/d^2;
     phi := map(S,Ch,DegreeMap=>deg->{deg_0}|(0*degt)|(deg_{1..<#deg}));
     psi := map(S,F,DegreeMap=>deg->{0}|deg);
     C := (phi ** M) ** (psi ** seqmod);
-    --error "break here please";
     exactCouple(Q, C)
     )
     
     
 TorCouple(Module, List) := Module => (W, submods) -> (
-    R := ring last submods;
     expectFiltrationList submods;
-    d := local d;
-    t := local t;
-    Ch := R[d,Degrees=>{-1}]/d^2;
-    -- work around res bug
-    {R', theta} := flattenRing R;
-    rW := (theta^(-1))(res(theta ** W));
-    M := chainModule(Ch, rW);
-    S := R[d,t,Degrees=>{{-1,0},{0,1}}]/d^2;
-    phi := map(S,Ch,DegreeMap=>deg->{deg_0,0,deg_1});
-    F := R[t];
-    fm := filtrationModule(F,submods);
-    psi := map(S,F,DegreeMap=>deg->{0,deg_0,deg_1});
-    C := (phi ** M) ** (psi ** fm);
-    e := local e;
-    f := local f;
-    Q := R[e_1,f_1,Degrees=>{{-1,-1},{0,2}}]; -- note non-default degrees
-    exactCouple(Q, C)
+    R := ring last submods;
+    F := R[getSymbol "f"];
+    fm := filtrationModule(F, submods);
+    TorCouple(getSymbol "e", W, fm)
     )
 
 TEST ///
@@ -3544,8 +3524,8 @@ needsPackage "ExactCouples"
             for m in submods do print m;
             W = coker map(R^1,,{{x^3}})
             --Q = coupleRing(R,1,ee,ff,Degrees=>{{-1, -1}, {0, 2}})
-            seqmod = filtrationModule(R[t,Degrees=>{{2}}],submods)
-            couple = prune TorCouple(e, W, seqmod)
+            seqmod = filtrationModule(R[t,Degrees=>{{-2}}],submods)
+            couple = prune TorCouple(ee, W, seqmod)
             --couple = prune TorCouple(W,submods)
             expectExactCouple couple
             plotPages((-1..2,-1..5,1..3), prune @@ evaluateInDegree, couple)
