@@ -1093,12 +1093,13 @@ contravariantExtCouple(Symbol, Module, Module) := (eSymbol, seqmod, Y) -> (
         error("contravariantExtCouple(eSymbol, seqmod, Y) relies on a nonzero degree for " +
               "(ring seqmod)_0");
         );
-    -- TODO: following positivity checks are incorrect since they assume {-1,0,...,0} is a
-    -- heft vector for degf.  Usually, degf is {-1}, so this is ok.
+    edF := externalDegreeIndices F;
+    eheft := (heft F)_edF;
+    poscheck := deg -> (sum(apply(eheft, (deg_{1..<#deg})_edF, (p,q)->p*q)) < 0);
     dtp := degrees target pres;
-    rowselect := select(#dtp,k->((dtp#k)#1)>0);
+    rowselect := select(#dtp,k->poscheck(dtp#k));
     dsp := degrees source pres;
-    colselect := select(#dsp,k->((dsp#k)#1)>0);
+    colselect := select(#dsp,k->poscheck(dsp#k));
     hm = coker(pres_colselect^rowselect);
     couple := exactCouple((map(S,ring hm)) ** hm);
     Q := ring couple;
