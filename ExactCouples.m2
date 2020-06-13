@@ -539,17 +539,20 @@ longExactSequence = method()
 longExactSequence(Matrix) := Module => m -> (
     C := ring m;
     expectChainRing C;
+    external := externalDegreeIndices C;
+    degd := (degree C_0)_external;
     R := coefficientRing C;
     d := local d;
-    f := local f;
-    F := R[d, f, Degrees => {{0,1},{-1,1}}]/ideal(d^2);
-    phi := map(F,C,{d},DegreeMap => (deg -> {0} | deg));
-    zeds := toList((degreeLength R):0);
-    evencols := forceAction(oneEntry({1,0}|zeds,,F_1),phi**m);
-    g := getSymbol "e";
-    h := getSymbol "f";
-    Q := coupleRing(R, 1, g, h);
-    exactCouple(Q, evencols)
+    f := local f; 
+    F := R[d, f, Degrees => {{0}|degd,{-1}|degd}] / d^2;
+    --F := R[d, f, Degrees => {{0,1},{-1,1}}]/ideal(d^2);
+    --phi := map(F,C,{d},DegreeMap => (deg -> {0} | deg));
+    --zeds := toList((degreeLength R):0);
+    --evencols := forceAction(oneEntry({1,0}|zeds,,F_1),phi**m);
+    sm := sequenceModule((ring m)[f,Degrees=>{{-1}}],{m});
+    sm' := map(F, ring sm, {F_1, F_0}, DegreeMap => deg -> deg) ** sm;
+    --Q := coupleRing(R, 1, getSymbol "e", getSymbol "f");
+    exactCouple(sm' ** F^{degree(F_1)}) -- banana
     )
 
 longExactSequence(Ring, Matrix) := Module => (Q, m) -> (
@@ -1609,37 +1612,31 @@ doc ///
         M = longExactSequence m
     Inputs
         m:Matrix
-            whose ring is of the form R[d]/d^2 for some coefficient ring R, and where d has degree +1
+            whose ring is of the form R[d]/d^2 for some coefficient ring R
     Outputs
-        LES:Module
-            an exact couple encoding the sequence, which lives in bidegrees
-            $\{-1,q\} \to \{0,q\} \to \{1,q} \to \{-1,q+1\} \to ...$
+        M:Module
+            for a ring of the form R[e,f,Degrees=>{{1,0},{-2,2}}]
     Description
         Text
             Suppose $m:A \to B$, where A and B are considered cochain complexes by virtue
-            of the square-zero action of d, and note that m commutes with this action since
-            it is a map of modules.  Writing C(m) for the mapping cone of the map m, the long
+            of the square-zero action of d.  Writing C(m) for the mapping cone of the map m, the long
             exact sequence in cohomology takes the form
             $\cdots \to H^p A \to H^p B \to H^p C(m) \to H^{p+1} A \to \cdots$
+            
             The output module M encodes this sequence as follows:
+            
+            The cohomology of A appears in bidegrees {1,2p}: $M_{1,2p} = H^p A$
+            
+            The cohomology of B appears in bidegrees {-1,2p}: $M_{-1,2p} = H^{p-1} B$
+            
+            The cohomology of C(m) appears in bidegrees {0,2p}.
+            
+            Multiplication by e induces the maps $H^{p-1} B \to H^{p-1} C(m) \to H^{p}A$ and
 
-
-            The cohomology of A appears in the first (zero-indexed) column: M_{1,2p} = $H^p A$;
-
-
-            The cohomology of B appears in the minus-first column, with a shift: M_{-1,2p} = $H^{p-1} B$;
-
-
-            The cohomology of C(m) appears in the even rows of the zeroth column;
-
-
-            Moreover, setting e = (ring LES)_0 and f = (ring LES)_1, we have:
-
-            Multiplication by e induces the horizontal maps $H^p B \to H^p C(m) \to H^{p+1}A$ and
-
-            Multiplication by f induces diagonal maps $H^p A \to H^p B$ of degree (-2, 1).
-            In fact, under the isomorphisms M_{2,p} = $H^p A$ and M_{0,p} = $H^{p-1} B$, this map coincides with $H^p m : H^p A \to H^p B$.
-
+            Multiplication by f induces diagonal maps $H^p A \to H^p B$.
+            
+            Note that this convention leaves the odd rows empty.  The reasoning behind these conventions
+            is explained in @ TO "Conventions and first examples" @.
         Example
             R = QQ[x]; S = R[d] / ideal(d^2); declareGenerators(S, {a => {0,0}}); A = cospan(x^2*a, d*x*a)
             declareGenerators(S, {b => {0,0}}); B = cospan(x^2*b, d*b)
@@ -1647,9 +1644,15 @@ doc ///
             LES = longExactSequence m;
             excerptLES(0,2,LES)
     Caveat
-        The source and target of m must be homogeneous, and m itself must be degree-preserving
+        The source and target of m must be homogeneous, and m itself must be degree-preserving.  If the variable
+        d has degree different from 1, then the other degrees are adjusted to match d.
+        
+        The output module is usually not concentrated in the three columns of interest indicated above.
+        This is because we compute M by building a natural exact couple associated to m, and these other 
+        entries appear organically.
     SeeAlso
         excerptLES
+        "Conventions and first examples"
 ///
 
 
