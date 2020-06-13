@@ -1643,7 +1643,8 @@ doc ///
         Example
             R = QQ[x]; S = R[d] / ideal(d^2); declareGenerators(S, {a => {0,0}}); A = cospan(x^2*a, d*x*a)
             declareGenerators(S, {b => {0,0}}); B = cospan(x^2*b, d*b)
-            m = map(B, A, matrix {b}); LES = longExactSequence m;
+            m = map(B, A, matrix {b}); 
+            LES = longExactSequence m;
             excerptLES(0,2,LES)
     Caveat
         The source and target of m must be homogeneous, and m itself must be degree-preserving
@@ -3551,14 +3552,15 @@ doc ///
                 );
             B' = toSeqMod chainModule(res B)
             torCouple = prune TorCouple(A,B')
-            plotPages((-3..3,-3..3,1..3), prune @@ evaluateInDegree, torCouple)
+            plotPages((-3..3,-4..2,1..3), prune @@ evaluateInDegree, torCouple)
             covExtCouple = prune covariantExtCouple(A,B')
-            plotPages((-3..3,-3..3,1..3), prune @@ evaluateInDegree, covExtCouple)
-            contraExtCouple = prune contravariantExtCouple(B',A) -- see Caveat
-            plotPages((-3..1,-1..5,1..3), prune @@ evaluateInDegree, contraExtCouple)
+            plotPages((-3..3,-4..2,1..3), prune @@ evaluateInDegree, covExtCouple)
+            contraExtCouple = prune contravariantExtCouple(B' ** (ring B')^{{-4,0}},A) -- see Caveat
+            plotPages((-3..1,-5..1,1..3), prune @@ evaluateInDegree, contraExtCouple)
         Text
             It bears mentioning that there are many other spectral sequences arising from Tor and Ext,
-            perhaps varying both coordinates instead of just one, or composing these functors in various
+            both coordinates could vary instead of just one, or these functors could be composed
+            in various
             ways.  For such applications, work directly with the function @ TO exactCouple @.  If you
             obtain any compelling examples this way, the author of this package would appreciate hearing
             about it!
