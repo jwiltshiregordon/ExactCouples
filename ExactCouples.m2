@@ -626,7 +626,7 @@ excerptCouple(List, ZZ, Module) := Net => (startDegree, rotations, M) -> (
 
 excerptLES = method()
 -- Here, we assume that M is an exact couple produced by longExactSequence
-excerptLES(ZZ, ZZ, Module) := Net => (k, l, M) -> excerptCouple({0,0},l-k+1,M);
+excerptLES(ZZ, ZZ, Module) := Net => (k, l, M) -> excerptCouple({0,2*k-2},l-k+1,M);
 
 excerptLES(ZZ, Module) := Net => (k, M) -> excerptLES(k, k, M)
 
@@ -1615,32 +1615,38 @@ doc ///
             whose ring is of the form R[d]/d^2 for some coefficient ring R
     Outputs
         M:Module
-            for a ring of the form R[e,f,Degrees=>{{1,0},{-2,2}}]
+            for a ring of the form R[e,f,Degrees=>\{\{1,0},\{-2,2}}]
     Description
         Text
             Suppose $m:A \to B$, where A and B are considered cochain complexes by virtue
             of the square-zero action of d.  Writing C(m) for the mapping cone of the map m, the long
             exact sequence in cohomology takes the form
+            
             $\cdots \to H^p A \to H^p B \to H^p C(m) \to H^{p+1} A \to \cdots$
             
             The output module M encodes this sequence as follows:
             
-            The cohomology of A appears in bidegrees {1,2p}: $M_{1,2p} = H^p A$
+            $\cdots \to M_{\{1,2p\}} \to M_{\{-1,2p+2\}} \to M_{\{0,2p+2\}} \to M_{\{1,2p+2\}} \to \cdots $
             
-            The cohomology of B appears in bidegrees {-1,2p}: $M_{-1,2p} = H^{p-1} B$
+            where the maps are multiplication by $e$ or $f$, in the repeating pattern $...,e,f,e,e,f,e,e,f,e...$.
+            In other words, for all $p \in \ZZ$,
             
-            The cohomology of C(m) appears in bidegrees {0,2p}.
+            $M_{\{1,2p\}} = H^p A$
+            
+            $M_{\{-1,2p\}} = H^{p-1} B$
+            
+            $M_{\{0,2p\}} = H^{p-1} B$;
             
             Multiplication by e induces the maps $H^{p-1} B \to H^{p-1} C(m) \to H^{p}A$ and
 
             Multiplication by f induces diagonal maps $H^p A \to H^p B$.
             
-            Note that this convention leaves the odd rows empty.  The reasoning behind these conventions
+            Note that this setup leaves the odd rows empty.  The reasoning behind these conventions
             is explained in @ TO "Conventions and first examples" @.
         Example
             R = QQ[x]; S = R[d] / ideal(d^2); declareGenerators(S, {a => {0,0}}); A = cospan(x^2*a, d*x*a)
             declareGenerators(S, {b => {0,0}}); B = cospan(x^2*b, d*b)
-            m = map(B, A, matrix {b}); 
+            m = map(B, A, matrix {b});
             LES = longExactSequence m;
             excerptLES(0,2,LES)
     Caveat
@@ -1648,7 +1654,7 @@ doc ///
         d has degree different from 1, then the other degrees are adjusted to match d.
         
         The output module is usually not concentrated in the three columns of interest indicated above.
-        This is because we compute M by building a natural exact couple associated to m, and these other 
+        This is because we compute M by building a natural exact couple associated to m, and other nonzero 
         entries appear organically.
     SeeAlso
         excerptLES
@@ -3524,10 +3530,9 @@ doc ///
             three functions.  Specifically, we
             explain how to use a graded R[t]-module in place of a filtered module.  
             
-            The idea is to replace a sequence of inclusions with a general sequence of maps.  The 
-            first page then records homology 
-            of mapping cones instead of homology of the associated graded.
-            In the case of inclusions, the mapping cone is quasi-isomorphic to the
+            The idea is to replace a sequence of inclusions with a general sequence of maps.  In place 
+            of the associated graded, whose homology usually makes up the first page, we use mapping cones.  
+            If the variable t acts by inclusions, the mapping cone is quasi-isomorphic to the
             associated graded, so this really is a generalization.
             
             The schematic for using these generalized versions: replace the "submods" argument, which is
@@ -3561,11 +3566,11 @@ doc ///
             contraExtCouple = prune contravariantExtCouple(B' ** (ring B')^{{-4,0}},A) -- see Caveat
             plotPages((-3..1,-5..1,1..3), prune @@ evaluateInDegree, contraExtCouple)
         Text
-            It bears mentioning that there are many other spectral sequences arising from Tor and Ext,
-            both coordinates could vary instead of just one, or these functors could be composed
+            It bears mentioning that there are many other spectral sequences arising from Tor and Ext.
+            For example, both coordinates could vary instead of just one, or these functors could be composed
             in various
             ways.  For such applications, work directly with the function @ TO exactCouple @.  If you
-            obtain any compelling examples this way, the author of this package would appreciate hearing
+            obtain anything compelling, the author of this package would appreciate hearing
             about it!
     Caveat
         In the case of @ TO contravariantExtCouple @, the module seqmod should be concentrated in degrees
