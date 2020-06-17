@@ -1390,6 +1390,7 @@ doc ///
         "Bockstein spectral sequence"
         "Serre spectral sequence in homology"
         "Exact couples for Tor and Ext"
+        "Functoriality for Tor and Ext couples"
 ///
 
 
@@ -3582,6 +3583,45 @@ doc ///
         TorCouple
 ///
 
+doc ///
+    Key
+        "Functoriality for Tor and Ext couples"
+    Headline
+        induced maps between couples and spectral sequences
+    Description
+        Text
+            The idea is to encode the action as a module for a ring.
+            
+            As a basic first example, suppose we have two QQ[x]-modules, $X$ and $Y$, two submodules
+            $A \subseteq X$ and $B \subseteq Y$, and a map $g : X \to Y$ with $g(A) \subseteq B$.
+            
+            Fix some other QQ[x]-module W.  Applying Hom(W,-), we obtain two long exact sequences in Ext
+            
+            $0 \to Hom(W,A) \to Hom(W,X) \to Hom(W,X/A) \to Ext^1(W,A) \to \cdots $
+            
+            $0 \to Hom(W,B) \to Hom(W,Y) \to Hom(W,Y/B) \to Ext^1(W,B) \to \cdots $
+            
+            and a downwards map induced by $g$ that forms a commuting ladder.
+            
+            The pages @ TO "Exact couples for Tor and Ext" @ and @ TO covariantExtCouple @ explain how
+            to build each row of this ladder individually, but how can we obtain the downward maps?
+            
+            In brief, we encode the action of g by introducing a ring QQ[x][g], and use Shapiro's lemma to 
+            reformulate the same exact sequence of in terms of a covariant Ext couple over this larger ring.
+            
+            In slightly more detail: we replace W with an appropriate QQ[x][g]-module W', and 
+            replace X, Y, A, B with a single QQ[x][t][g]-module M encoding their comparison maps, and then
+            call covariantExtCouple(W',M).
+        Example
+            R = QQ[x]
+            S = R[t][g]
+            declareGenerators(S,{a=>{0,0,3},b=>{0,1,1},c=>{1,0,2},d=>{1,1,0}})
+            M = cospan(x^13*a,x^15*b,x^6*c,x^8*d,g*a-x*c,g*b-x*d,t*a-x^2*b,t*c-x^2*d)
+            isHomogeneous M
+    SeeAlso
+        "Exact couples for Tor and Ext"
+///
+
 TEST ///
 S = QQ[s, t, u]; -- TODO: this won't work over ZZ
 R = S[x, y, z];
@@ -3661,28 +3701,31 @@ restart
 needsPackage "ExactCouples"
 R = QQ[x]
 S = R[t][g]
-declareGenerators(S,{a=>{0,0,3},b=>{0,1,1},c=>{1,0,1},d=>{1,1,0}})
-M = cospan(x^13*a,x^15*b,x^7*c,x^8*d,g*a-x^2*c,g*b-x*d,t*a-x^2*b,t*c-x*d)
+declareGenerators(S,{a=>{0,0,3},b=>{0,1,1},c=>{1,0,2},d=>{1,1,0}})
+M = cospan(x^13*a,x^15*b,x^6*c,x^8*d,g*a-x*c,g*b-x*d,t*a-x^2*b,t*c-x^2*d)
 isHomogeneous M
 {A,B,C,D} = (deg -> prune evaluateInDegree({deg#0},evaluateInDegree({deg#1},M))) \ ({0,0},{1,0},{0,1},{1,1})
-
 W = R^1/(R_0^10)
-netList table({Ext^0,Ext^1},{A,B,C,D},(F,V)->prune F(W,V))
-
 AB = prune evaluateInDegree({0},M)
 coupleAB = covariantExtCouple(W,AB)
-excerptCouple({-2,2},4,coupleAB)
-
 CD = prune evaluateInDegree({1},M)
 coupleCD = covariantExtCouple(W,CD)
-excerptCouple({-2,2},4,coupleCD)
-
-M' = restackModule({1,3,2},M) -- fails. Finally time to fix restackings
--- gives non-homogenoeus
-
-
+--M' = restackModule({1,3,2},M) -- fails. Finally time to fix restackings
+-- gives non-homogenoeus; hand-prepare below
+phi = map(R[g][t],S,DegreeMap=>deg->deg_{1,0,2})
+M' = phi ** M
+isHomogeneous M'
 couple = covariantExtCouple(extensionInDegree({0},coefficientRing ring M',W),M')
+excerptCouple({-2,2},4,coupleAB)
+excerptCouple({-2,2},4,coupleCD)
 excerptCouple({-2,2},4,couple)
+
+
+
+
+
+
+
 
 couple' = restackModule({1,3,2},couple)
 coupleAB' = evaluateInDegree({0},couple')
