@@ -1624,7 +1624,7 @@ doc ///
             
             $\cdots \to H^p A \to H^p B \to H^p C(m) \to H^{p+1} A \to \cdots$
             
-            The output module M encodes this sequence as follows:
+            The output module M is bigraded, and encodes this sequence as follows:
             
             $\cdots \to M_{\{1,2p\}} \to M_{\{-1,2p+2\}} \to M_{\{0,2p+2\}} \to M_{\{1,2p+2\}} \to \cdots $
             
@@ -1653,7 +1653,7 @@ doc ///
         The source and target of m must be homogeneous, and m itself must be degree-preserving.  If the variable
         d has degree different from 1, then the other degrees are adjusted to match d.
         
-        The output module is usually not concentrated in the three columns of interest indicated above.
+        The output module usually has nonzero entries outside of the three columns of interest indicated above.
         This is because we compute M by building a natural exact couple associated to m, and other nonzero 
         entries appear organically.
     SeeAlso
@@ -2070,12 +2070,12 @@ doc ///
             $A' \subseteq A$, which is induced by the identity, is a degree 0 map; in contrast,
             the projection $A / (ker f) \to A'$, which is induced by $f$, has the same degree
             as $f$ itself.  This forces the inverse map $A' \to A / ker(f)$ to have degree $-deg(f)$.
-
+            
             If we had taken A' to be the coimage of f instead of the image, 
             this would have resulted in different degrees.  So either of these conventions
             would have an assymetry: an unjustified preference for image or coimage.
-
-            Our convention avoids this assymetry by averaging: we place A' exactly halfway between
+            
+            We use neither convention.  Instead, we place A' exactly halfway between
             (image f) and (coimage f).  This has the effect of giving the comparison
             maps $A \to A' \to A$ the same degree, namely, $(degree f)/2$.  (This division-by-two
             accounts for the requirement in @ TO expectCoupleRing @ that the degree of $f$ be even.)
@@ -3530,10 +3530,13 @@ doc ///
             three functions.  Specifically, we
             explain how to use a graded R[t]-module in place of a filtered module.  
             
-            The idea is to replace a sequence of inclusions with a general sequence of maps.  In place 
-            of the associated graded, whose homology usually makes up the first page, we use mapping cones.  
+            The idea is to replace a sequence of inclusions with a general sequence of maps.  
+            The first page then consists of the homology of mapping cones, which play the role
+            of the associated graded.   
             If the variable t acts by inclusions, the mapping cone is quasi-isomorphic to the
-            associated graded, so this really is a generalization.
+            associated graded, and we recover the filtered case.
+            
+            {\bf How to use the R[t] versions}
             
             The schematic for using these generalized versions: replace the "submods" argument, which is
             an increasing list of submodules of a fixed R-module, with a "seqmod" argument which 
@@ -3631,6 +3634,7 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- TODO: explain algorithms for (co/contra)variantExtCouple and TorCouple
 -- 
 -- TODO: long exact sequence of a triple documentation example
+-- TODO: snake lemma doc using ker = Tor_1 and a couple
 -- TODO: map of filtered modules gives induced map on LES "functoriality" page for docs
 -- TODO: better links in docs
 -- TODO: explain external, internal degrees, and how to use evaluateInDegree to obtain a 
@@ -3640,6 +3644,9 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- TODO: highlight Ext and Tor couples in docs.
 -- TODO: longExactSequence probably has doc errors, and anyhow should be rewritten
 -- TODO: test unit-counit formulas for the adjunctions
+-- TODO: spell check docs
+
+-- TODO: flatten module should accept a function instead of a permutation
 
 -- surj of exact couples has exact kernel
 -- at chain level, any map of chain sequence modules has a cone, also a chain sequence module
@@ -3650,11 +3657,60 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- if A->B->C->A[1]->B[1] is an exact sequence of chain complexes, then it induces a long 
 -- exact sequence in homology.
 
--- TODO: sequence modules allow any degrees. So... must allow throughout.  Currently failing
--- for triangle rings somewhere.
-
 restart
 needsPackage "ExactCouples"
+R = QQ[x]
+S = R[t][g]
+declareGenerators(S,{a=>{0,0,3},b=>{0,1,1},c=>{1,0,1},d=>{1,1,0}})
+M = cospan(x^13*a,x^15*b,x^7*c,x^8*d,g*a-x^2*c,g*b-x*d,t*a-x^2*b,t*c-x*d)
+isHomogeneous M
+{A,B,C,D} = (deg -> prune evaluateInDegree({deg#0},evaluateInDegree({deg#1},M))) \ ({0,0},{1,0},{0,1},{1,1})
+
+W = R^1/(R_0^10)
+netList table({Ext^0,Ext^1},{A,B,C,D},(F,V)->prune F(W,V))
+
+AB = prune evaluateInDegree({0},M)
+coupleAB = covariantExtCouple(W,AB)
+excerptCouple({-2,2},4,coupleAB)
+
+CD = prune evaluateInDegree({1},M)
+coupleCD = covariantExtCouple(W,CD)
+excerptCouple({-2,2},4,coupleCD)
+
+M' = restackModule({1,3,2},M) -- fails. Finally time to fix restackings
+-- gives non-homogenoeus
+
+
+couple = covariantExtCouple(extensionInDegree({0},coefficientRing ring M',W),M')
+excerptCouple({-2,2},4,couple)
+
+couple' = restackModule({1,3,2},couple)
+coupleAB' = evaluateInDegree({0},couple')
+excerptCouple({-2,2},4,coupleAB')
+excerptCouple({-2,2},4,coupleAB)
+
+
+AB = prune evaluateInDegree({0},restackModule({1,3,2},M))
+CD = prune evaluateInDegree({1},restackModule({1,3,2},M))
+
+ABcouple = covariantExtCouple(W,map(R[t],ring AB)**AB)
+excerptCouple({0,2},2,ABcouple)
+
+
+
+table({1,2,3},{1,2,3},(x,y)->x*y)
+
+
+phi = map((QQ[x])[g,t,Degrees=>{{0,1},{1,0}}],R)
+xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
+xyplot(0..1,0..1,phi**M)
+
+W' = extensionInDegree({0},coefficientRing R,W)
+Ext^1(W',evaluateInDegree({0},M))
+
+
+
+
             R = QQ[x]
             X = R^1 / x^9
             submods = apply(5,k->image map(X,,{{x^(8-2*k)}}));
