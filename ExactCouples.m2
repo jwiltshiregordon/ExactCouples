@@ -3687,18 +3687,30 @@ doc ///
             We give a similar example for @ TO contravariantExtCouple @, bearing in mind that this function
             operates on a cofiltration (surjections instead of inclusions) when its second argument is a module.
             See @ TO "Exact couples for Tor and Ext" @ for this way of using contravariantExtCouple.
+            
+            In order to maintain finite generation, we may only ask for functoriality for a finite extension.  
+            It is only possible to ask about a finite number of morphisms anyway, so this is not a real
+            restriction.  In the following example, we use the ring R[g]/g^100 for this reason.
         Example
             erase(symbol x); erase(symbol y);
-            R = QQ[z]; S = R[g][t]; declareGenerators(S,{x=>{0,0,5},m=>{1,0,5},y=>{0,1,0},n=>{1,1,0}});
-            M = cospan(z^6*x,z^3*m,z^10*y,z^7*n,g*x-z^5*y,g*m-z^5*n,t*x-m,t*y-n,t*m,t*n); isHomogeneous M
+            R = QQ[z]; S = (R[g]/g^100)[t]; declareGenerators(S,{x=>{0,0,5},y=>{0,1,0}});
+            M = cospan(z^6*x,z^3*t*x,z^10*y,z^7*t*y,g*x-z^5*y,t^2*x,t^2*y); isHomogeneous M
             eid = prune @@ evaluateInDegree; (dt, dg) = degree \ (S_0, S_1);
-            {A,X,B,Y} = (deg -> prune eid({deg#1},eid({deg#0},M))) \ ({0,0},dt,dg,dt+dg);
-            netList {{A, X}, {B, Y}}
-            Y = R^1 / (R_0^10);
-            Y' = extensionInDegree({0}, coefficientRing S, Y)
+            {A,B,C,D} = (deg -> prune eid({deg#1},eid({deg#0},M))) \ ({0,0},dt,dg,dt+dg);
+            netList {{A, B}, {C, D}}
+            Y = R^1 / (R_0^7);
+            Y' = extensionInDegree({-99}, coefficientRing S, Y)
             couple = prune contravariantExtCouple(M,Y')
-            expectExactCouple couple
-            excerptCouple({-2,0},4,couple)
+            --restack by hand
+            Q = (R[j_1,k_1,Degrees=>{{1,-1},{0,2}}])[g]/g^100
+            phi = map(Q,ring couple,{j_1,k_1,g,z},DegreeMap=>deg->deg_{2,0,1,3})
+            C = phi ** couple
+            C0 = evaluateInDegree({0},C)
+            expectExactCouple C0
+            C1 = evaluateInDegree({-1},C)
+            expectExactCouple C1
+            excerptCouple({-2,0},4,C0)
+            excerptCouple({-2,0},4,C1)
     SeeAlso
         "Exact couples for Tor and Ext"
 ///
@@ -3784,162 +3796,48 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 
 restart
 needsPackage "ExactCouples"
-R = QQ[z][g]/g^100
-declareGenerators(R,{x=>{0,5},y=>{1,0}})
+            R = QQ[z]; S = (R[g]/g^100)[t]; declareGenerators(S,{x=>{0,0,5},y=>{0,1,0}});
+            M = cospan(z^6*x,z^3*t*x,z^10*y,z^7*t*y,g*x-z^5*y,t^2*x,t^2*y); isHomogeneous M
+            eid = prune @@ evaluateInDegree; (dt, dg) = degree \ (S_0, S_1);
+            {A,B,C,D} = (deg -> prune eid({deg#1},eid({deg#0},M))) \ ({0,0},dt,dg,dt+dg);
+            netList {{A, B}, {C, D}}
+            Y = R^1 / (R_0^7);
+            Y' = extensionInDegree({-99}, coefficientRing S, Y)
+            couple = prune contravariantExtCouple(M,Y')
+            --restack by hand
+            Q = (R[j_1,k_1,Degrees=>{{1,-1},{0,2}}])[g]/g^100
+            phi = map(Q,ring couple,{j_1,k_1,g,z},DegreeMap=>deg->deg_{2,0,1,3})
+            C = phi ** couple
+            C0 = evaluateInDegree({0},C)
+            expectExactCouple C0
+            C1 = evaluateInDegree({-1},C)
+            expectExactCouple C1
+            excerptCouple({-2,0},4,C0)
+            excerptCouple({-2,0},4,C1)
+            
+
+
+
+
+R = QQ[z][g,Degrees=>{-1}]/g^100
+declareGenerators(R,{x=>{0,5},y=>{-1,0}})
 X = cospan(z^6*x,z^10*y,g*x-z^5*y)
 isHomogeneous X
-A = image map(X,,matrix {z^3*x,z^7*y})
-isHomogeneous A
 declareGenerators(coefficientRing R,{w=>{0}})
 Y = cospan(z^10*w)
-Y' = extensionInDegree({-99},R,Y)
+Y' = extensionInDegree({99},R,Y)
 eid = prune @@ evaluateInDegree
 
 (prune Ext^0(eid({0},X),Y),eid({0},Ext^0(X,Y')))
-(prune Ext^0(eid({1},X),Y),eid({-1},Ext^0(X,Y')))
+(prune Ext^0(eid({-1},X),Y),eid({1},Ext^0(X,Y')))
 
 (prune Ext^1(eid({0},X),Y),eid({0},Ext^1(X,Y')))
-(prune Ext^1(eid({1},X),Y),eid({-1},Ext^1(X,Y')))
+(prune Ext^1(eid({-1},X),Y),eid({1},Ext^1(X,Y')))
+
+contravariantExtCouple(X,Y')
 
 
 
-
-R = QQ[z][g]
-declareGenerators(R,{x=>{0,5},y=>{1,0}})
-X = cospan(z^6*x,z^10*y,g*x-z^5*y)
-isHomogeneous X
-A = image map(X,,matrix {z^3*x,z^7*y})
-isHomogeneous A
-Y = (coefficientRing R)^1
-Y' = extensionInDegree({0},R,Y)
-couple = contravariantExtCouple({A,X},Y')
-excerptCouple({0,0},4,couple)
-prune Ext^0(A,Y')
-prune Ext^1(A,Y')
-prune Ext^2(A,Y')
-
-prune Ext^0(X,Y')
-prune Ext^1(X,Y')
-prune Ext^2(X,Y')
-
-
---Y' = extensionInDegree({0},R,Y)
-declareGenerators(R,{w=>{0,0}})
-Y' = cospan(z*w)
-eid = prune @@ evaluateInDegree
-
-
-
-
-
-
-R = QQ[z][g]
-declareGenerators(R,{x=>{0,5},y=>{1,0}})
-X = cospan(z^6*x,z^10*y,g*x-z^5*y)
-Y = declareGenerators(coefficientRing R,{w=>{0}})
-isHomogeneous X
-isHomogeneous Y
-couple = contravariantExtCouple(X,Y)
-
-
-
-
-R' = (QQ[z,Degrees=>{{-1}}])[g]
-phi = map(R',R,DegreeMap=>deg->{deg_0,-deg_1})
-eid = prune @@ evaluateInDegree
-rX = chainModule res (phi ** X)
-S = ring rX
-Y' = extensionInDegree({-1},S,extensionInDegree({0},R,Y))
-hm = Hom(rX, Y')
-
-eid({-1},eid({0},hm))
-eid({0},eid({0},hm))
-
-
-
-
-
-theta = (flattenRing S)#1
-xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
-xyplot(-1..3,-3..3,hm)
-
-
-
-
-
-
-
-
-T = QQ[z][g]
-declareGenerators(T,{x=>{0,5},y=>{1,0}})
-seqmod = cospan(z^6*x,z^10*y,g*x-z^5*y)
-Y = declareGenerators(coefficientRing T,{w=>{0}})
-
-
-
-
-C = QQ[z][d,g,Degrees=>{{1,0},{0,1}}]/d^2
-phi = map(C,S)
-isHomogeneous phi
-xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
-xyplot(-1..3,-3..3,phi**hm)
-
-
-
---Y = cospan(z^10*w)
-flattenModule := m -> ((flattenRing ring m)#1) ** m;
-rX = flattenModule chainModule res flattenModule X
-S = ring rX
-phi = map(S, ring Y, DegreeMap=>deg->{0,0}|deg)
-
-Y' = phi ** Y
-hm = Hom(rX, Y')
-
-ans = prune Ext^1(coker S_0, hm)
-eid = prune @@ evaluateInDegree
-
-O = QQ[z][d,g,Degrees=>{{1,0},{0,1}}]/d^2
-psi = map(O,S,DegreeMap=>deg->deg_{0,1,2})
-
-couple = exactCouple(psi**aans)
-xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
-xyplot(-5..5,-5..5,couple)
-
-apply(5,i->eid({0},eid({i},psi**aans)))
-apply(5,i->Ext^i(eid({0},X),Y))
-apply(5,i->eid({1},eid({i},ans)))
-apply(5,i->Ext^i(eid({1},X),Y))
-
-
-Ext^1(eid({0},X),Y)
-
-
-
-
-R = QQ[z][g]
-declareGenerators(R,{x=>{0,5},y=>{1,0}})
-X = cospan(z^6*x,z^10*y,g*x-z^5*y)
-isHomogeneous X
-A = image map(X,,matrix {z^3*x,z^7*y})
-isHomogeneous A
-Y = (coefficientRing R)^1
---Y' = extensionInDegree({0},R,Y)
-declareGenerators(R,{w=>{0,0}})
-Y' = cospan(z*w)
-eid = prune @@ evaluateInDegree
-
-(prune Ext^0(eid({0},X),Y),eid({0},Ext^0(X,Y')))
-(prune Ext^0(eid({1},X),Y),eid({1},Ext^0(X,Y')))
-
-(prune Ext^1(eid({0},X),Y),eid({0},Ext^1(X,Y')))
-(prune Ext^1(eid({1},X),Y),eid({1},Ext^1(X,Y')))
-
-
---Y = cospan(z^100*w)
-couple = contravariantExtCouple({A,X},Y)
-expectExactCouple couple
-excerptCouple({-2,0},4,couple)
-contravariantExtLES(4,X,A,Y)
 
 
             R = QQ[z]; S = R[g][t, Degrees=>{{-1}}]; declareGenerators(S,{x=>{0,0,5},y=>{0,1,0}});
