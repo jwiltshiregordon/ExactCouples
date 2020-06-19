@@ -24,7 +24,7 @@ export {"applyEntrywise",
   "evaluateInDegree",
   "extensionInDegree",
   "evaluateInDegreeLaw", "extensionInDegreeLaw", "distinguishedTriangleLaw",
-  "expectChainRing", "expectCoupleRing", "expectTriangleRing",
+  "expectChainRing", "expectCoupleRing", "expectTriangleRing","expectSequenceRing",
   "chainModuleHomology",
   "toChainComplex",
   "triangleRing", "distinguishedTriangle",
@@ -1053,7 +1053,7 @@ canonicalFiltration(Ring, Module) := Module => (Q, M) -> (
 -- algorithm:
 -- Left Kan extend Y to the sequence ring, and then right Kan to chain ring.
 -- call the resulting thing Y'.  
--- Take the cofiltration of (submods | {0}), and resolve by frees.  
+-- Take the cofiltration of ({0} | submods), and resolve by frees.  
 -- Call the resulting chain sequence module M.
 -- claim: exactCouple Hom(M, Y') is the correct couple (after truncating)
 -- Pf sketch: Hom(M, Y') = Hom(M, Ran Lan Y) = Hom(Res M, Lan Y).
@@ -3592,10 +3592,10 @@ doc ///
         Text
             The idea is to encode the action as a module for a ring.
             
-            As a basic first example, suppose we have two QQ[x]-modules, $X$ and $Y$, two submodules
+            As a basic first example, suppose we have two R-modules, $X$ and $Y$, two submodules
             $A \subseteq X$ and $B \subseteq Y$, and a map $g : X \to Y$ with $g(A) \subseteq B$.
             
-            Fix some other QQ[x]-module W.  Applying Hom(W,-), we obtain two long exact sequences in Ext
+            Fix some other R-module W.  Applying Hom(W,-), we obtain two long exact sequences in Ext
             
             $0 \to Hom(W,A) \to Hom(W,X) \to Hom(W,X/A) \to Ext^1(W,A) \to \cdots $
             
@@ -3606,18 +3606,99 @@ doc ///
             The pages @ TO "Exact couples for Tor and Ext" @ and @ TO covariantExtCouple @ explain how
             to build each row of this ladder individually, but how can we obtain the downward maps?
             
-            In brief, we encode the action of g by introducing a ring QQ[x][g], and use Shapiro's lemma to 
+            In brief, we encode the action of g by introducing a ring R[g], and use Shapiro's lemma to 
             reformulate the same exact sequence of in terms of a covariant Ext couple over this larger ring.
             
-            In slightly more detail: we replace W with an appropriate QQ[x][g]-module W', and 
-            replace X, Y, A, B with a single QQ[x][t][g]-module M encoding their comparison maps, and then
+            In slightly more detail: we replace W with an appropriate R[g]-module W', and 
+            replace X, Y, A, B with a single R[g][t]-module M encoding their comparison maps, and then
             call covariantExtCouple(W',M).
+            
+            {\bf A small example}
+            
+            Set R = $\QQ[z]$, and build the commuting square
+        CannedExample
+            |   A - - t - -> X
+            |   |            |
+            |   g            g
+            |   |            |
+            |   v            v
+            |   B - - t - -> Y
+        Text
+            by giving a presentation over the ring R[g][t], placing A in bidegree \{0,0}.  The example square
+            we have in mind:
+        CannedExample
+            |  cokernel {3} | x13 | - x^2 -> cokernel {1} | x15 |
+            |           |                             |
+            |           x                             x
+            |           |                             |
+            |           v                             v
+            |  cokernel {2} | x6 |  - x^2 -> cokernel {0} | x8 |
+        Text
+            Building it is a matter of naming generators, specifying degrees, and imposing relations.
         Example
-            R = QQ[x]
-            S = R[t][g]
-            declareGenerators(S,{a=>{0,0,3},b=>{0,1,1},c=>{1,0,2},d=>{1,1,0}})
-            M = cospan(x^13*a,x^15*b,x^6*c,x^8*d,g*a-x*c,g*b-x*d,t*a-x^2*b,t*c-x^2*d)
-            isHomogeneous M
+            R = QQ[z]; S = R[g][t]; declareGenerators(S,{a=>{0,0,3},x=>{1,0,1},b=>{0,1,2},y=>{1,1,0}});
+            M = cospan(z^13*a,z^15*x,z^6*b,z^8*y,g*a-z*b,g*x-z*y,t*a-z^2*x,t*b-z^2*y); isHomogeneous M
+            eid = prune @@ evaluateInDegree; (dt, dg) = degree \ (S_0, S_1);
+            {A,X,B,Y} = (deg -> prune eid({deg#1},eid({deg#0},M))) \ ({0,0},dt,dg,dt+dg);
+            netList {{A, X}, {B, Y}}
+        Text
+            We also need another module W.
+        Example
+            W = R^1 / (R_0^10);
+        Text
+            Since R[g] is projective as an R-module, Shapiro's lemma applies, and Ext can be computed
+            over R[g] if we replace W with its extension.
+        Example
+            W' = extensionInDegree({0}, coefficientRing S, W)
+        Text
+            And now we can build the couple.
+        Example
+            couple = prune covariantExtCouple(W',M)
+            expectExactCouple couple
+        Text
+            To view the long exact sequence, we use @ TO excerptCouple @.
+        Example
+            excerptCouple({-2,2},4,couple)
+        Text
+            Note that each entry in this long exact sequence is still an R[g]-module.  
+            This is by design!  The long exact ladder is now encoded as an exact sequence 
+            of R[g]-modules whose degree 0 part and degree 1 part make up the two exact 
+            rows, 
+            and where the action of g gives the ladder's rungs.
+            
+            {\bf Interpreting the output}
+            
+            As always, relative groups appear in the middle column.  So we expect, for example, the bottom nonzero
+            entry in the middle column to encodes Hom(W,X/A), Hom(W,Y/B), and the action
+            of g.  Following the degree conventions laid out in @ TO covariantExtCouple @, this entry can
+            be computed as follows.
+        Example
+            relHom = eid({0,2},couple)
+        Text
+            The first column of this matrix gives a relation that specified the action of g.  Since 
+            -z * relHom_0 + g*relHom_1 = 0, we see that g acts by multiplication by z.  We may verify that
+            relHom has the expected values in degrees 0 and 1.
+        Example
+            eid({0},relHom)
+            Hom(W,coker map(X,A,{{z^2}}))
+            eid({1},relHom)
+            Hom(W,coker map(Y,B,{{z^2}}))
+        Text
+            We give a similar example for @ TO contravariantExtCouple @, bearing in mind that this function
+            operates on a cofiltration (surjections instead of inclusions) when its second argument is a module.
+            See @ TO "Exact couples for Tor and Ext" @ for this way of using contravariantExtCouple.
+        Example
+            erase(symbol x); erase(symbol y);
+            R = QQ[z]; S = R[g][t]; declareGenerators(S,{x=>{0,0,5},m=>{1,0,5},y=>{0,1,0},n=>{1,1,0}});
+            M = cospan(z^6*x,z^3*m,z^10*y,z^7*n,g*x-z^5*y,g*m-z^5*n,t*x-m,t*y-n,t*m,t*n); isHomogeneous M
+            eid = prune @@ evaluateInDegree; (dt, dg) = degree \ (S_0, S_1);
+            {A,X,B,Y} = (deg -> prune eid({deg#1},eid({deg#0},M))) \ ({0,0},dt,dg,dt+dg);
+            netList {{A, X}, {B, Y}}
+            Y = R^1 / (R_0^10);
+            Y' = extensionInDegree({0}, coefficientRing S, Y)
+            couple = prune contravariantExtCouple(M,Y')
+            expectExactCouple couple
+            excerptCouple({-2,0},4,couple)
     SeeAlso
         "Exact couples for Tor and Ext"
 ///
@@ -3686,7 +3767,11 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- TODO: test unit-counit formulas for the adjunctions
 -- TODO: spell check docs
 
+-- TODO: evaluateInDegree should check # and degree length first because if you do it wrong
+--       you get a meaningless error at the moment
+
 -- TODO: flatten module should accept a function instead of a permutation
+-- TODO: toChainComplex can sometimes return modules over inconsistent base rings?
 
 -- surj of exact couples has exact kernel
 -- at chain level, any map of chain sequence modules has a cone, also a chain sequence module
@@ -3699,6 +3784,201 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 
 restart
 needsPackage "ExactCouples"
+R = QQ[z][g]/g^100
+declareGenerators(R,{x=>{0,5},y=>{1,0}})
+X = cospan(z^6*x,z^10*y,g*x-z^5*y)
+isHomogeneous X
+A = image map(X,,matrix {z^3*x,z^7*y})
+isHomogeneous A
+declareGenerators(coefficientRing R,{w=>{0}})
+Y = cospan(z^10*w)
+Y' = extensionInDegree({-99},R,Y)
+eid = prune @@ evaluateInDegree
+
+(prune Ext^0(eid({0},X),Y),eid({0},Ext^0(X,Y')))
+(prune Ext^0(eid({1},X),Y),eid({-1},Ext^0(X,Y')))
+
+(prune Ext^1(eid({0},X),Y),eid({0},Ext^1(X,Y')))
+(prune Ext^1(eid({1},X),Y),eid({-1},Ext^1(X,Y')))
+
+
+
+
+R = QQ[z][g]
+declareGenerators(R,{x=>{0,5},y=>{1,0}})
+X = cospan(z^6*x,z^10*y,g*x-z^5*y)
+isHomogeneous X
+A = image map(X,,matrix {z^3*x,z^7*y})
+isHomogeneous A
+Y = (coefficientRing R)^1
+Y' = extensionInDegree({0},R,Y)
+couple = contravariantExtCouple({A,X},Y')
+excerptCouple({0,0},4,couple)
+prune Ext^0(A,Y')
+prune Ext^1(A,Y')
+prune Ext^2(A,Y')
+
+prune Ext^0(X,Y')
+prune Ext^1(X,Y')
+prune Ext^2(X,Y')
+
+
+--Y' = extensionInDegree({0},R,Y)
+declareGenerators(R,{w=>{0,0}})
+Y' = cospan(z*w)
+eid = prune @@ evaluateInDegree
+
+
+
+
+
+
+R = QQ[z][g]
+declareGenerators(R,{x=>{0,5},y=>{1,0}})
+X = cospan(z^6*x,z^10*y,g*x-z^5*y)
+Y = declareGenerators(coefficientRing R,{w=>{0}})
+isHomogeneous X
+isHomogeneous Y
+couple = contravariantExtCouple(X,Y)
+
+
+
+
+R' = (QQ[z,Degrees=>{{-1}}])[g]
+phi = map(R',R,DegreeMap=>deg->{deg_0,-deg_1})
+eid = prune @@ evaluateInDegree
+rX = chainModule res (phi ** X)
+S = ring rX
+Y' = extensionInDegree({-1},S,extensionInDegree({0},R,Y))
+hm = Hom(rX, Y')
+
+eid({-1},eid({0},hm))
+eid({0},eid({0},hm))
+
+
+
+
+
+theta = (flattenRing S)#1
+xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
+xyplot(-1..3,-3..3,hm)
+
+
+
+
+
+
+
+
+T = QQ[z][g]
+declareGenerators(T,{x=>{0,5},y=>{1,0}})
+seqmod = cospan(z^6*x,z^10*y,g*x-z^5*y)
+Y = declareGenerators(coefficientRing T,{w=>{0}})
+
+
+
+
+C = QQ[z][d,g,Degrees=>{{1,0},{0,1}}]/d^2
+phi = map(C,S)
+isHomogeneous phi
+xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
+xyplot(-1..3,-3..3,phi**hm)
+
+
+
+--Y = cospan(z^10*w)
+flattenModule := m -> ((flattenRing ring m)#1) ** m;
+rX = flattenModule chainModule res flattenModule X
+S = ring rX
+phi = map(S, ring Y, DegreeMap=>deg->{0,0}|deg)
+
+Y' = phi ** Y
+hm = Hom(rX, Y')
+
+ans = prune Ext^1(coker S_0, hm)
+eid = prune @@ evaluateInDegree
+
+O = QQ[z][d,g,Degrees=>{{1,0},{0,1}}]/d^2
+psi = map(O,S,DegreeMap=>deg->deg_{0,1,2})
+
+couple = exactCouple(psi**aans)
+xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
+xyplot(-5..5,-5..5,couple)
+
+apply(5,i->eid({0},eid({i},psi**aans)))
+apply(5,i->Ext^i(eid({0},X),Y))
+apply(5,i->eid({1},eid({i},ans)))
+apply(5,i->Ext^i(eid({1},X),Y))
+
+
+Ext^1(eid({0},X),Y)
+
+
+
+
+R = QQ[z][g]
+declareGenerators(R,{x=>{0,5},y=>{1,0}})
+X = cospan(z^6*x,z^10*y,g*x-z^5*y)
+isHomogeneous X
+A = image map(X,,matrix {z^3*x,z^7*y})
+isHomogeneous A
+Y = (coefficientRing R)^1
+--Y' = extensionInDegree({0},R,Y)
+declareGenerators(R,{w=>{0,0}})
+Y' = cospan(z*w)
+eid = prune @@ evaluateInDegree
+
+(prune Ext^0(eid({0},X),Y),eid({0},Ext^0(X,Y')))
+(prune Ext^0(eid({1},X),Y),eid({1},Ext^0(X,Y')))
+
+(prune Ext^1(eid({0},X),Y),eid({0},Ext^1(X,Y')))
+(prune Ext^1(eid({1},X),Y),eid({1},Ext^1(X,Y')))
+
+
+--Y = cospan(z^100*w)
+couple = contravariantExtCouple({A,X},Y)
+expectExactCouple couple
+excerptCouple({-2,0},4,couple)
+contravariantExtLES(4,X,A,Y)
+
+
+            R = QQ[z]; S = R[g][t, Degrees=>{{-1}}]; declareGenerators(S,{x=>{0,0,5},y=>{0,1,0}});
+            M = cospan(z^6*x,z^3*t*x,z^10*y,z^7*t*y,g*x-z^5*y,t^2*x,t^2*y); isHomogeneous M
+            
+            eid = prune @@ evaluateInDegree; (dt, dg) = degree \ (S_0, S_1);
+            {A,X,B,Y} = (deg -> prune eid({deg#1},eid({deg#0},M))) \ ({0,0},dt,dg,dt+dg);
+            netList {{A, X}, {B, Y}}
+            Y = R^1 / (R_0^10);
+            Y' = extensionInDegree({0}, coefficientRing S, Y)
+            couple = prune contravariantExtCouple(M,Y')
+            expectExactCouple couple
+            excerptCouple({-2,0},4,couple)
+
+phi = map(R[g,t,Degrees=>{{0,1},{-1,0}}],S)
+xyplot := (a,b,mm)->netList reverse table(toList b,toList a,(j,i)->prune evaluateInDegree({i,j},mm));
+xyplot(-2..2,-2..2,phi**M)
+xyplot(-5..5,-5..5,couple)
+
+-- covariantExtCouple functoriality
+            R = QQ[z]; S = R[g][t]; declareGenerators(S,{a=>{0,0,3},x=>{1,0,1},b=>{0,1,2},y=>{1,1,0}});
+            M = cospan(z^13*a,z^15*x,z^6*b,z^8*y,g*a-z*b,g*x-z*y,t*a-z^2*x,t*b-z^2*y); isHomogeneous M
+            eid = prune @@ evaluateInDegree; (dt, dg) = degree \ (S_0, S_1);
+            {A,X,B,Y} = (deg -> prune eid({deg#1},eid({deg#0},M))) \ ({0,0},dt,dg,dt+dg);
+            netList {{A, X}, {B, Y}}
+            W = R^1 / (R_0^10);
+            W' = extensionInDegree({0}, coefficientRing S, W)
+            couple = prune covariantExtCouple(W',M)
+            expectExactCouple couple
+
+
+
+
+
+
+
+
+
+
 R = QQ[x]
 S = R[t][g]
 declareGenerators(S,{a=>{0,0,3},b=>{0,1,1},c=>{1,0,2},d=>{1,1,0}})
