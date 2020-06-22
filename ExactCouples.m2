@@ -3601,7 +3601,7 @@ doc ///
             
             $0 \to Hom(W,B) \to Hom(W,Y) \to Hom(W,Y/B) \to Ext^1(W,B) \to \cdots $
             
-            and a downwards map induced by $g$ that forms a commuting ladder.
+            and downwards maps induced by $g$ that give a commuting ladder.
             
             The pages @ TO "Exact couples for Tor and Ext" @ and @ TO covariantExtCouple @ explain how
             to build each row of this ladder individually, but how can we obtain the downward maps?
@@ -3627,12 +3627,12 @@ doc ///
             by giving a presentation over the ring R[g][t], placing A in bidegree \{0,0}.  The example square
             we have in mind:
         CannedExample
-            |  cokernel {3} | x13 | - x^2 -> cokernel {1} | x15 |
+            |  cokernel {3} | z13 | - z^2 -> cokernel {1} | z15 |
             |           |                             |
-            |           x                             x
+            |           z                             z
             |           |                             |
             |           v                             v
-            |  cokernel {2} | x6 |  - x^2 -> cokernel {0} | x8 |
+            |  cokernel {2} | z6 |  - x^2 -> cokernel {0} | z8 |
         Text
             Building it is a matter of naming generators, specifying degrees, and imposing relations.
         Example
@@ -3668,41 +3668,119 @@ doc ///
             
             {\bf Interpreting the output}
             
-            As always, relative groups appear in the middle column.  So we expect, for example, the bottom nonzero
-            entry in the middle column to encodes Hom(W,X/A), Hom(W,Y/B), and the action
-            of g.  Following the degree conventions laid out in @ TO covariantExtCouple @, this entry can
-            be computed as follows.
+            As an example, we focus on the bottom nonzero entry in the middle column:
         Example
             relHom = eid({0,2},couple)
         Text
-            The first column of this matrix gives a relation that specified the action of g.  Since 
-            -z * relHom_0 + g*relHom_1 = 0, we see that g acts by multiplication by z.  We may verify that
-            relHom has the expected values in degrees 0 and 1.
-        Example
-            eid({0},relHom)
-            Hom(W,coker map(X,A,{{z^2}}))
-            eid({1},relHom)
-            Hom(W,coker map(Y,B,{{z^2}}))
+            The degree \{0,2} comes from the conventions explained at @ TO covariantExtCouple @, which 
+            also explains that relHom, when expanded along
+            its g action, should look like this:
+        CannedExample
+            |   Hom(W,X/A)
+            |       |
+            |       g
+            |       |
+            |       v
+            |   Hom(W,Y/B)
         Text
-            We give a similar example for @ TO contravariantExtCouple @, bearing in mind that this function
-            operates on a cofiltration (surjections instead of inclusions) when its second argument is a module.
-            See @ TO "Exact couples for Tor and Ext" @ for this way of using contravariantExtCouple.
+            By evaluating in degrees 0 and 1, we verify that relHom has these expected values.
+        Example
+            (eid({0},relHom), Hom(W,coker map(X,A,{{z^2}})))
+            (eid({1},relHom), Hom(W,coker map(Y,B,{{z^2}})))
+        Text
+            We can also compute the action of g on relHom in these degrees:
+        Example
+            eid({1}, relHom ** matrix {{g}})
+        Text
+            {\bf Contravariant functoriality}
             
-            In order to maintain finite generation, we may only ask for functoriality for a finite extension.  
-            It is only possible to ask about a finite number of morphisms anyway, so this is not a real
-            restriction.  In the following example, we use the ring R[g]/g^100 for this reason.
+            We give a similar example for @ TO contravariantExtCouple @, evaluating on a cofiltration
+            (surjections instead of inclusions).  
+            See @ TO "Exact couples for Tor and Ext" @ for more details on this way of 
+            using contravariantExtCouple.
+            
+            Start with a commuting square of R-modules
+        CannedExample
+            |   X - - t - ->> C
+            |   |             |
+            |   g             g
+            |   |             |
+            |   v             v
+            |   Y - - t - ->> D
+        Text
+            For convenience, set A = ker(t : X - -> C) and B = ker(t : Y - -> D).  If Z is some other 
+            module, we have a ladder
+        CannedExample
+            CannedExample
+            |   0 - - -> Hom(C,Z) - - -> Hom(X,Z) - - -> Hom(A,Z) - - -> Ext^1(C,Z) - - -> ...
+            |   |            |               |               |                 |
+            |   g            g               g               g                 g
+            |   |            |               |               |                 |
+            |   v            v               v               v                 v
+            |   0 - - -> Hom(D,Z) - - -> Hom(Y,Z) - - -> Hom(B,Z) - - -> Ext^1(D,Z) - - -> ...
+        Text
+            To use Shapiro's lemma in this setting, we would like to replace the R-module Z with an
+            R[g]-module Z' that captures the action of g on these Ext groups.  Such a Z' exists, but
+            it is usually not finitely generated.  In this case, Z' would have a copy of Z in
+            every non-positive degree.
+            
+            In order to maintain finite generation, we replace $R[g]$ with a quotient ring $R[g]/g^n$
+            for some $n$ large enough to accommodate the maps we care about.  (In our case, we have 
+            a two-row ladder, so $R[g]/g^2$ suffices.  If we had other action maps, a similar truncation 
+            trick would work for larger rings $R[g,h,...]$.)
+            
+            Using the ring $R[g]/g^n$, we may take
+        CannedExample
+            Z' = extensionInDegree({-n+1},Z)
+        Text
+            since this module is isomorphic to the right Kan extension of Z to the ring $R[g]/g^n$.
+        
+            {\bf A small example}
+            
+            Set $R=\QQ[z]$, and build the commuting square
+        CannedExample
+            |  cokernel {5} | z6 |  - - ->> cokernel {5} | z3 |
+            |           |                             |
+            |           z5                            z5
+            |           |                             |
+            |           v                             v
+            |  cokernel {0} | z10 | - - ->> cokernel {0} | z7 |
+        Text
+            As indicated above, since we only care about the map induced by the matrix 
+        CannedExample
+            {0} | g |
+        Text
+            and not the action of g in other degrees, we may take n=2 since this number exceeds
+            the row- and column-degrees of this matrix.
         Example
             erase(symbol x); erase(symbol y);
-            R = QQ[z]; S = (R[g]/g^100)[t]; declareGenerators(S,{x=>{0,0,5},y=>{0,1,0}});
+            n = 2;
+            R = QQ[z]; S = (R[g]/g^n)[t]; declareGenerators(S,{x=>{0,0,5},y=>{0,1,0}});
             M = cospan(z^6*x,z^3*t*x,z^10*y,z^7*t*y,g*x-z^5*y,t^2*x,t^2*y); isHomogeneous M
             eid = prune @@ evaluateInDegree; (dt, dg) = degree \ (S_0, S_1);
-            {A,B,C,D} = (deg -> prune eid({deg#1},eid({deg#0},M))) \ ({0,0},dt,dg,dt+dg);
-            netList {{A, B}, {C, D}}
-            Y = R^1 / (R_0^7);
-            Y' = extensionInDegree({-99}, coefficientRing S, Y)
-            couple = prune contravariantExtCouple(M,Y')
+            {X,C,Y,D} = (deg -> prune eid({deg#1},eid({deg#0},M))) \ ({0,0},dt,dg,dt+dg);
+            netList {{X, C}, {Y, D}}
+        Text
+            Set Z to be $\QQ[z]/z^7$, and build the coinduced/Hom/right-Kan-extension module Z'
+        Example
+            Z = R^1 / (R_0^7);
+            Z' = extensionInDegree({-n+1}, coefficientRing S, Z)
+        Text
+            We are now ready to build the couple using the larger ring.
+        Example
+            couple = prune contravariantExtCouple(M,Z')
+            excerptCouple({-2,0},4,couple)
+        Text
+            It may be alarming to see non-zero entries in positions that appear at the point in 
+            the sequence that should hold Ext^3.  Fortunately, these entries disappear after
+            evaluation at the two degrees \{0} and \{-1}.  (The degrees are negated because of
+            contravariance.  Alternatively, we could have set the degree of g to be -1).
+            
+            To check this, we restack and evaluate
+            to see both rows.
+        Example
             --restack by hand
-            Q = (R[j_1,k_1,Degrees=>{{1,-1},{0,2}}])[g]/g^100
+            Q = (R[j_1,k_1,Degrees=>{{1,-1},{0,2}}])[g]/g^n
             phi = map(Q,ring couple,{j_1,k_1,g,z},DegreeMap=>deg->deg_{2,0,1,3})
             C = phi ** couple
             C0 = evaluateInDegree({0},C)
@@ -3711,6 +3789,13 @@ doc ///
             expectExactCouple C1
             excerptCouple({-2,0},4,C0)
             excerptCouple({-2,0},4,C1)
+        Text
+            We can verify by recomputing these two sequences directly.
+        Example
+            A = image map(X,,{{z^3}});
+            B = image map(Y,,{{z^7}});
+            contravariantExtLES(4,X,A,Z)
+            contravariantExtLES(4,Y,B,Z)
     SeeAlso
         "Exact couples for Tor and Ext"
 ///
