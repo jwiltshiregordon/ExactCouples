@@ -1231,6 +1231,28 @@ doc ///
 
 doc ///
     Key
+        expectSequenceRing
+        (expectSequenceRing,Ring)
+    Headline
+        accepts rings of the form R[t]
+    Usage
+        expectSequenceRing Q
+    Inputs
+        Q:Ring
+    Consequences
+        Item
+            causes an error if Q is not of the form R[t]
+    Description
+        Text
+            Specifically, Q should have exactly one generator over
+            its coefficient ring.
+        Example
+            Q = QQ[t];
+            expectSequenceRing Q
+///
+
+doc ///
+    Key
         expectChainRing
         (expectChainRing,Ring)
     Headline
