@@ -10,7 +10,7 @@ newPackage(
        },
       HomePage => "https://sites.google.com/wisc.edu/jwg/home",
       Headline => "spectral sequences by Massey's method of exact couples",
-  AuxiliaryFiles => false, -- set to true if package comes with auxiliary files
+  AuxiliaryFiles => true, -- set to true if package comes with auxiliary files
       DebuggingMode => true,     -- set to true only during development
   PackageImports => {"Elimination"}
       )
@@ -47,32 +47,27 @@ exportMutable {}
 -- we need to use rawBasis
 debug Core
 
-load "./Code/Utility.m2"
-load "./Code/LawUtility.m2"
-load "./Code/EvaluationAdjunction.m2"
-load "./Code/RingBuilders.m2"
-load "./Code/Expectations.m2"
-load "./Code/Conversions.m2"
-load "./Code/TriangleAdjunction.m2"
-load "./Code/LES.m2"
-load "./Code/Restack.m2"
-load "./Code/Couples.m2"
-load "./Code/SpectralSequences.m2"
-load "./Code/contravariantExtCouple.m2"
-load "./Code/covariantExtCouple.m2"
-load "./Code/TorCouple.m2"
-load "./Code/Deprecated.m2"
+load "./ExactCouples/Utility.m2"
+load "./ExactCouples/LawUtility.m2"
+load "./ExactCouples/EvaluationAdjunction.m2"
+load "./ExactCouples/RingBuilders.m2"
+load "./ExactCouples/Expectations.m2"
+load "./ExactCouples/Conversions.m2"
+load "./ExactCouples/TriangleAdjunction.m2"
+load "./ExactCouples/LES.m2"
+load "./ExactCouples/Restack.m2"
+load "./ExactCouples/Couples.m2"
+load "./ExactCouples/SpectralSequences.m2"
+load "./ExactCouples/contravariantExtCouple.m2"
+load "./ExactCouples/covariantExtCouple.m2"
+load "./ExactCouples/TorCouple.m2"
+load "./ExactCouples/Deprecated.m2"
 
 beginDocumentation()
 
-load "./Code/Documentation.m2"
-load "./Code/AdjunctionTests.m2"
+load "./ExactCouples/Documentation.m2"
+load "./ExactCouples/AdjunctionTests.m2"
 end--
-
--- Here place M2 code that you find useful while developing this
--- package.  None of it will be executed when the file is loaded,
--- because loading stops when the symbol "end" is encountered.
-
 
 check ExactCouples
 
@@ -114,6 +109,29 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 
 restart
 needsPackage "ExactCouples"
+R = QQ[d]/d^2;
+            M = coker map(R^{-1,-1,-1,-1,-1,0,0,0,0},R^{-1,-1,-1,-2,-2,-2,-2,-2},
+                {{0,0,0,d,0,0,0,0},{0,0,0,0,d,0,0,0},{0,0,0,0,0,d,0,0},
+                 {0,0,0,0,0,0,d,0},{0,0,0,0,0,0,0,d},{-4*d,4*d,4*d,0,0,0,0,0},
+                 {5*d,0,0,0,0,0,0,0},{0,5*d,0,0,0,0,0,0},{0,0,5*d,0,0,0,0,0}});
+            N = coker map(R^{-1,-1,0,0,0,1,1},R^{0,-1,-1,-2,-2},
+                {{0,0,0,d,0},{0,0,0,0,d},{0,0,-4*d,0,0},{0,d,0,0,0},
+                 {0,0,3*d,0,0},{0,0,0,0,0},{d,0,0,0,0}});
+            f = map(N, M, {{1,1,1,1,1,0,0,0,0},{1,1,1,1,1,0,0,0,0},{d,d,d,d,d,-14,-12,4,4},
+                           {0,0,0,0,0,1,1,1,1},{0,0,0,0,0,3,3,3,3},{0,0,0,0,0,d,d,d,0},
+                           {0,0,0,0,0,0,0,0,0}});
+            LES = longExactSequence f;
+            expectExactCouple LES;
+            excerptLES(0,2,LES)
+
+
+
+
+
+
+
+
+
 needsPackage "NoetherNormalization"
 loadPackage "Dmodules"
 needsPackage "TestIdeals"

@@ -87,6 +87,9 @@ sequenceModule(Ring, List) := (Q, L) -> (
     tar := directSum({Q^{}} | rows);
     src := directSum({Q^{}} | cols);
     -- why does matrix only work on maps between free modules?
+    if not isHomogeneous map(tar, src, matrix ents) then (
+        error "how did this happen?";
+        );
     coker map(tar, src, matrix ents)
     )
 
