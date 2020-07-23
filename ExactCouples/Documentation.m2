@@ -5,6 +5,7 @@ doc ///
     Headline
         spectral sequences by Massey's method of exact couples
     SeeAlso
+        "Encoding diagrams as modules"
         "Conventions and first examples"
         "Bockstein spectral sequence"
         "Serre spectral sequence in homology"
@@ -2231,7 +2232,8 @@ doc ///
         induced maps between couples and spectral sequences
     Description
         Text
-            The idea is to encode the action as a module for a ring.
+            The exact couples described in @ TO "Exact couples for Tor and Ext" @ are functorial in
+            a sense that we explain here.
 
             As a basic first example, suppose we have two R-modules, $X$ and $Y$, two submodules
             $A \subseteq X$ and $B \subseteq Y$, and a map $g : X \to Y$ with $g(A) \subseteq B$.
@@ -2247,10 +2249,14 @@ doc ///
             The pages @ TO "Exact couples for Tor and Ext" @ and @ TO covariantExtCouple @ explain how
             to build each row of this ladder individually, but how can we obtain the downward maps?
 
-            In brief, we encode the action of g by introducing a ring R[g], and use Shapiro's lemma to
-            reformulate the same exact sequence of in terms of a covariant Ext couple over this larger ring.
-
-            In slightly more detail: we replace W with an appropriate R[g]-module W', and
+            In brief, we encode the action of g by introducing a ring R[g] and reformulate the ladder
+            as a long exact sequence over this larger ring.  Each vertical rung becomes a snippet of a graded
+            R[g]-module (since there are two rows, we only care about g-degrees 0 and 1).  So the final
+            output is a long exact sequence of R[g]-modules recording the two sequences in degrees 0 and
+            1 and the map as multiplication by g.
+            
+            Shapiro's lemma allows us to compute this new sequence in terms of a single covariant Ext couple 
+            over R[g].  Specifically, we replace W with an appropriate R[g]-module W', and
             replace X, Y, A, B with a single R[g][t]-module M encoding their comparison maps, and then
             call covariantExtCouple(W',M).
 
@@ -2352,12 +2358,12 @@ doc ///
             For convenience, set A = ker(t : X - -> C) and B = ker(t : Y - -> D).  If Z is some other
             module, we have a ladder
         CannedExample
-            |   0 - - -> Hom(C,Z) - - -> Hom(X,Z) - - -> Hom(A,Z) - - -> Ext^1(C,Z) - - -> ...
+            |   0 - - -> Hom(D,Z) - - -> Hom(Y,Z) - - -> Hom(B,Z) - - -> Ext^1(D,Z) - - -> ...
             |   |            |               |               |                 |
             |   g            g               g               g                 g
             |   |            |               |               |                 |
             |   v            v               v               v                 v
-            |   0 - - -> Hom(D,Z) - - -> Hom(Y,Z) - - -> Hom(B,Z) - - -> Ext^1(D,Z) - - -> ...
+            |   0 - - -> Hom(C,Z) - - -> Hom(X,Z) - - -> Hom(A,Z) - - -> Ext^1(C,Z) - - -> ...
         Text
             To use Shapiro's lemma in this setting, we would like to replace the R-module Z with an
             R[g]-module Z' that captures the action of g on these Ext groups.  Such a Z' exists, but
@@ -2441,3 +2447,188 @@ doc ///
     SeeAlso
         "Exact couples for Tor and Ext"
 ///
+
+doc ///
+    Key
+        "Encoding diagrams as modules"
+    Headline
+        Building graded modules with specified modules in certain degrees, and with specified action maps
+    Description
+        Text
+            Many algorithms in computer algebra accept as input a finite commuting diagram of modules.  
+            This can pose a challenge to programmers, since specifying such a diagram can be unwieldy.
+            For example, to input a commuting cube, a user could specify twelve maps in a list... but...
+            these maps come without any preferred ordering, which makes any convention hard to remember,
+            and moreover, the programmer will be forced to include
+            many compatibility checks in order to supply useful error messages.
+            
+            This package takes the following approach, which we illustrate in the case of a commuting
+            square (a cube would be similar).
+            
+            Let R be the base ring, and build a new ring
+        CannedExample
+            S = R[f,g,Degrees=>{{1,0},{0,1}}]
+        Text
+            A graded S-module is an infinite grid of R-modules connected by maps induced by multiplication
+            by the variables f and g.  In particular, it encodes an infinite number of commuting squares!
+            To specify a single commuting square, we restrict attention to the four bidegrees \{0,0\}, \{1,0\}, 
+            \{0,1\}, and \{1,1\}.  (We could ask that the module vanish away from these degrees, but in
+            practice it is more efficient to just say "we don't care what happens in other degrees".)
+            
+            {\bf Internal and external degrees}
+            
+            Some terminology, since the ring R may itself have some grading.  We call this grading 
+            "internal" since it happens inside the coefficients.  The
+            variables f and g have internal degree zero, even though their external degrees are \{1,0} and
+            \{0,1} respectively.  When building a ring, the Degrees option specifies external degrees.  Suppose
+            that R has degree length three so that deg(1_R) = \{0,0,0}, for example.  We have then
+        CannedExample
+            deg(f) = {1,0,0,0,0}
+            deg(g) = {0,1,0,0,0}
+        Text
+            The first two coordinates are the external degree, and the last three are internal.  To obtain
+            this information about a ring, you can use @ TO internalDegreeIndices @ and 
+            @ TO externalDegreeIndices @.  For example:
+        Example
+            R = QQ[x,y,Degrees=>{{1,2,3},{4,5,6}}]
+            S = R[f,g,Degrees=>{{1,0},{0,1}}]
+            internal = internalDegreeIndices S
+            external = externalDegreeIndices S
+        Text
+            Later, given a multidegree, it is easy to find the internal and external degrees
+        Example
+            deg = {2,3,4,5,6}
+            deg_internal
+            deg_external
+        Text
+            We generally wish to accommodate a wide range of coefficient rings R, which in particular means
+            we accommodate any number of internal degrees, including towers of rings where the coefficients
+            themselves have coefficients, etc.  In such cases, all degrees that are not external count as
+            internal.
+            
+            {\bf Example: encoding a commuting square}
+            
+            In this example, we take R=QQ[z].
+        Example
+            R = QQ[z]
+            S = R[f,g,Degrees=>{{1,0},{0,1}}]
+        Text
+            We wish to encode a commuting square with the
+            general layout
+        CannedExample
+            |   A - -g- -> B
+            |   |          |
+            |   f          f
+            |   |          |
+            |   v          v
+            |   C - -g- -> D
+        Text
+            The downward maps will be encoded by the action of f, and the rightward maps by g.  Here
+            is a particular example.
+        CannedExample
+            |  cokernel {3} | z13 | - z^2 -> cokernel {1} | z15 |
+            |           |                             |
+            |           z                             z
+            |           |                             |
+            |           v                             v
+            |  cokernel {2} | z6 |  - x^2 -> cokernel {0} | z8 |
+        Text
+            We aim to encode this commuting square as an S-module.  
+            The external degree will give
+            the position in the commuting square, and the internal degree will record the R-degree.  Then,
+            in a multidegree \{r,c,d\}, r gives the row (0 or 1 in our case), c gives the column (also
+                0 or 1), and d gives the internal degree (usual grading on R=QQ[z]).
+            
+            {\bf Declaring generators}
+            
+            We begin the process in the upper left corner, with the module
+        CannedExample
+            A = cokernel {3} | z13 |
+        Text
+            Let us name the generator of this module $a$.  Since we
+            are in the upper left corner, the external degree is \{0,0\}.  And since the generator appears
+            in R-degree 3, the internal degree is \{3\}.  In total, then, the degree of $a$ is \{0,0,3\}.
+            
+            Similarly, let $b$, $c$, and $d$ be generators with external degrees \{0,1}, \{1,0}, and \{1,1},
+            and with interal degrees 1, 2, and 0.  This information can be given to M2 using the function
+            @ TO declareGenerators @.
+        Example
+            declareGenerators(S, {a => {0,0,3}, b => {0,1,1}, c => {1,0,2}, d => {1,1,0}})
+        Text
+            We must now impose relations on these four generators so that the four modules match our intent,
+            and same for the maps.
+            
+            The first four relations come from the original descriptions of A, B, C, and D:
+        CannedExample
+            z^13*a
+            z^15*b
+             z^6*c
+             z^8*d
+        Text
+            The next four relations come from the descriptions of the four maps:
+        CannedExample
+            g*a - z^2*b
+            g*c - z^2*d
+            f*a  -  z*c
+            f*b  -  z*d
+        Text
+            The first of these, for example, forces ga = z^2b, and this is what we want since g is 
+            supposed to act by the horizontal map, which sends the generator for A to z^2 times the
+            generator for B.   With these four relations, the action of f and g is determined in 
+            the four degrees of interest.
+        Example
+            M = cospan(z^13*a, z^15*b, z^6*c, z^8*d,
+                       g*a - z^2*b, g*c - z^2*d, f*a - z*c, f*b - z*d)
+        Text
+            The module M now contains a complete description of the commuting square.
+            
+            {\bf Evaluating a module at various external degrees}
+            
+            In order to check that M is correct, we can use the function @ TO evaluateInDegree @ to
+            make sure the proper R-module lives in each of the four external degrees.
+        Example
+            netList apply(2, r -> apply(2, c -> prune evaluateInDegree({r,c}, M)))
+        Text
+            
+            {\bf Evaluating a module at a structure map}
+            
+            In order to check the action of f and g, we use another form of evaluateInDegree.
+        Example
+            prune evaluateInDegree({0,0},,g,M)
+            prune evaluateInDegree({1,0},,g,M)
+            prune evaluateInDegree({0,0},,f,M)
+            prune evaluateInDegree({0,1},,f,M)
+        Text
+            
+            {\bf Example calculation: computing kernels of cokernels}
+            
+            In order to perform calculations on a diagram encoded as above, one main strategy involves
+            changing which variables are internal and which are external.  In this example, we take
+            the cokernel of the downward maps, and then take the kernel of the induced rightward map,
+            resulting in a single R-module 
+        CannedExample
+            ker( coker(A - -g- -> B) - - -> coker(C - -g- -> D) )
+        Text
+            We want to take the cokernel of the g action map in a way that retains the action of f.  So
+            build a ring where f is an internal variable, and only g is external:
+        Example
+            S' = R[f][g]
+            phi = map(S',S,DegreeMap=>deg->deg_{1,0,2})
+            isHomogeneous phi
+            M' = phi ** M
+        Text
+            Since only g is external, we may evaluate to obtain a map of R[f]-modules, and then take its
+            cokernel:
+        Example
+            cokerf = coker evaluateInDegree({0},,g,M')
+        Text
+            Now g is gone, and f is an external variable.  We may evaluate to obtain the map on cokernels,
+            and take the kernel:
+        Example
+            ker evaluateInDegree({0},,f,cokerf)
+    SeeAlso
+        evaluateInDegree
+        cospan
+        declareGenerators
+///
+-- Towers and restacking.  Interior and exterior degrees

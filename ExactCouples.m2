@@ -41,7 +41,9 @@ export {"applyEntrywise",
   "canonicalFiltration", "expectFiltrationList",
   "contravariantExtCouple", "contravariantExtLES", "covariantExtCouple", "covariantExtLES",
   "TorCouple", "TorLES",
-  "chainModule", "mapToTriangleRing"}
+  "chainModule", "mapToTriangleRing"
+  --,"generateLaw"
+  }
 exportMutable {}
 
 -- we need to use rawBasis

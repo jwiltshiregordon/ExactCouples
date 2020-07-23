@@ -1,37 +1,14 @@
--- If R and S are rings, and if F is an exact functor
--- F : (R-mod) --> (S-mod)
--- with the property that F sends free R-modules to free S-modules,
--- then it is easy to apply F to a general M2 module if we have the 
--- following two functions:
--- 
--- degreeLaw : (R-degrees) --> (lists of S-degrees)
--- 
---             (1x1 matrices over R  )     (matrices over S)
--- entryLaw  : (encoding maps between) --> (encoding maps  )
---             (rank-1 free modules  )     (of free modules)
--- 
--- Here, degreeLaw says what happens to free modules:
---
--- F(R^{-deg}) = S^(degreeLaw deg)
---
--- and entryLaw says what happens to a 1x1 matrix m
---
--- F(m) = entryLaw(m)
--- 
--- We require that entryLaw be compatible with degreeLaw so that
--- the source and target of entryLaw(m) match degreeLaw applied
--- to the source and target.  For this reason, it is possible to
--- infer degreeLaw from R and entryLaw:
+-- This file, LawUtility.m2, is about exact functors that take R-modules
+-- to S-modules.  Such a functor is determined by its operation on free
+-- S-modules, indeed, on free S-modules of rank one.
 
---inferDegreeLaw = method()
---inferDegreeLaw(Ring, FunctionClosure) := FunctionClosure => (R, entryLaw) -> (
---    deg -> degrees target entryLaw(id_(R^{-deg}))
---    )
+-- If F : (R-mod) --> (S-mod) is exact, then let "law" be a FunctionClosure
+-- giving the operation of F on maps of free modules.  Specifically, given
+-- a Matrix m describing a map A --> B between frees, let law(m) be a Matrix
+-- describing FA --> FB (here, FA and FB need not be free modules).
 
+-- With such a law in hand, it is easy to apply F to a general M2 module:
 
--- The following code actually works for any exact F with F(free) = f.g.
--- We may compute F(Macaulay2 module) by the following 
--- easy code (which uses only entryLaw since degreeLaw is determined):
 applyLawToModule = method()
 applyLawToModule(FunctionClosure, Module) := Module => (law, M) -> (
     if M.?generators then (
@@ -50,8 +27,7 @@ applyLawToModule(FunctionClosure, Module) := Module => (law, M) -> (
     )
 
 -- As an application, we can tensor with flat modules without computing
--- a gb.  This is much faster, but it is up to the programmer to be
--- sure that the module or map is actually flat!
+-- a gb.  Of course, it is up to the programmer to be sure of flatness.
 
 tensorFlat = method()
 tensorFlat(RingMap, Module) := Module => (phi, M) -> (
@@ -70,6 +46,34 @@ tensorFlat(Module, Module) := Module => (F, M) -> (
     applyLawToModule(law, M)
     )
 
+-- Since any exact functor F : (R-mod) --> (S-mod) as above is additive,
+-- its law is actually determined by its operation on 1x1 matrices that
+-- give maps between free modules of rank one.  This restricted function
+-- is called "entryLaw".
+
+--The following function computes law from entryLaw.
+
+--generateLaw = method()
+--generateLaw(Ring, Ring, FunctionClosure) := FunctionClosure => (R, S, entryLaw) -> (
+--    m -> ( -- m should be a map of free modules
+--        if not ((isFreeModule source m) and (isFreeModule target m)) then (
+--            error "law only operates on maps of free modules";
+--            );
+--        rows := toList(0..<numgens target m);
+--        cols := toList(0..<numgens source m);
+--        degreeLaw := deg -> target entryLaw(id_(R^({-deg})));
+--        src := directSum({S^{}} | apply(degrees source m, degreeLaw));
+--        tar := directSum({S^{}} | apply(degrees target m, degreeLaw));
+--        if #rows == 0 or #cols == 0 then (
+--            return map(tar, src, {});
+--            );
+--        -- TODO: add parallelization here
+--        rawEntries := matrix for r in rows list for c in cols list entryLaw(submatrix(m, {r}, {c}));
+--        map(tar, src, sub(rawEntries, S))
+--        )
+--    )
+
+-- TODO: faster potentially to keep values on generators and compute products.
 
 -- Returns a matrix over the coefficient ring of the ring of m
 -- degreeLaw takes a multidegree to a list of multidegrees
@@ -122,5 +126,25 @@ applyLawToChainComplex(Ring, FunctionClosure, ChainComplex) := ChainComplex => (
     ret
     )
 
+-- TODO: explain how this setup makes writing tests easier
 -- TODO: general functoriality for adjointable laws
--- TODO: complete adjunction from degreeLaws, one entryLaw, and the unit or counit
+-- TODO: complete adjunction from degreeLaws, one entryLaw, and the unit or counit (degreeLaw doesn't
+-- make sense until we are in adjoint scenario)  We can go direct to law without stopping at entryLaw.
+-- choose a good size of matrix, and parallelize.
+
+-- Generate adjoint pair from unit
+
+--MatrixLaw = new Type of MutableHashTable
+--RingAdjunction = new Type of MutableHashTable
+
+-- A MatrixLaw object takes maps between free modules to maps between free modules
+
+--buildMatrixLaw = method()
+--buildMatrixLaw(Ring, Ring, FunctionClosure) := MatrixLaw => (R, S, law) ->
+
+
+
+
+--generateAdjunction = method()
+--generateAdjunction(Ring, Ring, FunctionClosure, FunctionClosure) := 
+--    Adjunction => (R, S, eta, G, 

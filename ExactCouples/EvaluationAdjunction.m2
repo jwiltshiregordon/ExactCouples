@@ -1,4 +1,3 @@
-
 -- The adjunction for evaluation in a particular degree.  As the right adjoint, we have
 -- r : (internal degrees) --> (full degrees)
 --          ideg          -->   d | ideg
@@ -26,6 +25,7 @@ evaluateInDegreeLaw(List, Ring) := FunctionClosure => (d, R) -> (
     degreeLaw := x -> apply(degrees source unitLaw x, deg -> deg_internal);
     entryLaw := m -> m * unitLaw((first degrees source m)) // unitLaw((first degrees target m));
     m -> applyEntrywise(coefficientRing R, degreeLaw, entryLaw, m)
+    --generateLaw(R, coefficientRing R, entryLaw)
     )
 
 evaluateInDegree = method()
@@ -39,10 +39,30 @@ evaluateInDegree(List, Matrix) := Matrix => (d, f) -> (
     applyLawToMatrix(law, f)
     )
 
+-- Convenience methods for evaluating at a ring element
+evaluateInDegree(List, List, RingElement, Module) := Matrix => (rowdeg, coldeg, x, M) -> (
+    zed := 0 * (internalDegreeIndices ring M);
+    evaluateInDegree(0*rowdeg, Hom(oneEntry(rowdeg | zed, coldeg | zed, x_(ring M)), M))
+    )
+
+evaluateInDegree(List, Nothing, RingElement, Module) := Matrix => (rowdeg, null, x, M) -> (
+    zed := 0 * (internalDegreeIndices ring M);
+    evaluateInDegree(0*rowdeg, Hom(oneEntry(rowdeg | zed, , x_(ring M)), M))
+    )
+
+evaluateInDegree(Nothing, List, RingElement, Module) := Matrix => (null, coldeg, x, M) -> (
+    zed := 0 * (internalDegreeIndices ring M);
+    evaluateInDegree(0*coldeg, Hom(oneEntry(, coldeg | zed, x_(ring M)), M))
+    )
+
+
+
 evaluateInDegree(List, ChainComplex) := ChainComplex => (d, C) -> (
     law := evaluateInDegreeLaw(d, ring C);
     applyLawToChainComplex(coefficientRing ring C, law, C)
     )
+
+
 
 extensionInDegreeLaw = method()
 extensionInDegreeLaw(List, Ring) := FunctionClosure => (d, R) -> (
@@ -64,3 +84,4 @@ extensionInDegree(List, Ring, Matrix) := Module => (d, E, f) -> (
     law := extensionInDegreeLaw(d, E);
     applyLawToMatrix(law, f)
     )
+

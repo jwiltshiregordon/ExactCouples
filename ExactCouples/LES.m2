@@ -1,4 +1,3 @@
-
 longExactSequence = method()
 longExactSequence(Matrix) := Module => m -> (
     C := ring m;
@@ -9,16 +8,9 @@ longExactSequence(Matrix) := Module => m -> (
     d := local d;
     f := local f;
     F := R[d, f, Degrees => {{0}|degd,{-1}|(0*degd)}] / d^2;
-    --F := R[d, f, Degrees => {{0,1},{-1,1}}]/ideal(d^2);
-    --phi := map(F,C,{d},DegreeMap => (deg -> {0} | deg));
-    --zeds := toList((degreeLength R):0);
-    --evencols := forceAction(oneEntry({1,0}|zeds,,F_1),phi**m);
     sm := sequenceModule((ring m)[f,Degrees=>{{-1}}],{m});
     sm' := map(F, ring sm, {F_1, F_0}, DegreeMap => deg -> deg) ** sm;
-    --Q := coupleRing(R, 1, getSymbol "e", getSymbol "f");
-    --F := ring sm;
-    --error "break here please";
-    exactCouple(sm' ** F^{degree(F_1)}) -- banana
+    exactCouple(sm' ** F^{degree(F_1)})
     )
 
 longExactSequence(Ring, Matrix) := Module => (Q, m) -> (
