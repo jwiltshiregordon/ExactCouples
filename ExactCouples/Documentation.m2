@@ -36,31 +36,79 @@ doc ///
     Description
         Text
         Example
-            S = QQ[s, t, u]; R = S[x, y]; m = matrix {{s*x^2+t*x*y+u*y^2}}
-            N = evaluateInDegree({4}, coker matrix {{s*x^2+t*x*y+u*y^2}})
+            S = QQ[s, t, u]; R = S[x, y]; m = matrix {{s*x^2+t*x*y+u*y^2}}; M = coker m
+            N = evaluateInDegree({4}, M)
             apply(10, i -> hilbertFunction({i}, N))
-            (F, f) = flattenRing R; apply(10, i -> hilbertFunction({4, i}, coker (f m)))
+            (F, f) = flattenRing R; apply(10, i -> hilbertFunction({4, i}, f ** M))
     SeeAlso
+        structureMap
+        extensionInDegree
+///
+
+doc ///
+    Key
+        structureMap
+        (structureMap,List,List,RingElement,Module)
+        (structureMap,List,Nothing,RingElement,Module)
+        (structureMap,Nothing,List,RingElement,Module)
+    Headline
+        computes the action of a ring element on a particular degree
+    Usage
+        structureMap(x,y,r,M)
+    Inputs
+        M:Module
+           over some ring R with coefficient ring $k$
+        x:List
+            an external R-degree
+        y:List
+            an external R-degree
+        r:RingElement
+            of degree y-x
+    Outputs
+        :Matrix
+            the $k$-linear map $M_x \to M_y$, $m \mapsto r \cdot m$
+    Description
+        Text
+            An "external" R-degree is a list of integers
+            of length equal to (degreeLength R) - (degreeLength k).
+            See @ TO "Encoding diagrams as modules" @
+            for more discussion about internal and external degrees for a ring.
+            
+            A graded R-module has a component $R_x$ in every external degree $x$, and this
+            component is a $k$-module.
+            If $r \in R$ has degree
+            $y-x$, then multiplication by $r$ gives a $k$-linear map $R_x \to R_y$.  This is the
+            map that is returned by structureMap.
+            
+            Only one of $x$ and $y$ needs to be supplied if $r$ is nonzero, since then the other
+            degree can be inferred.
+        Example
+            k = QQ[s, t, u]; R = k[x, y]; m = matrix {{s*x^2+t*x*y+u*y^2}}; M = coker m
+            phi = structureMap({4}, {7}, x^2*y, M)
+            source phi
+            target phi
+    SeeAlso
+        evaluateInDegree
         extensionInDegree
 ///
 
 
- document {
-     Key => {applyEntrywise, (applyEntrywise, Ring, FunctionClosure, FunctionClosure, Matrix)},
-     Headline => "apply a matrix-valued function to the entries of a matrix",
-     Usage => "applyEntrywise(S, degreeLaw, entryLaw, m)",
-     Inputs => {
-   "m" => Matrix => {"a homogeneous matrix over some ring R"},
-   "S" => Ring => {"the output ring"},
-   "degreeLaw" => FunctionClosure => {"a function that converts a multidegree for R ",
-                                      "to a list of multidegrees for S"},
-   "entryLaw" => FunctionClosure => {"a function that accepts a homogeneous one-by-one matrix over R and ",
-                                     "returns a matrix over S whose degrees match those determined by degreeLaw.",
-     "This function will be called on every one-by-one submatrix of m"}
-
-        },
-     Outputs => {"the block matrix obtained by replacing each entry e with the matrix entryLaw(e)"}
-     }
+-- document {
+--     Key => {applyEntrywise, (applyEntrywise, Ring, FunctionClosure, FunctionClosure, Matrix)},
+--     Headline => "apply a matrix-valued function to the entries of a matrix",
+--     Usage => "applyEntrywise(S, degreeLaw, entryLaw, m)",
+--     Inputs => {
+--   "m" => Matrix => {"a homogeneous matrix over some ring R"},
+--   "S" => Ring => {"the output ring"},
+--   "degreeLaw" => FunctionClosure => {"a function that converts a multidegree for R ",
+--                                      "to a list of multidegrees for S"},
+--   "entryLaw" => FunctionClosure => {"a function that accepts a homogeneous one-by-one matrix over R and ",
+--                                     "returns a matrix over S whose degrees match those determined by degreeLaw.",
+--     "This function will be called on every one-by-one submatrix of m"}
+--
+--        },
+--     Outputs => {"the block matrix obtained by replacing each entry e with the matrix entryLaw(e)"}
+--     }
 
 
 doc ///
