@@ -20,7 +20,7 @@ newPackage(
 export {"applyEntrywise",
   "declareGenerators", "cospan",
   "internalDegreeIndices", "externalDegreeIndices",
-  "evaluateInDegree",
+  "evaluateInDegree", "structureMap",
   "extensionInDegree",
   "evaluateInDegreeLaw", "extensionInDegreeLaw", "distinguishedTriangleLaw",
   "expectChainRing", "expectCoupleRing", "expectTriangleRing","expectSequenceRing",

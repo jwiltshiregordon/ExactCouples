@@ -40,17 +40,18 @@ evaluateInDegree(List, Matrix) := Matrix => (d, f) -> (
     )
 
 -- Convenience methods for evaluating at a ring element
-evaluateInDegree(List, List, RingElement, Module) := Matrix => (rowdeg, coldeg, x, M) -> (
+structureMap = method()
+structureMap(List, List, RingElement, Module) := Matrix => (rowdeg, coldeg, x, M) -> (
     zed := 0 * (internalDegreeIndices ring M);
     evaluateInDegree(0*rowdeg, Hom(oneEntry(rowdeg | zed, coldeg | zed, x_(ring M)), M))
     )
 
-evaluateInDegree(List, Nothing, RingElement, Module) := Matrix => (rowdeg, null, x, M) -> (
+structureMap(List, Nothing, RingElement, Module) := Matrix => (rowdeg, null, x, M) -> (
     zed := 0 * (internalDegreeIndices ring M);
     evaluateInDegree(0*rowdeg, Hom(oneEntry(rowdeg | zed, , x_(ring M)), M))
     )
 
-evaluateInDegree(Nothing, List, RingElement, Module) := Matrix => (null, coldeg, x, M) -> (
+structureMap(Nothing, List, RingElement, Module) := Matrix => (null, coldeg, x, M) -> (
     zed := 0 * (internalDegreeIndices ring M);
     evaluateInDegree(0*coldeg, Hom(oneEntry(, coldeg | zed, x_(ring M)), M))
     )

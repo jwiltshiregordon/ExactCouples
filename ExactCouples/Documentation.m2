@@ -2543,7 +2543,7 @@ doc ///
             
             We begin the process in the upper left corner, with the module
         CannedExample
-            A = cokernel {3} | z13 |
+            |  A = cokernel {3} | z13 |
         Text
             Let us name the generator of this module $a$.  Since we
             are in the upper left corner, the external degree is \{0,0\}.  And since the generator appears
@@ -2594,10 +2594,10 @@ doc ///
             
             In order to check the action of f and g, we use another form of evaluateInDegree.
         Example
-            prune evaluateInDegree({0,0},,g,M)
-            prune evaluateInDegree({1,0},,g,M)
-            prune evaluateInDegree({0,0},,f,M)
-            prune evaluateInDegree({0,1},,f,M)
+            prune structureMap({0,0},,g,M)
+            prune structureMap({1,0},,g,M)
+            prune structureMap({0,0},,f,M)
+            prune structureMap({0,1},,f,M)
         Text
             
             {\bf Example calculation: computing kernels of cokernels}
@@ -2620,12 +2620,12 @@ doc ///
             Since only g is external, we may evaluate to obtain a map of R[f]-modules, and then take its
             cokernel:
         Example
-            cokerf = coker evaluateInDegree({0},,g,M')
+            cokerg = coker structureMap({0},,g,M')
         Text
             Now g is gone, and f is an external variable.  We may evaluate to obtain the map on cokernels,
             and take the kernel:
         Example
-            ker evaluateInDegree({0},,f,cokerf)
+            ker structureMap({0},,f,cokerg)
     SeeAlso
         evaluateInDegree
         cospan
