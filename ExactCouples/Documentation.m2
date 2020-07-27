@@ -24,14 +24,158 @@ doc ///
             of $f$.  The maps of the exact couple then come from the usual long exact sequence.
             
             Since an exact couple of R-modules is itself an R-module with some extra action maps, it
-            can be considered a module for a larger ring containing variables that act by the
-            structure maps of the couple.  This observation allows us to encode exact couples as modules
+            can be considered a module for a larger ring with new variables acting by these extra maps.
+            This observation allows us to encode exact couples as modules
             and thereby compute with them using Groebner bases and other standard Macaulay2 methods.
             
             This encoding strategy works generally for commuting diagrams; 
             see @ TO "Encoding diagrams as modules" @.  It may take some time to get used to it.  One 
             benefit comes in our approach to functoriality; see @ TO "Functoriality for Tor and Ext couples" @.
             
+            {\bf Elemetary first example: solving linear equations in abelian groups}
+            
+            Suppose we are interested in solving the equation $3a_1 + 6a_2 = 0$ for pairs of elements 
+            $a_1, a_2$ drawn from an abelian group $A$.  Introduce notation for the solution set
+            
+            $GA := \{ (a_1, a_2) \in A^2 | 3a_1 + 6a_2 = 0 \}$
+            
+            We make three observations about G:
+            
+            1) There is a natural abelian group structure on $GA$
+            
+            2) If $f: A \to B$ is a map, then any solution $(a_1, a_2)$
+            for $A$ pushes along $f$ to a solution $(f(a_1), f(a_2))$ for $B$.  We call the resulting
+            induced map $Gf : GA \to GB$.  
+            In fact, $Gf$ is a group homomorphism.
+            
+            3) If $i : A \subseteq X$ is an inclusion of abelian groups, then any solution in $A$ is
+            also a solution in $X$; in other words, the map $Gi : GA \subseteq GX$ is an inclusion. 
+            In fact, the maps from 2) give an exact sequence $0 \to GA \to GX \to G(X/A)$ so that 
+            $G$ is left exact.
+            
+            Observation 3) leads to a divide-and-conquor strategy for understanding $GX$.  If $X$ is 
+            a complicated abelian group,
+            and if $A \subseteq X$ is an easier subgroup, then the exact sequence from 3) says that every
+            solution in $X$ is patched from solutions in $GA$ and $G(X/A)$.  One must bear in mind that 
+            the map $GX \to G(X/A)$ may 
+            not be surjective, so not all solutions in $X/A$ lift to solutions in $X$.  However, if we are able to
+            find generators for $I = image(G(X) \to G(X/A))$, then we can lift each of these to a solution in
+            $X$.  From these, every solution can be obtained by adding elements of $GA$.
+            
+            To assist in our understanding of $I$, we enlist the extended sequence (called (*) below)
+            
+            $0 \to GA \to GX \to G(X/A) \to (R^1G)A \to (R^1G)X \to (R^1G)(X/A) \to 0$    {\bf (*) }
+            
+            which we will construct shortly.  Then, $I = kernel(\delta : G(X/A) \to (R^1G)A)$, the kernel of the 
+            connecting homomorphism.  One theoretical benefit of the connecting homomorphism is that its
+            source and target depend only on $X/A$ and $A$.  (Of course, the values of $\delta$
+            depend in an essential way on the way $X$ is built from these two groups!)
+        
+            {\bf Description of the derived functor $R^1G$ and connecting homomorphism}
+            
+            We shall prove an isomorphism
+            
+            $(R^1G)(A) = A / \{ 3a_1 + 6a_2 | a_1, a_2 \in A \}$
+            
+            Proof:
+            
+            Let $W$ be the abelian group $\ZZ^2 / (3,6)$.  
+            The functor $G$ is naturally isomorphic to $Hom(W,-)$, so $R^1G$ is naturally 
+            isomorphic to $Ext^1(W,-)$, which can be computed from a free resolution $0 \to \ZZ \to \ZZ^2 \to W$.
+            This resolution also shows that $R^pG = 0$ for $p > 1$.
+            
+            We now describe the connecting homomorphism.
+            
+            Let $(x_1,x_2) \in X^2$ be a solution in $X/A$ so that $3x_1 + 6x_2 \in A$.  Then,
+            
+            $\delta(x_1,x_2) = 3x_1 + 6x_2 \in (R^1G)A$.
+            
+            We must check that $\delta$ does not depend on the choice of representatives.  Suppose $(x_1', x_2')$
+            represents the same solution in $X/A$.  Then $x_1' - x_1 \in A$, $x_2' - x_2 \in A$, and so
+            
+            $\delta(x_1',x_2') - \delta(x_1,x_2) = 3(x_1'-x_1) + 6(x_2'-x_2)$
+            
+            is of the form $3a_1 + 6a_2$, thereby vanishing in $(R^1G)A$.
+            
+            {\bf Multi-step filtrations}
+            
+            If $X$ is quite complicated, then subgroup $A$ may not be simple enough
+            to analyze directly.  It is natural to iterate the procedure above choosing subgroups $A' \subseteq A$,
+            and $A'' \subseteq X/A$, and continuing dyadically as needed.  It would be equivalent, and better-
+            organized, to allow ourselves a filtration by a chain of subgroups
+            
+            $A_0 \subseteq A_1 \subseteq \cdots \subseteq A_n = X$.
+            
+            We want to choose enough subgroups so that the quotients $A_q / A_{q-1}$ are not too
+            large (or are otherwise easy wrt G, for example, acyclic).  Then, we may build
+            solutions for $X$ by lifting solutions for each quotient.
+            
+            In other words, we start with information about $G(A_q/A_{q-1})$ with the goal of understanding
+            each $G(A_q) / G(A_{q-1})$.  For example, a collection of generators for these successive quotients
+            would also be a system of generators for $GX$.
+            
+            {\bf The spectral sequence}
+            
+            In proofs, it is often unnecessary to fully determine all these lifts and extensions.
+            This is because, sometimes, we can obtain enough control on the $G(A_q/A_{q-1})$ to tell us what we
+            want to know about $G(A_q) / G(A_{q-1})$.  The tool will be an exact couple, which is a 
+            generalization of the exact sequence (*) only in that it consists in this sequence for every pair 
+            $A_{q-1} \subseteq A_q$.  In order to acccommodate so many long exact sequences, and because these
+            sequences overlap, we adjust the layout of (*) to a stackable N-shaped zig-zag
+            
+        CannedExample
+               |
+               |  GX        R^1GX
+               |  ^ \        ^ \
+               |  |  \       |  \
+               |  |   \      |   \
+             0 |  |  G(X/A)  |   R^1G(X/A)
+              \|  |     \    |     \
+               \  |      \   |      \
+               |\ |       \  |       \
+               | GA       R^1GA       0
+               |
+        Text
+            resulting in a larger, more complicated-looking diagram:
+        CannedExample
+               |
+               |  .        .
+               |  :        :
+               | GA2     R1GA2     
+               |  ^\       ^\
+               |  | \      | \
+               |  |  \     |  \
+             0 |  | GA2/A1 | R1GA2/A1
+              \|  |    \   |    \
+               \  |     \  |     \
+               |\ |      \ |      \
+               | GA1     R1GA1     0
+               |  ^\       ^\
+               |  | \      | \
+               |  |  \     |  \
+             0 |  | GA1/A0 | R1GA1/A0
+              \|  |    \   |    \
+               \  |     \  |     \
+               |\ |      \ |      \
+            -  +*GA0* -  R1GA0  -  0  -   -   -   -
+               |  ^\       ^\
+               |  | \      | \
+               |  |  \     |  \
+             0 |  |  GA0   |  R1GA0
+              \|  |    \   |    \
+               \  |     \  |     \
+               |\ |      \ |      \
+               | 0        0        0
+               |
+        Text
+            Let's put coordinates on this diagram.  The entry marked *GA0* is in position (0,0).
+            The upward transition maps have bidegree (0,2), and the diagonal comparison maps
+            have bidegree (1,-1).  So the diagram is supported on degrees (x,y) where x+y is even.
+            If x and y are even, say, (x,y) = (2p,2q), we have the group $R^pG A_q$.  And if they
+            are odd, say (x,y) degree mistake!  Relative groups should be in even degree!
+            
+            If we introduce a ring R = \ZZ[e,f, Degrees=>{{1,-1},{0,2}}], then
+            the diagram becomes a graded R-module where e acts by comparisons, and f by transitions.
     SeeAlso
         "Encoding diagrams as modules"
         "Conventions and first examples"
@@ -56,13 +200,16 @@ doc ///
         M:Module
            over some ring R
         deg:List
-            an external degree for R
+            an external R-degree
     Outputs
         :Module
             the part of M sitting in degree deg, considered as a module for
             the coefficient ring of R
     Description
         Text
+            An "external" degree deg is one so that, give a degree deg' for the coefficient ring of
+            R, the concatenation (deg | deg') is a valid degree for R.  So an external degree is a list
+            of integers of length (degreeLength R) - (degreeLength coefficientRing R).
         Example
             S = QQ[s, t, u]; R = S[x, y]; m = matrix {{s*x^2+t*x*y+u*y^2}}; M = coker m
             N = evaluateInDegree({4}, M)
@@ -211,8 +358,8 @@ doc ///
             for a ring of the form R[e,f,Degrees=>\{\{1,0},\{-2,2}}]
     Description
         Text
-            Suppose $m:A \to B$, where A and B are considered cochain complexes by virtue
-            of the square-zero action of d.  Writing C(m) for the mapping cone of the map m, the long
+            Suppose $m:A \to B$ where $A$ and $B$ are both $R[d]/d^2$-modules considered as cochain complexes.
+            Writing C(m) for the mapping cone of the map m, the long
             exact sequence in cohomology takes the form
 
             $\cdots \to H^p A \to H^p B \to H^p C(m) \to H^{p+1} A \to \cdots$
@@ -280,6 +427,8 @@ doc ///
         Example
           declareGenerators(ZZ[x],{a => 1,b => 2,c => 3})
           cospan(x*a-2*b,x*b-2*c)
+    Caveat
+        This function gives an error if any of the variables already have values.
     SeeAlso
         cospan
 ///
@@ -304,7 +453,7 @@ doc ///
         Text
             Useful for building modules by generators and relations
         Example
-            declareGenerators(ZZ[x],{a => 1, b => 2, c => 3})
+            declareGenerators(ZZ[x], {a => 1, b => 2, c => 3})
             cospan(x*a-2*b,x*b-2*c)
     Caveat
         In M2, multiplication of ring elements by module elements happens on the left, so use
@@ -340,6 +489,7 @@ doc ///
             The encoding of a long exact sequence as a module is described in detail in @ TO "longExactSequence" @
         Example
             R = QQ[d]/d^2;
+            -- build two R-modules
             M = coker map(R^{-1,-1,-1,-1,-1,0,0,0,0},R^{-1,-1,-1,-2,-2,-2,-2,-2},
                 {{0,0,0,d,0,0,0,0},{0,0,0,0,d,0,0,0},{0,0,0,0,0,d,0,0},
                  {0,0,0,0,0,0,d,0},{0,0,0,0,0,0,0,d},{-4*d,4*d,4*d,0,0,0,0,0},
@@ -347,6 +497,7 @@ doc ///
             N = coker map(R^{-1,-1,0,0,0,1,1},R^{0,-1,-1,-2,-2},
                 {{0,0,0,d,0},{0,0,0,0,d},{0,0,-4*d,0,0},{0,d,0,0,0},
                  {0,0,3*d,0,0},{0,0,0,0,0},{d,0,0,0,0}});
+            -- and an interesting map N <-- M
             f = map(N, M, {{1,1,1,1,1,0,0,0,0},{1,1,1,1,1,0,0,0,0},{d,d,d,d,d,-14,-12,4,4},
                            {0,0,0,0,0,1,1,1,1},{0,0,0,0,0,3,3,3,3},{0,0,0,0,0,d,d,d,0},
                            {0,0,0,0,0,0,0,0,0}});
