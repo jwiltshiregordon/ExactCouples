@@ -111,6 +111,58 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 
 restart
 needsPackage "ExactCouples"
+R = QQ[x,y,z,t]
+m = matrix {{-y,-z,0},{x,0,-z},{0,x,y}}
+p = m - t * id_(R^3)
+Is = reverse apply(4,i->module minors(i,p))
+covariantExtCouple(coker vars R, Is)
+
+
+minors(0,p)
+minors(1,p)
+minors(2,p)
+minors(3,p)
+minors(4,p)
+
+W = coker matrix {{t}}
+prune Hom(W,M)
+prune Ext^1(W,M)
+
+
+M = coker(m - t * id_(R^3))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+R = ZZ/101[a..d];
+I = ideal(a*b-c*d, (a*c-b*d)^2);
+pd = primaryDecomposition I
+fpd = apply(reverse accumulate(intersect, pd), module)
+couple = prune contravariantExtCouple(fpd,R^1)
+plotPages((0..5,-3..3,1..5), prune @@ evaluateInDegree, couple)
+
+
+
+
 R = QQ[d]/d^2;
             M = coker map(R^{-1,-1,-1,-1,-1,0,0,0,0},R^{-1,-1,-1,-2,-2,-2,-2,-2},
                 {{0,0,0,d,0,0,0,0},{0,0,0,0,d,0,0,0},{0,0,0,0,0,d,0,0},

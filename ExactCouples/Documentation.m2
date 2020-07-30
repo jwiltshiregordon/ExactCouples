@@ -16,12 +16,19 @@ doc ///
             im(A --> A) = ker(A --> E).
             
             Every exact couple gives rise to a spectral sequence, and most spectral sequences
-            can be constructed by means of an exact couple.
+            can be constructed by means of an exact couple.  Exact couples were introduced in
             
-            This package can handle exact couples that arise in the following manner: we have a chain
-            complex of finitely generated modules $C_*$, and an endomorphism $f : C_* \to C_*$.  Then, 
+            Massey, W. (1952). Exact Couples in Algebraic Topology (Parts I and II). 
+            Annals of Mathematics, 56(2), second series, 363-396.
+            
+            This package constructs exact couples arising from a bounded chain
+            complex of finitely generated modules $C_*$ and an endomorphism $f : C_* \to C_*$.  Then, 
             we take A to be the homology of $C_*$, and E to be the homology of the mapping cone
-            of $f$.  The maps of the exact couple then come from the usual long exact sequence.
+            of $f$.  The maps of the exact couple then come from the usual long exact sequence.  
+            The resulting spectral sequence converges to the
+            homology of $C_*$.
+            For example, several standard exact sequences for Tor and Ext are of this form; see 
+            @ TO "Exact couples for Tor and Ext" @.
             
             Since an exact couple of R-modules is itself an R-module with some extra action maps, it
             can be considered a module for a larger ring with new variables acting by these extra maps.
@@ -29,154 +36,32 @@ doc ///
             and thereby compute with them using Groebner bases and other standard Macaulay2 methods.
             
             This encoding strategy works generally for commuting diagrams; 
-            see @ TO "Encoding diagrams as modules" @.  It may take some time to get used to it.  One 
+            see @ TO "Encoding diagrams as modules" @.  This style may feel unfamilar at first.  One 
             benefit comes in our approach to functoriality; see @ TO "Functoriality for Tor and Ext couples" @.
             
-            {\bf Elemetary first example: solving linear equations in abelian groups}
+            It may seem strange or useless to compute a spectral sequence converging to
+            $H_* C_*$, since in our context, it would be much easier to compute these modules directly.
+            This feeling comes from the unfortunate misconception that the purpose of a spectral sequence
+            is to compute its abutment.
             
-            Suppose we are interested in solving the equation $3a_1 + 6a_2 = 0$ for pairs of elements 
-            $a_1, a_2$ drawn from an abelian group $A$.  Introduce notation for the solution set
+            Rather, a spectral sequence is a tool for proving, and this proving is easier if you can look at 
+            examples.
+            For instance, a skillful filtration of $C_*$ could clarify its
+            homology.  Or perhaps the map $f$ is
+            the mathematical focus, and so the intricacies of the spectral sequence tell you about
+            the way iterates of $f$ interact with homology.  In either case, a spectral sequence can 
+            lead to direct, understandable proofs.
             
-            $GA := \{ (a_1, a_2) \in A^2 | 3a_1 + 6a_2 = 0 \}$
+            For the serious user of this package, there is at least one common mathematical difficulty:
             
-            We make three observations about G:
-            
-            1) There is a natural abelian group structure on $GA$
-            
-            2) If $f: A \to B$ is a map, then any solution $(a_1, a_2)$
-            for $A$ pushes along $f$ to a solution $(f(a_1), f(a_2))$ for $B$.  We call the resulting
-            induced map $Gf : GA \to GB$.  
-            In fact, $Gf$ is a group homomorphism.
-            
-            3) If $i : A \subseteq X$ is an inclusion of abelian groups, then any solution in $A$ is
-            also a solution in $X$; in other words, the map $Gi : GA \subseteq GX$ is an inclusion. 
-            In fact, the maps from 2) give an exact sequence $0 \to GA \to GX \to G(X/A)$ so that 
-            $G$ is left exact.
-            
-            Observation 3) leads to a divide-and-conquor strategy for understanding $GX$.  If $X$ is 
-            a complicated abelian group,
-            and if $A \subseteq X$ is an easier subgroup, then the exact sequence from 3) says that every
-            solution in $X$ is patched from solutions in $GA$ and $G(X/A)$.  One must bear in mind that 
-            the map $GX \to G(X/A)$ may 
-            not be surjective, so not all solutions in $X/A$ lift to solutions in $X$.  However, if we are able to
-            find generators for $I = image(G(X) \to G(X/A))$, then we can lift each of these to a solution in
-            $X$.  From these, every solution can be obtained by adding elements of $GA$.
-            
-            To assist in our understanding of $I$, we enlist the extended sequence (called (*) below)
-            
-            $0 \to GA \to GX \to G(X/A) \to (R^1G)A \to (R^1G)X \to (R^1G)(X/A) \to 0$    {\bf (*) }
-            
-            which we will construct shortly.  Then, $I = kernel(\delta : G(X/A) \to (R^1G)A)$, the kernel of the 
-            connecting homomorphism.  One theoretical benefit of the connecting homomorphism is that its
-            source and target depend only on $X/A$ and $A$.  (Of course, the values of $\delta$
-            depend in an essential way on the way $X$ is built from these two groups!)
-        
-            {\bf Description of the derived functor $R^1G$ and connecting homomorphism}
-            
-            We shall prove an isomorphism
-            
-            $(R^1G)(A) = A / \{ 3a_1 + 6a_2 | a_1, a_2 \in A \}$
-            
-            Proof:
-            
-            Let $W$ be the abelian group $\ZZ^2 / (3,6)$.  
-            The functor $G$ is naturally isomorphic to $Hom(W,-)$, so $R^1G$ is naturally 
-            isomorphic to $Ext^1(W,-)$, which can be computed from a free resolution $0 \to \ZZ \to \ZZ^2 \to W$.
-            This resolution also shows that $R^pG = 0$ for $p > 1$.
-            
-            We now describe the connecting homomorphism.
-            
-            Let $(x_1,x_2) \in X^2$ be a solution in $X/A$ so that $3x_1 + 6x_2 \in A$.  Then,
-            
-            $\delta(x_1,x_2) = 3x_1 + 6x_2 \in (R^1G)A$.
-            
-            We must check that $\delta$ does not depend on the choice of representatives.  Suppose $(x_1', x_2')$
-            represents the same solution in $X/A$.  Then $x_1' - x_1 \in A$, $x_2' - x_2 \in A$, and so
-            
-            $\delta(x_1',x_2') - \delta(x_1,x_2) = 3(x_1'-x_1) + 6(x_2'-x_2)$
-            
-            is of the form $3a_1 + 6a_2$, thereby vanishing in $(R^1G)A$.
-            
-            {\bf Multi-step filtrations}
-            
-            If $X$ is quite complicated, then subgroup $A$ may not be simple enough
-            to analyze directly.  It is natural to iterate the procedure above choosing subgroups $A' \subseteq A$,
-            and $A'' \subseteq X/A$, and continuing dyadically as needed.  It would be equivalent, and better-
-            organized, to allow ourselves a filtration by a chain of subgroups
-            
-            $A_0 \subseteq A_1 \subseteq \cdots \subseteq A_n = X$.
-            
-            We want to choose enough subgroups so that the quotients $A_q / A_{q-1}$ are not too
-            large (or are otherwise easy wrt G, for example, acyclic).  Then, we may build
-            solutions for $X$ by lifting solutions for each quotient.
-            
-            In other words, we start with information about $G(A_q/A_{q-1})$ with the goal of understanding
-            each $G(A_q) / G(A_{q-1})$.  For example, a collection of generators for these successive quotients
-            would also be a system of generators for $GX$.
-            
-            {\bf The spectral sequence}
-            
-            In proofs, it is often unnecessary to fully determine all these lifts and extensions.
-            This is because, sometimes, we can obtain enough control on the $G(A_q/A_{q-1})$ to tell us what we
-            want to know about $G(A_q) / G(A_{q-1})$.  The tool will be an exact couple, which is a 
-            generalization of the exact sequence (*) only in that it consists in this sequence for every pair 
-            $A_{q-1} \subseteq A_q$.  In order to acccommodate so many long exact sequences, and because these
-            sequences overlap, we adjust the layout of (*) to a stackable N-shaped zig-zag
-            
-        CannedExample
-               |
-               |  GX        R^1GX
-               |  ^ \        ^ \
-               |  |  \       |  \
-               |  |   \      |   \
-             0 |  |  G(X/A)  |   R^1G(X/A)
-              \|  |     \    |     \
-               \  |      \   |      \
-               |\ |       \  |       \
-               | GA       R^1GA       0
-               |
-        Text
-            resulting in a larger, more complicated-looking diagram:
-        CannedExample
-               |
-               |  .        .
-               |  :        :
-               | GA2     R1GA2     
-               |  ^\       ^\
-               |  | \      | \
-               |  |  \     |  \
-             0 |  | GA2/A1 | R1GA2/A1
-              \|  |    \   |    \
-               \  |     \  |     \
-               |\ |      \ |      \
-               | GA1     R1GA1     0
-               |  ^\       ^\
-               |  | \      | \
-               |  |  \     |  \
-             0 |  | GA1/A0 | R1GA1/A0
-              \|  |    \   |    \
-               \  |     \  |     \
-               |\ |      \ |      \
-            -  +*GA0* -  R1GA0  -  0  -   -   -   -
-               |  ^\       ^\
-               |  | \      | \
-               |  |  \     |  \
-             0 |  |  GA0   |  R1GA0
-              \|  |    \   |    \
-               \  |     \  |     \
-               |\ |      \ |      \
-               | 0        0        0
-               |
-        Text
-            Let's put coordinates on this diagram.  The entry marked *GA0* is in position (0,0).
-            The upward transition maps have bidegree (0,2), and the diagonal comparison maps
-            have bidegree (1,-1).  So the diagram is supported on degrees (x,y) where x+y is even.
-            If x and y are even, say, (x,y) = (2p,2q), we have the group $R^pG A_q$.  And if they
-            are odd, say (x,y) degree mistake!  Relative groups should be in even degree!
-            
-            If we introduce a ring R = \ZZ[e,f, Degrees=>{{1,-1},{0,2}}], then
-            the diagram becomes a graded R-module where e acts by comparisons, and f by transitions.
+            Even if a spectral sequence with finitely generated entries can be constructed
+            by means of a couple, the auxilliary data is often not finitely generated.  The author
+            of this package would be interested in any systematic method of replacing such couples
+            with finitely generated versions that recover the same spectral sequence.  If you
+            have information or ideas, please send an email!
+           
     SeeAlso
+        "Elemetary introduction: solving linear equations in abelian groups"
         "Encoding diagrams as modules"
         "Conventions and first examples"
         "Bockstein spectral sequence"
@@ -2754,4 +2639,358 @@ doc ///
         cospan
         declareGenerators
 ///
--- Towers and restacking.  Interior and exterior degrees
+
+doc ///
+    Key
+        "Elemetary introduction: solving linear equations in abelian groups"
+    Headline
+        a discussion of the equation 3x+6y=0.
+    Description
+        Text
+            Suppose we are interested in solving the equation $3a_1 + 6a_2 = 0$ for pairs of elements 
+            $a_1, a_2$ drawn from an abelian group $A$.  Introduce notation for the solution set
+            
+            $GA := \{ (a_1, a_2) \in A^2 | 3a_1 + 6a_2 = 0 \}$
+            
+            We make three observations about G:
+            
+            1) There is a natural abelian group structure on $GA$
+            
+            2) If $f: A \to B$ is a map, then any solution $(a_1, a_2)$
+            for $A$ pushes along $f$ to a solution $(f(a_1), f(a_2))$ for $B$.  We call the resulting
+            induced map $Gf : GA \to GB$.  
+            In fact, $Gf$ is a group homomorphism.
+            
+            3) If $i : A \subseteq X$ is an inclusion of abelian groups, then any solution in $A$ is
+            also a solution in $X$; in other words, the map $Gi : GA \subseteq GX$ is an inclusion. 
+            In fact, the maps from 2) give an exact sequence $0 \to GA \to GX \to G(X/A)$ so that 
+            $G$ is left exact.
+            
+            Observation 3) leads to a divide-and-conquor strategy for understanding $GX$.  If $X$ is 
+            a complicated abelian group,
+            and if $A \subseteq X$ is an easier subgroup, then the exact sequence from 3) says that every
+            solution in $X$ is patched from solutions in $GA$ and $G(X/A)$.  One must bear in mind that 
+            the map $GX \to G(X/A)$ may 
+            not be surjective, so not all solutions in $X/A$ lift to solutions in $X$.  However, if we are able to
+            find generators for $I = image(G(X) \to G(X/A))$, then we can lift each of these to a solution in
+            $X$.  From these, every solution can be obtained by adding elements of $GA$.
+            
+            To assist in our understanding of $I$, we enlist the extended sequence (called (*) below)
+            
+            $0 \to GA \to GX \to G(X/A) \to (R^1G)A \to (R^1G)X \to (R^1G)(X/A) \to 0$    {\bf (*) }
+            
+            which we will construct shortly.  (Here, $R^1G$ is an operation like $G$ in that it satisfies
+                properties 1) and 2) above.  It is known as the "first right derived functor of G".  The
+                zeroth right derived functor of $G$ is $G$ itself: $R^0G = G$)
+            
+            Then, $I = kernel(\delta : G(X/A) \to (R^1G)A)$, the kernel of the 
+            connecting homomorphism.  
+            --One theoretical benefit of the connecting homomorphism is that its
+            --source and target depend only on $X/A$ and $A$.  (Of course, the values of $\delta$
+            --depend in an essential way on the way $X$ is built from these two groups!)
+        
+            {\bf Description of the derived functor $R^1G$ and connecting homomorphism}
+            
+            By a short homological argument, we shall prove an isomorphism
+            
+            $(R^1G)(A) = A / \{ 3a_1 + 6a_2 | a_1, a_2 \in A \}$ for any abelian group $A$.
+            
+            Proof:
+            
+            Let $W$ be the abelian group $\ZZ^2 / (3,6)$.  
+            The functor $G$ is naturally isomorphic to $Hom(W,-)$, so $R^1G$ is naturally 
+            isomorphic to $Ext^1(W,-)$, which can be computed from a free resolution $0 \to \ZZ \to \ZZ^2 \to W$.
+            This resolution also shows that $R^pG = 0$ for $p > 1$.
+            
+            We now describe the connecting homomorphism.
+            
+            Let $(x_1,x_2) \in X^2$ be a solution in $X/A$ so that $3x_1 + 6x_2 \in A$.  Then, the connecting 
+            homomorphism is given by the formula
+            
+            $\delta(x_1,x_2) = 3x_1 + 6x_2 \in (R^1G)A$.
+            
+            We must check that $\delta$ does not depend on the choice of representatives.  Suppose $(x_1', x_2')$
+            represents the same solution in $X/A$.  Then $x_1' - x_1 \in A$, $x_2' - x_2 \in A$, and so
+            
+            $\delta(x_1',x_2') - \delta(x_1,x_2) = 3(x_1'-x_1) + 6(x_2'-x_2)$
+            
+            is of the form $3a_1 + 6a_2$, thereby vanishing in $(R^1G)A$.
+            
+            {\bf Multi-step filtrations}
+            
+            If $X$ is quite complicated, then subgroup $A$ may not be simple enough
+            to analyze directly.  It is natural to iterate the procedure above, choosing 
+            subgroups $A' \subseteq A$,
+            and $A'' \subseteq X/A$ to subdivide the filtration dyadically as needed.  
+            It is equivalent, and better-
+            organized, to allow ourselves a filtration by a chain of subgroups
+            
+            $A_0 \subseteq A_1 \subseteq \cdots \subseteq A_n = X$.
+            
+            We want to choose enough subgroups so that the quotients $A_q / A_{q-1}$ are not too
+            difficult.  Specifically, we assume that each $A_q / A_{q-1}$ is easy enough that we can obtain 
+            good information about the $(R^pG)(A_q / A_{q-1})$.
+            
+            Of course, we would be happier to understand the quotients $G(A_q) / G(A_{a-1})$, since from these
+            the procedure for computing $GX$ is quite clear: simply pick representatives for each group 
+            $G(A_q) / G(A_{q-1})$; then, each element of $GX$ expands uniquely as a sum of repesentatives, one 
+            drawn from each successive quotient.
+            
+            In other words, we start with information about $(R^pG)(A_q/A_{q-1})$ with the goal of understanding
+            each $G(A_q) / G(A_{q-1})$.
+            
+            {\bf The spectral sequence}
+            
+            --Sometimes, we can obtain enough control on the $(R^pG)(A_q/A_{q-1})$ to tell us what we
+            --want to know about $G(A_q) / G(A_{q-1})$.  
+            The proper tool for this is a spectral sequence, which is a sequence
+            of two-dimensional arrays ("pages") of abelian groups and maps in a certain pattern, and with certain 
+            compatibilities.  Spectral sequences can be notationally dense, but our example will remain 
+            light.
+            
+            The first page of our spectral sequence looks like this:
+            
+        CannedExample
+            page 1, with differential of degree {1, -1}:
+            +----++----+-----------------+-----------------+---+
+            |q=4 ||0   |       ...       |       ...       |0  |
+            +----++----+-----------------+-----------------+---+
+            |q=3 ||0   |    G A_3/A_2    |  R^1G A_3/A_2   |0  |
+            +----++----+-----------------+-----------------+---+
+            |q=2 ||0   |    G A_2/A_1    |  R^1G A_2/A_1   |0  |
+            +----++----+-----------------+-----------------+---+
+            |q=1 ||0   |    G A_1/A_0    |  R^1G A_1/A_0   |0  |
+            +----++----+-----------------+-----------------+---+
+            |q=0 ||0   |      G A_0      |    R^1G A_0     |0  |
+            +----++----+-----------------+-----------------+---+
+            |q=-1||0   |0                |0                |0  |
+            +----++----+-----------------+-----------------+---+
+            |    ||p=-1|p=0              |p=1              |p=2|
+            +----++----+-----------------+-----------------+---+
+        Text
+            This is a table of (R^pG)(A_q / A_{q-1}), essentially.  There are maps (not pictured) of degree \{1,-1}
+            relating the groups in the p=0 column to those in the p=1 column.  They are called differentials,
+            and their degree changes depending on the page number.  The differentials on page one are given
+            by the composite
+            
+            $D_1 : G(A_{q+1} / A_q) \to (R^1G)(A_q) \to (R^1G)(A_q / A_{q-1})$
+            
+            where the first map is the connecting homomorphism in the sequence (*) for the pair
+            $A_q \subseteq A_{q+1}$, and the second map comes from property 2) for $R^1G$.
+            
+            Note that $D_1$ squares to zero because our diagram has only two nonzero columns.  
+            The modules on page two can be computed as the homology of the differential $D_1$.
+            
+            We think of the p=0 column as containing potential
+            solutions, and the p=1 column as containing potential obstructions to solutions.  The differential's
+            job is to cancel out potential solutions with potential obstructions as appropriate, so that 
+            these elements do not appear on the next page.
+            
+            After turning the page enough times, (for an $n$-step filtration, $n$ turns is enough), the answer 
+            stabilizes to the "infinity" page, which looks like this
+        CannedExample
+            page r >> 0, with differential of degree {1, -r}:
+            +----++----+-----------------+------------------------+---+
+            |q=4 ||0   |       ...       |       ...              |0  |
+            +----++----+-----------------+------------------------+---+
+            |q=3 ||0   |  G A_3 / G A_2  |  R^1G A_3 / R^1G A_2   |0  |
+            +----++----+-----------------+------------------------+---+
+            |q=2 ||0   |  G A_2 / G A_1  |  R^1G A_2 / R^1G A_1   |0  |
+            +----++----+-----------------+------------------------+---+
+            |q=1 ||0   |  G A_1 / G A_0  |  R^1G A_1 / R^1G A_0   |0  |
+            +----++----+-----------------+------------------------+---+
+            |q=0 ||0   |      G A_0      |        R^1G A_0        |0  |
+            +----++----+-----------------+------------------------+---+
+            |q=-1||0   |0                |0                       |0  |
+            +----++----+-----------------+------------------------+---+
+            |    ||p=-1|p=0              |p=1                     |p=2|
+            +----++----+-----------------+------------------------+---+
+        Text
+            Now the p=0 column consists of actual solutions, and the p=1 column consists of hibernating 
+            obstructions that might
+            reawaken if $X$ maps somewhere else.
+            
+            To see how this might be useful, we mention some general facts about spectral sequences.  
+            First, the differential on 
+            each page always squares to zero.  Second, the next page is isomorphic to to the homology of
+            the differential on the previous page.  Consequently, any zero entry persists 
+            forever, and more generally, entries only get smaller (in the sense of subquotients) as 
+            the pages turn.
+            
+            In our example, the r=1 page is concentrated in the columns p=0,1, so every subsequent page
+            is similarly bounded; and the 
+            differential on page $r$ has degree \{1,-r}, so degree considerations ensure the square-zero
+            property.  
+            Taking homology replaces the p=0 groups with kernels and the p=1 groups with
+            cokernels.  This operation is therefore responsible for removing the extraneous solutions that 
+            may be present on the first page.  Let's try it!
+        
+            {\bf Running the spectral sequence on an example}
+            
+            Let $X$ be the abelian group with three generators $a,b,c$ and defining relations $4a=b$,
+            $4b=c$, and $4c=a$.  Let $A_0 = span(a+b+c)$, $A_1 = span(a+b+c,9a)$, and $A_2=X$.  Using the natural
+            isomorphism of $G$ and $Hom(W,-)$ mentioned earlier, we build the spectral sequence as follows:
+        Example
+            declareGenerators(ZZ, {a=>{}, b=>{}, c=>{}}); -- degrees in X are empty
+            X = cospan(4*a-b,4*b-c,4*c-a)
+            A0 = image map(X,,matrix {a+b+c})
+            A1 = image map(X,,matrix {a+b+c,9*a})
+            W = coker matrix {{3},{6}}
+            M = prune covariantExtCouple(W,{A0,A1,X});
+            plotPages((-1..2,-1..4,1..3), prune @@ evaluateInDegree, M)
+        Text
+            Some things we can conclude just from the first page:
+            
+            1) The differential on page 1 vanishes.  The only one with any potential maps from $\ZZ/7$ to
+               $\ZZ/3$, and is therefore zero.
+            
+            2) On later pages, there is only one potential nonzero differential, and it will happen 
+               (if it happens) on page 2.
+               Moreover, since $R^1GA_0$ is a simple group, this differential is either zero or surjective.
+               In either case, we have enough information to compute the order of $GX$: it will 
+               have size either $3^4 \cdot 7$ or $3^3 \cdot 7$.
+            
+            3) For degree reasons, the entries in positions (0,0) and (0,1) survive to the infinity page.
+               Practically speaking, this means that every potential solution in $G(A_1/A_0)$ lifts to a true
+               solution.
+            
+            4) We also know that $R^1GX$ is either $\ZZ/3$ or $\ZZ/3 \oplus \ZZ/3$, and this information would
+               also tell us the order of $GX$.  ($\ZZ/9$ is not possible because $R^1G$ always has exponent 3)
+            
+            5) We know that $GX$ is not cyclic because its subgroup $G(A_0)$ is not cyclic.
+            
+            Let's try to understand $GX$ by hand using this information.
+            
+            We start by finding the nine solutions in $A_0$.  This is easy, since $4(a+b+c)=a+b+c$ and so
+            $3(a+b+c)=0$.  Therefore, $A_0 \cong \ZZ/3$ and so any pair in $A_0$ solves the equation.  Explicitly,
+            setting $w=a+b+c$, we have nine solutions $(k*w,l*w) \in GA_0$ for $k,l \in \{0,1,2\}$.
+            
+            Next, by observation 3), we know that solutions in $G(A_1/A_0)$ will lift and that 
+            $G(A_1)/G(A_0) = \ZZ / 7$.  Since $A_1$ is 
+            generated by $A_0$ together with one new element, we know $A_1/A_0$ is cyclic with generator $9a$.
+            Its order must be prime to 3 because $R^1G$ vanishes on this group.  We may therefore divide 
+            the equation $3x+6y=0$ by three, obtaining $x+2y=0$ and $x=-2y$.  Taking $y=9a$ gives the solution
+            $(-18a,9a)$ in $A_1/A_0$.  The group $A_1/A_0$ is nonzero since $G(A_1/A_0) = \ZZ/7$, and thus
+            this solution is nonzero, since its second coordinate generates the nonzero cyclic group $A_1/A_0$.
+            This proves that we have found a generator for $G(A_1)/G(A_0)$, since any nonzero element generates
+            $\ZZ/7$.  
+            Observing that the solution $(-18a,9a)$
+            also works in $GA_1$, we find that we have fully computed $GA_1$: it is isomorphic
+            to $(\ZZ/3)^2 \oplus \ZZ/7$, generated by $(a+b+c,0)$, $(0,a+b+c)$, and $(-18a,9a)$.
+            
+            We could now contend with $G(X/A_1)$, which is isomorphic to $\ZZ/3 \oplus \ZZ/3$.  We know that
+            either all nine or only three of these lift to solutions in GX.
+            
+            Instead, let's compute $R^1GX$.  Since the p>1 derived functors vanish, $R^1G$ is right exact.
+            Moreover, by the general calculation, it sends $\ZZ$ to $\ZZ/3$.  This proves that $R^1G$ 
+                coincides with $- \otimes \ZZ/3$.
+            By right exactness, we may
+            apply $R^1G$ directly to
+            the presentation for $X$ to obtain a matrix over $\ZZ/3$:
+        Example
+            prune coker(map(ZZ/3,ZZ) ** (presentation X))
+        Text
+            According to this calculation, the total $\ZZ/3$-dimension of the p=1 column at the infinity 
+            page must
+            be 1.  The only way this could happen is if the differential on page 2 is surjective.
+            
+            And indeed, that is what we see on pages 2 and 3.
+            
+            (In fact, the author was aided by knowledge of pages 2 and 3 in the construction of the argument
+                above.  Knowing the answer often makes proving it easier.)
+            
+            Using this package, it is also possible to compute directly the differentials on these pages.
+            First we compute the pages as modules
+        Example
+            E1 = prune pageModule(1, D, M)
+            E2 = prune pageModule(2, D, M)
+            E3 = prune pageModule(3, D, M)
+        Text
+            Each of these modules is over a different ring.  Specifically, page $r$ is a module for 
+            $\ZZ[D_r]/(D_r)^2$ where the
+            degree of $D_r$ is \{1,-r}.
+            
+            We may compute the interesting differential on page two using the following command.
+        Example
+            prune structureMap({0,2},{1,0},D_2,E2)
+        Text
+            So we see directly that this differential is a surjection.
+            
+            {\bf A peek at the exact couple}
+            
+            One of the main headaches of a spectral sequence is that the modules and differentials on one
+            page compute the next page of modules, but not the differentials.
+            
+            However, there is another object, called an exact couple, that determines a spectral sequence 
+            but also has the property that each of its "pages" fully determines the next.  It may not be
+            true that every spectral sequence is constructed by means of an exact couple, but certainly
+            most of the common ones can.  
+            
+            An exact couple is a 
+            generalization of the exact sequence (*) only in that it consists in this sequence for every pair 
+            $A_{q-1} \subseteq A_q$.  In order to acccommodate so many long exact sequences, and because these
+            sequences overlap, we adjust the layout of (*) to a stackable N-shaped zig-zag
+        CannedExample
+            |
+            |      GX        R^1GX
+            |      ^ \        ^ \
+            |      |  \       |  \
+            |      |   \      |   \
+            | 0    |  G(X/A)  |   R^1G(X/A)
+            |  \   |     \    |     \
+            |   \  |      \   |      \
+            |    \ |       \  |       \
+            |     GA       R^1GA       0
+        Text
+            resulting in a larger, more complicated-looking diagram:
+        CannedExample
+            |      .        .
+            |      :        :
+            |     GA2     R1GA2     
+            |      ^\       ^\
+            |      | \      | \
+            |      |  \     |  \
+            | 0    | GA2/A1 | R1GA2/A1
+            |  \   |    \   |    \
+            |   \  |     \  |     \
+            |    \ |      \ |      \
+            |     GA1     R1GA1     0
+            |      ^\       ^\
+            |      | \      | \
+            |      |  \     |  \
+            | 0    | GA1/A0 | R1GA1/A0
+            |  \   |    \   |    \
+            |   \  |     \  |     \
+            |    \ |      \ |      \
+            |     GA0     R1GA0     0
+            |      ^\       ^\
+            |      | \      | \
+            |      |  \     |  \
+            | 0    | *GA0*  |  R1GA0
+            |  \   |    \   |    \
+            |   \  |     \  |     \
+            |    \ |      \ |      \
+            |     0        0        0
+        Text
+            Let's put coordinates on this diagram.  The entry marked *GA0* is in position (0,0).
+            The diagonal maps, which go downward and rightward, have degree (1,-1), and the upward maps
+            have degree (0,2).  So the diagram is supported in degrees (x,y) where x+y is even.
+            --If x and y are even, say, (x,y) = (2p,2q), we have the group $(R^pG)(A_q/A_{q-1})$.  And if they
+            --are odd, say (x,y) = (2p-1,2q+1), then we have $R^pA_q$.
+            
+            If we introduce a ring R = \ZZ[e,f, Degrees=>\{\{1,-1},\{0,2}}], then
+            the diagram becomes a graded R-module where e acts by the diagonal maps, 
+            and f acts by the upwards maps.  
+            
+            In the example above, we named this module M.  Observe that M encodes an exact couple
+            by setting $E$ to be the odd part and $A$ to be the even part.
+            The purpose of this package is to make easy the calculation of couples like $M$, their derived
+            couples, and the resulting spectral sequences.
+    SeeAlso
+        "Encoding diagrams as modules"
+        "Conventions and first examples"
+        "Bockstein spectral sequence"
+        "Serre spectral sequence in homology"
+        "Exact couples for Tor and Ext"
+        "Functoriality for Tor and Ext couples"
+///
