@@ -111,11 +111,61 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 
 restart
 needsPackage "ExactCouples"
+needsPackage "PushForward"
 R = QQ[x,y,z,t]
+m = matrix {{t^2,t*x,x^2},{t^2,t*y,y^2},{t^2,t*z,z^2}}
+filt = reverse apply({1,2,3},i->module minors(i,m))
+prune module minors(2,m)
+couple = prune TorCouple(coker vars R, filt)
+disp = (deg,E) -> prune pushFwd(map(R,QQ),evaluateInDegree(deg,E))
+plotPages((-1..4,-1..3,1..2), disp, couple)
+-- this one makes output I don't understand
+
+
+
+restart
+needsPackage "ExactCouples"
+needsPackage "PushForward"
+R = QQ[x,y,z,t]
+m = matrix {{t^2,t*x,x^2},{t^2,t*y,y^2},{t^2,t*z,z^2}}
+filt = reverse apply({1,2,3},i->module minors(i,m))
+couple = prune TorCouple(coker matrix {{t}}, filt)
+disp = (deg,E) -> prune pushFwd(map(R,QQ[x,y,z]),evaluateInDegree(deg,E))
+plotPages((-1..2,-1..4,1..2), disp, couple)
+
+
+
+restart
+needsPackage "ExactCouples"
+needsPackage "PushForward"
+R = QQ[x,y,z,t]
+m = matrix {{x,y,z},{y,x,t},{z,t,x}}
+I = minors(2,m)
+filt = reverse apply(3,k->module intersect(I,ideal(x^k)))
+couple = prune TorCouple(coker vars R, filt)
+disp = (deg,E) -> prune pushFwd(map(R,QQ),evaluateInDegree(deg,E))
+plotPages((-1..4,-1..3,1..2), disp, couple)
+
+
+
+
+S = R / det(m)
+M = coker(sub(m,S) - t * id_(S^3))
+prune Hom(coker S_3, M)
+
+Is = reverse apply(4,i->module minors(i,sub(m,S)))
+couple = prune covariantExtCouple(M ** coker t, Is)
+plotPages((0..4,0..4,1..3),prune @@ evaluateInDegree, couple)
+
+
+
+
+
+R = QQ[x,y,z]
 m = matrix {{-y,-z,0},{x,0,-z},{0,x,y}}
-p = m - t * id_(R^3)
-Is = reverse apply(4,i->module minors(i,p))
-covariantExtCouple(coker vars R, Is)
+Is = reverse apply(3,i->module minors(i,m))
+couple = prune covariantExtCouple(coker vars R, Is)
+plotPages((0..4,0..4,1..3),prune @@ evaluateInDegree, couple)
 
 
 minors(0,p)

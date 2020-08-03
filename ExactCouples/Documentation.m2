@@ -41,7 +41,7 @@ doc ///
             
             It may seem strange or useless to compute a spectral sequence converging to
             $H_* C_*$, since in our context, it would be much easier to compute these modules directly.
-            This feeling comes from the unfortunate misconception that the purpose of a spectral sequence
+            However, it is a misconception that the purpose of a spectral sequence
             is to compute its abutment.
             
             Rather, a spectral sequence is a tool for proving, and this proving is easier if you can look at 
@@ -68,6 +68,7 @@ doc ///
         "Serre spectral sequence in homology"
         "Exact couples for Tor and Ext"
         "Functoriality for Tor and Ext couples"
+        "An example of a Tor couple"
 ///
 
 
@@ -2993,4 +2994,22 @@ doc ///
         "Serre spectral sequence in homology"
         "Exact couples for Tor and Ext"
         "Functoriality for Tor and Ext couples"
+///
+
+doc ///
+    Key
+        "An example of a Tor couple"
+    Headline
+        A geometric example
+    Description
+        Text
+            This is fun!
+        Example
+            needsPackage "PushForward"
+            R = QQ[x,y,z,t]
+            m = matrix {{t^2,t*x,x^2},{t^2,t*y,y^2},{t^2,t*z,z^2}}
+            filt = reverse apply(4,i->module minors(i,m))
+            couple = prune TorCouple(coker matrix {{t}}, filt)
+            disp = (deg,E) -> prune pushFwd(map(R,QQ[x,y,z]),evaluateInDegree(deg,E))
+            plotPages((-1..2,-1..4,1..2), disp, couple)    
 ///
