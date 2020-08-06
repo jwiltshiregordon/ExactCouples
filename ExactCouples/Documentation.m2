@@ -39,6 +39,11 @@ doc ///
             see @ TO "Encoding diagrams as modules" @.  This style may feel unfamilar at first.  One 
             benefit comes in our approach to functoriality; see @ TO "Functoriality for Tor and Ext couples" @.
             
+            If this encoding makes sense, then @ TO "Conventions and first examples" @ is a good place
+            to look.
+            
+            {\bf A common complaint}
+            
             It may seem strange or useless to compute a spectral sequence converging to
             $H_* C_*$, since in our context, it would be much easier to compute these modules directly.
             However, it is a misconception that the purpose of a spectral sequence
@@ -46,11 +51,11 @@ doc ///
             
             Rather, a spectral sequence is a tool for proving, and this proving is easier if you can look at 
             examples.
-            For instance, a skillful filtration of $C_*$ could clarify its
-            homology.  Or perhaps the map $f$ is
-            the mathematical focus, and so the intricacies of the spectral sequence tell you about
-            the way iterates of $f$ interact with homology.  In either case, a spectral sequence can 
-            lead to direct, understandable proofs.
+            --For instance, a skillful filtration of $C_*$ could clarify its
+            --homology.  Or perhaps the map $f$ is
+            --the mathematical focus, and so the intricacies of the spectral sequence tell you about
+            --the way iterates of $f$ interact with homology.  In either case, a spectral sequence can 
+            --lead to direct, understandable proofs.
             
             For the serious user of this package, there is at least one common mathematical difficulty:
             
@@ -68,7 +73,7 @@ doc ///
         "Serre spectral sequence in homology"
         "Exact couples for Tor and Ext"
         "Functoriality for Tor and Ext couples"
-        "An example of a Tor couple"
+        "An exact couple associated to a Young tableau"
 ///
 
 
@@ -2461,7 +2466,7 @@ doc ///
     Key
         "Encoding diagrams as modules"
     Headline
-        Building graded modules with specified modules in certain degrees, and with specified action maps
+        building graded modules with specified modules in certain degrees, and with specified action maps
     Description
         Text
             Many algorithms in computer algebra accept as input a finite commuting diagram of modules.  
@@ -2998,18 +3003,45 @@ doc ///
 
 doc ///
     Key
-        "An example of a Tor couple"
+        "An exact couple associated to a Young tableau"
     Headline
-        A geometric example
+        a standard filling provides a filtration by monomial ideals
     Description
         Text
-            This is fun!
+            Let $\lambda$ be a partition, and let $I \subseteq R=\QQ[x,y]$ be its
+            corresponding monomial ideal.  Every standard filling of $\lambda$ provides a 
+            filtration by monomial ideals of the interval
+            
+            $I \subseteq ... \subseteq R$
+            
+            We compute the resulting homology spectral sequence for every standard tableau
+            of shape \{3,2\}, where homology means Tor(coker vars R, -).
         Example
             needsPackage "PushForward"
-            R = QQ[x,y,z,t]
-            m = matrix {{t^2,t*x,x^2},{t^2,t*y,y^2},{t^2,t*z,z^2}}
-            filt = reverse apply(4,i->module minors(i,m))
-            couple = prune TorCouple(coker matrix {{t}}, filt)
-            disp = (deg,E) -> prune pushFwd(map(R,QQ[x,y,z]),evaluateInDegree(deg,E))
-            plotPages((-1..2,-1..4,1..2), disp, couple)    
+            needsPackage "SpechtModule"
+            lambda = {3,2}
+            R = QQ[x,y,Degrees=>{{1,0},{0,1}}]
+            I = ideal apply(lambda | {0}, 0..#lambda, (k,l)->x^l*y^k)
+            boxes = flatten apply(#lambda,r->apply(lambda#r,c->(r,c)))
+            p = new Partition from lambda
+            tableaux = toListOfTableaux(standardTableaux p)
+            filts = apply(tableaux, t -> reverse apply(1 + sum lambda, k -> 
+                    module(I + ideal apply(boxes, b -> (if t_b >= k then x^(b#0)*y^(b#1) else 0_R)))))
+            disp = (deg,E) -> prune pushFwd(map(R,QQ),evaluateInDegree(deg,E))
+            for i in 0..<#tableaux do (
+                print(tableaux#i);
+                filt = filts#i;
+                couple = prune TorCouple(coker vars R, filt);
+                plotPages((-1..3,-1..6,1..(sum lambda)), disp, couple);
+                )
+        Text
+            By changing the display function, we can view degree information
+        Example
+            disp = (deg,E) -> degrees minimalPresentation evaluateInDegree(deg,E);
+            for i in 0..<#tableaux do (
+                print(tableaux#i);
+                filt = filts#i;
+                couple = prune TorCouple(coker vars R, filt);
+                plotPages((-1..3,-1..6,1..(sum lambda)), disp, couple);
+                )
 ///
