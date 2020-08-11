@@ -8,7 +8,7 @@ TorCouple(Symbol, Module, Module) := Module => (eSymbol, W, seqmod) -> (
     F := ring seqmod;
     expectSequenceRing F;
     if not (coefficientRing ring seqmod) === ring W then (
-        error("last two arguments incompatible: TorCouple(eSymbol, W, seqmod) " +
+        error("last two arguments incompatible: TorCouple(eSymbol, W, seqmod) " |
               "requires (coefficientRing ring seqmod) === ring W");
         );
     t := baseName(F_0);

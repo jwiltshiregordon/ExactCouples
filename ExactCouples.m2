@@ -111,15 +111,108 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 
 restart
 needsPackage "ExactCouples"
+R = QQ[x,y,z]
+M = module ideal(x^4+y^4+z^4)
+filt = {M, module ideal (x^4+y^4+z^4, x^3+y^3), R^1}
+for d from -3 to 3 do (
+    print("d = ", d);
+    filtd = apply(filt,m->m**R^({d}));
+    k = max({0} | apply(filtd,regularity));
+    use R;
+    W = module ideal(x^k,y^k,z^k);
+    couple = prune covariantExtCouple(W, filtd);
+    couple' = prune evaluateInDegree({0},restackModule({2,1}, couple));
+    plotPages((-1..3,-1..3,1..2),prune@@evaluateInDegree,couple');
+    );
+
+
+
+
+
+excerptLES(0,3,couple')
+
+plotPages
+
+
+regularity M
+
+
+
+restart
+needsPackage "ExactCouples"
 needsPackage "PushForward"
-R = QQ[x,y,z,t]
-m = matrix {{t^2,t*x,x^2},{t^2,t*y,y^2},{t^2,t*z,z^2}}
-filt = reverse apply({1,2,3},i->module minors(i,m))
-prune module minors(2,m)
+R = QQ[x,y, Degrees=>{{1,0},{0,1}}]
+m = matrix {{1_R,x*y^3,x^2*y^8,x^3*y,x^4*y^2,x^5*y^4,x^6*y^7,x^7*y^5,x^8*y^6}}
+sparegens = M -> image map(M,, (prune coker cover (prune M).cache.pruningMap).cache.pruningMap)
+M = image m
+viennot = reverse for i from 0 to 4 list M do M = sparegens M
+couple = prune TorCouple(coker vars R, viennot)
+disp = (deg,E) -> degrees minimalPresentation evaluateInDegree(deg,E);
+plotPages((-1..3,-1..6,1..5), disp, couple);
+
+
+
+M = prune image m
+pF = prune cokernel cover M.cache.pruningMap
+image map(image M, , pF.cache.pruningMap)
+image map(image m,, map(cover M, , cover pM.cache.pruningMap))
+
+
+restart
+needsPackage "ExactCouples"
+needsPackage "PushForward"
+needsPackage "SpechtModule"
+lambda = {3,2}
+R = QQ[x,y]
+I = ideal apply(lambda | {0}, 0..#lambda, (k,l)->x^l*y^k)
+boxes = flatten apply(#lambda,r->apply(lambda#r,c->(r,c)))
+p = new Partition from lambda
+tableaux = toListOfTableaux(standardTableaux p)
+filts = apply(tableaux, t -> reverse apply(1 + sum lambda, k -> 
+        module(I + ideal apply(boxes, b -> (if t_b >= k then x^(b#0)*y^(b#1) else 0_R)))))
+for i in 0..<#tableaux do (
+    print(tableaux#i);
+    filt = filts#i;
+    couple = prune TorCouple(coker vars R, filt);
+    --disp = (deg,E) -> prune pushFwd(map(R,QQ),evaluateInDegree(deg,E))
+    disp = (deg,E) -> sort flatten degrees minimalPresentation evaluateInDegree(deg,E);
+    plotPages((-1..3,-1..6,1..5), disp, couple);
+    )
+
+
+
+restart
+needsPackage "ExactCouples"
+needsPackage "PushForward"
+R = QQ[x,y]
+ideals = {ideal(0_R), ideal(x^4,y^4,x^2*y), ideal(x^2,y^2,x^2*y),ideal(x,y)}
+M = coker map(R^{0,-1},, {{x^3,y^4,0,0,x^2,y^2},{0,0,x^2,y^2,-x-y,2*y+7*x}})
+quos = apply(ideals, I->M /(I*M))
+inds = apply(-1+#ideals,k->inducedMap(quos#(k+1),quos#(k)))
+seq = sequenceModule(R[t],inds)
+couple = prune TorCouple(coker vars R, seq)
+--disp = (deg,E) -> prune pushFwd(map(R,QQ),evaluateInDegree(deg,E))
+disp = (deg,E) -> sort flatten degrees minimalPresentation evaluateInDegree(deg,E)
+plotPages((-1..4,-1..4,1..5), disp, couple)
+
+
+
+
+
+restart
+needsPackage "ExactCouples"
+needsPackage "PushForward"
+R = QQ[x,y]
+lambdas = {{1},{4,1,1,1},{4,4,2,1},{4,4,4,3}}
+f = lambda -> module ideal apply(lambda | {0}, 0..#lambda, (k,l)->x^k*y^l)
+filt = reverse apply(lambdas,f)
 couple = prune TorCouple(coker vars R, filt)
-disp = (deg,E) -> prune pushFwd(map(R,QQ),evaluateInDegree(deg,E))
-plotPages((-1..4,-1..3,1..2), disp, couple)
--- this one makes output I don't understand
+--disp = (deg,E) -> prune pushFwd(map(R,QQ),evaluateInDegree(deg,E))
+disp = (deg,E) -> sort flatten degrees minimalPresentation evaluateInDegree(deg,E)
+plotPages((-1..3,-1..4,1..4), disp, couple)
+
+
+
 
 
 

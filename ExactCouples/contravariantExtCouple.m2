@@ -20,7 +20,7 @@ contravariantExtCouple(Module, Module) := (seqmod, Y) -> (
 contravariantExtCouple(Symbol, Module, Module) := (eSymbol, seqmod, Y) -> (
     R := ring Y;
     if not (coefficientRing ring seqmod) === ring Y then (
-        error("last two arguments incompatible: contravariantExtCouple(eSymbol, seqmod, Y) " +
+        error("last two arguments incompatible: contravariantExtCouple(eSymbol, seqmod, Y) " |
               "requires (coefficientRing ring seqmod) === ring Y");
         );
     F := ring seqmod;
@@ -43,7 +43,7 @@ contravariantExtCouple(Symbol, Module, Module) := (eSymbol, seqmod, Y) -> (
     -- because our chain sequence module is only correct in certain degrees;
     -- we had truncated to keep it fg
     if (degree f) == 0*(degree f) then (
-        error("contravariantExtCouple(eSymbol, seqmod, Y) relies on a nonzero degree for " +
+        error("contravariantExtCouple(eSymbol, seqmod, Y) relies on a nonzero degree for " |
               "(ring seqmod)_0");
         );
     edF := externalDegreeIndices F;

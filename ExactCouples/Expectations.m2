@@ -98,9 +98,20 @@ expectCoupleRing(Ring) := Nothing => Q -> (
 expectFiltrationList = method()
 expectFiltrationList(List) := Nothing => L -> (
     if #L == 0 then (
-        error "a filtration list must contain at least one module";
+        error "a filtration list must contain at least one module or sheaf";
         );
-    if not all(#L - 1, q -> isSubset(L#q, L#(q+1))) then (
-        error "expected a list of submodules, each contained in the next";
+    if (not (instance(L#0, Module) or instance(L#0, CoherentSheaf))) then (
+        error "expected a list of either modules or sheaves";
+        );
+    if instance(L#0, Module) then ( 
+        if not all(#L - 1, q -> isSubset(L#q, L#(q+1))) then (
+            error "expected a list of submodules, each contained in the next";
+            );
+        );
+    if instance(L#0, CoherentSheaf) then (
+        --There's a problem here! isSubsheaf is not implemented
+        --if not all(#L - 1, q -> isSubsheaf(L#q, L#(q+1))) then (
+        --    error "expected a list of subsheaves, each embedding in the next";
+        --    );
         );
     );
