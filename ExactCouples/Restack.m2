@@ -63,7 +63,7 @@ restackRing(List, Ring) := RingMap => (fn, R) -> (
     perm0 := fiberflip(wts);
     perm1 := surjcable(wts, surj);
     perm2 := fiberflip(sumfibers(wts, surj));
-    perm := inversePermutation(perm2_(perm1_perm0));
+    perm := inversePermutation(perm2_(perm1_perm0)) | toList(#perm0..<(degreeLength R));
     map(S0,R,DegreeMap=>(deg -> deg_perm))
     );
 

@@ -21,11 +21,11 @@ doc ///
             Massey, W. (1952). Exact Couples in Algebraic Topology (Parts I and II). 
             Annals of Mathematics, 56(2), second series, 363-396.
             
-            This package constructs exact couples arising from a bounded chain
+            This package constructs the exact couple arising from a bounded chain
             complex of finitely generated modules $C_*$ and an endomorphism $f : C_* \to C_*$.  Then, 
             we take A to be the homology of $C_*$, and E to be the homology of the mapping cone
-            of $f$.  The maps of the exact couple then come from the usual long exact sequence.  
-            The resulting spectral sequence converges to the
+            of $f$.  The maps of the exact couple come from the usual long exact sequence, and
+            the resulting spectral sequence converges to the
             homology of $C_*$.
             For example, several standard exact sequences for Tor and Ext are of this form; see 
             @ TO "Exact couples for Tor and Ext" @.
@@ -37,10 +37,11 @@ doc ///
             
             This encoding strategy works generally for commuting diagrams; 
             see @ TO "Encoding diagrams as modules" @.  This style may feel unfamilar at first.  One 
-            benefit comes in our approach to functoriality; see @ TO "Functoriality for Tor and Ext couples" @.
+            benefit comes in our approach to functoriality; see @ TO "Functoriality for Tor and Ext couples" @,
+            @ TO "restackRing" @ and @ TO "restackModule" @.
             
-            If this encoding makes sense, then @ TO "Conventions and first examples" @ is a good place
-            to look.
+            If this encoding makes sense, then @ TO "Conventions and first examples" @ explains the specifics
+            of our approach to exact couples.
             
             {\bf A common complaint}
             
@@ -109,6 +110,8 @@ doc ///
     SeeAlso
         structureMap
         extensionInDegree
+        "Encoding diagrams as modules"
+        restackModule
 ///
 
 doc ///
@@ -403,20 +406,20 @@ doc ///
     Key
         restackRing
         (restackRing,List,Ring)
-        restackModule
-        (restackModule,List,Module)
     Headline
         changes the order in which variables were adjoined
     Usage
         restackRing(p,R)
     Inputs
         R:Ring
-            whose coefficient ring is a quotient ring, and whose coefficient ring's coefficient ring is a quotient ring, etc. for at least n levels
+            whose coefficient ring has a coefficient ring, etc, for at least n levels
         p:List
-            the desired reordering of these levels as a permutation of the list \{1..n\}
+            the desired reordering of these levels as a permutation of the list \{1..n\},
+            or more generally, a list of length n that contains
+            every number 1..m for some m <= n.
     Outputs
         :RingMap
-            from R to a new ring where the variables are adjoined in the order determined by p
+            from R to a new ring with m levels where the variables are adjoined in the order determined by p
     Description
         Text
             Here's an example restacking a ring that is four levels deep.
@@ -427,23 +430,99 @@ doc ///
             D=C[d];
             restackRing({2,3,4,1}, D)
         Text
-            Let $R=QQ[x,y,z]$, and suppose X is a cochain
-            complex of R-modules, expressed as a module for the ring R[d]/d^2.  To obtain the module in
-            cohomological degree k, evaluateInDegree({k},X) suffices.  But what if we want to evaluate
-            in *polynomial* degree k?
-
-            In order to evaluate X in polynomial
-            degree g, however, we must restack the ring.
+            The following command flattens D completely.  (The same can be accomplished with flattenRing.)
         Example
-            R = QQ[x,y,z]; E = R[d]/d^2;
-            C = coker map(E^{{0,0},{0,-2},{-1,-3}},E^{{0,-2},{-1,-6}},{{x^2+y^2+z^2,d},{-1,0},{0,-x*y*z}})
-            apply(4,k->evaluateInDegree({k},C))
-            phi = restackRing({2,1},E);
-            C' = phi**C; apply(4,g->prune evaluateInDegree({g},C'))
+            restackRing({1,1,1,1}, D)
+        Text
+            If the list is shorter than length four, then deeper levels are preserved in the coefficient ring
+        Example
+            restackRing({1,1}, D)
+        Text
+            A more complicated surjection
+        Example
+            restackRing({2,1,2,1}, D)
     Caveat
         Each stage of R may only introduce relations among the most-recent variables.  So, in the last
         example, C=B[p,q]/(p^3-2*q^3) was allowed, but C=B[p,q]/(x*p^3-2*y*q^3) would not be.
     SeeAlso
+        restackModule
+///
+
+doc ///
+    Key
+        restackModule
+        (restackModule,List,Module)
+    Headline
+        restacks the ring that acts on a module
+    Usage
+        restackModule(p,M)
+    Inputs
+        M:Module
+            whose ring has a coefficient ring, which has a coefficient ring, etc, for at least n levels
+        p:List
+            the desired reordering of these levels as a permutation of the list \{1..n\},
+            or more generally, a list of length n that contains
+            every number 1..m for some m <= n.
+    Outputs
+        :Module
+            for a new ring with m levels where the variables are adjoined in the order determined by p
+    Description
+        Text
+            Sometimes a module has multiple ways of being considered as a diagram.  For example, set 
+            
+            $A = \QQ[a]/a^2$ 
+            
+            $B = \QQ[b]/b^2$
+            
+            $AB = A[b]/b^2$
+            
+            $BA = B[a]/a^2$
+            
+            Note that $AB$-modules are the same as cochain 
+            complexes of $A$-modules.  It may sometimes be useful to recast this data as
+            a cochain complex of $B$-modules.  This is certainly possible because the rings $AB$ and
+            $BA$ are isomorphic.  In fact, the isomorphism $\phi$ between these rings can be computed with
+            @ TO restackRing @, and the present function is then computed by
+            
+            tensorFlat(phi, M)
+            
+            For example, suppose we have an exact couple of $\QQ[x,y,z]$-modules, and we wish to evaluate
+            it in degree $0$ to obtain an exact couple of $\QQ$-modules.  Let's build an example couple
+        Example
+            R = QQ[x,y,z];
+            p = y^2*z-x^3+17*z^3;
+            filt = {module ideal(p^2), module ideal(p), R^1};
+            k = max({0} | apply(filt,regularity));
+            W = module ideal(x^k,y^k,z^k);
+            couple = prune covariantExtCouple(W, filt)
+        Text
+            We wish to evaluate this couple in $(x,y,z)$-degree 0, obtaining another couple.  
+            However, the function @ TO evaluateInDegree @
+            always eliminates the outermost level of the acting ring.  So in this case, we
+            can evaluate at an external bidegree of (ring couple).  This will return one of the
+            constituent modules of the couple.  For example, the page entry E_1^\{1,2\} may
+            be computed
+        Example
+            prune evaluateInDegree(2*{1,2},couple)
+        Text
+            but this is not the sort of evaluation we want.
+            
+            In order to evaluate in $(x,y,z)$-degree 0, we must restack the module so that
+            these variables are external and the couple variables are internal.
+        Example
+            coupleRestacked = restackModule({2,1},couple)
+        Text
+            Now we may evaluate in degree zero with the desired effect.
+        Example
+            coupleEvaluated = prune evaluateInDegree({0}, coupleRestacked)
+        Text
+            From here, we easily view the spectral sequence, if we like
+        Example
+            plotPages((-1..3,-1..3,1..3), prune @@ evaluateInDegree, coupleEvaluated)
+    Caveat
+        The ring of M must be restackable: each level may only introduce relations among the most-recent variables.
+    SeeAlso
+        restackRing
 ///
 
 doc ///
@@ -2442,9 +2521,10 @@ doc ///
             to see both rows.
         Example
             --restack by hand
-            Q = (R[j_1,k_1,Degrees=>{{1,-1},{0,2}}])[g]/g^n
-            phi = map(Q,ring couple,{j_1,k_1,g,z},DegreeMap=>deg->deg_{2,0,1,3})
-            C = phi ** couple
+            --Q = (R[j_1,k_1,Degrees=>{{1,-1},{0,2}}])[g]/g^n
+            --phi = map(Q,ring couple,{j_1,k_1,g,z},DegreeMap=>deg->deg_{2,0,1,3})
+            --C = phi ** couple
+            C = restackModule({2,1},couple)
             C0 = evaluateInDegree({0},C)
             expectExactCouple C0
             C1 = evaluateInDegree({-1},C)
@@ -2459,6 +2539,8 @@ doc ///
             contravariantExtLES(4,X,A,Z)
             contravariantExtLES(4,Y,B,Z)
     SeeAlso
+        restackModule
+        "Encoding diagrams as modules"
         "Exact couples for Tor and Ext"
 ///
 
@@ -2644,6 +2726,7 @@ doc ///
         evaluateInDegree
         cospan
         declareGenerators
+        restackModule
 ///
 
 doc ///
@@ -2999,6 +3082,7 @@ doc ///
         "Serre spectral sequence in homology"
         "Exact couples for Tor and Ext"
         "Functoriality for Tor and Ext couples"
+        restackModule
 ///
 
 doc ///
