@@ -111,11 +111,143 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 
 restart
 needsPackage "ExactCouples"
-R = QQ[x,y,z]
-M = module ideal(x^4+y^4+z^4)
-filt = {M, module ideal (x^4+y^4+z^4, x^3+y^3), R^1}
+A=QQ[x,y, Degrees => {{1,2},{1,2}}]/(x^2+y^2);
+B=A[b];
+C=B[p,q]/(p^3-2*q^3);
+D=C[d];
+
+-- D = QQ[x,y][b][p,q][d]
+-- flatten would be QQ[x,y,b,p,q,d]
+-- and this would be the function 1111
+-- what would be 1122?
+-- QQ[x,y,b][p,q,d]
+-- what would be 2211?
+-- QQ[p,q,d][x,y,b]
+-- 2231 should give QQ[d][x,y,b][p,q]
+
+fn = {2,2,3,1};
+R = D;
+n = #fn;
+m = max fn;
+R0 = R;
+filt = reverse(for i from 1 to n list R0 do R0 = coefficientRing R0);
+coefs = coefficientRing first filt;
+ringInfo = S -> (
+    variables = first entries vars S;
+    external = externalDegreeIndices S;
+    vardegs = apply(variables, v -> (degree v)_external);
+    (variables, vardegs, ideal S)
+    );
+ri = apply(filt, ringInfo);
+dls = apply(ri, z -> #(first z#1));
+S0 = coefs;
+for i from 1 to m do (
+    variables = {};
+    vardegs = {};
+    ideals = {};
+    for j from 1 to n do (
+        if fn#(j-1) == i then (
+            {vs, vds, I} = ri#(j-1);
+            variables = variables | vs;
+            zedsA = if #vardegs == 0 then {} else 0 * (first vardegs);
+            zedsB = if #vds == 0 then {} else 0 * (first vds);
+            vardegs = apply(vardegs, deg -> deg | zedsB) | apply(vds, deg -> zedsA | deg);
+            ideals = ideals | {I};
+            );
+        );
+    S0 = S0[variables, Degrees=>vardegs];
+    S0 = S0 / (sum apply(ideals, I -> sub(I, S0)));
+    );
+
+batchcount = wts -> (
+    awts = {0} | accumulate(plus, {0} | wts);
+    apply(#wts, i->toList(awts#i..<(awts#(i+1))))
+    );
+
+fiberflip = wts -> (
+    flatten apply(batchcount wts, reverse)
+    );
+
+sumfibers = (wts, surj) -> (
+    apply(1 + max surj, v -> sum apply(wts, surj, (w,x) -> if x == v then w else 0))
+    );
+
+surjcable = (wts, surj) -> (
+    m = 1 + max surj;
+    counts = new MutableList from m:0;
+    bc = batchcount(sumfibers(wts, surj));
+    cable = new MutableList from flatten apply(wts, surj, (w,v) -> toList(w:v));
+    for i in 0 ..< #cable do (
+        k = cable#i;
+        cable#i = bc#k#(counts#k);
+        counts#k = counts#k + 1;
+        );
+    toList cable
+    );
+
+flipsurj = surj -> (
+    pi0 = reverse toList(0..<#surj);
+    pi1 = reverse toList(0..(max surj));
+    pi1_(surj_pi0)
+    );
+
+surj = flipsurj apply(fn,v->v-1);
+wts = reverse dls;
+perm0 = fiberflip(wts);
+perm1 = surjcable(wts, surj);
+perm2 = fiberflip(sumfibers(wts, surj));
+perm = inversePermutation(perm2_(perm1_perm0));
+phi = map(S0,R,DegreeMap=>(deg -> deg_perm))
+isHomogeneous phi
+
+
+
+wts = {2,1,1,1}
+surj = {1,1,2,0}
+surjcable(wts,flipsurj(surj))
+
+
+netList apply(6,i->{R_i,degree R_i})
+netList apply(6,i->{S0_i,degree S0_i})
+
+-- Record original degree vector bunches.
+-- Start at end.  1 for d: {0}
+-- then 1 for p,q: {1}
+-- then 1 for b: {2}
+-- then 2 for x,y: {3,4}
+-- 
+
+
+
+
+variables = apply(filt, S -> first entries vars S);
+exdegs = apply(filt, externalDegreeIndices);
+vardegs = apply(filt, variables, exdegs, (S, V, E) -> apply(V, v -> v_E));
+
+apply(filt, S -> apply(first entries vars S, v -> (degree v)_(externalDegreeIndices S)))
+apply    
+
+
+
+
+
+
+restackRing({2,3,4,1}, D)
+
+-- find coefficients underneath
+-- can sub() ideal into whatever ring.  
+
+
+
+
+
+
+R = (ZZ/3)[x,y,z]
+p = x^4+y^4+z^4
+q = p*(x^3+y^3)
+filt = {module ideal p, module ideal(p,q), R^1}
 for d from -3 to 3 do (
-    print("d = ", d);
+    print("d = " | toString(d));
     filtd = apply(filt,m->m**R^({d}));
     k = max({0} | apply(filtd,regularity));
     use R;
