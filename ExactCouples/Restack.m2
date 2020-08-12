@@ -1,53 +1,72 @@
-restackRing = method()  -- this code can be tightened
-restackRing(List, Ring) := RingMap => (l, R) -> (
-    q := #l;
-    S := R;
-    {F, psi} := flattenRing S;
-    FF := ambient F;
-    tI := ideal presentation F;
-    dls := {};  --record the degree lengths along the tower
-    for i to q - 1 do (
-        try coefficientRing S then (
-            dls = {degreeLength S} | dls;
-            S = coefficientRing S;
-            ) else (
-                error ("Input ring must be a tower of height at least #l = " | q);
+restackRing = method()
+restackRing(List, Ring) := RingMap => (fn, R) -> (
+    n := #fn;
+    m := max fn;
+    R0 := R;
+    filt := reverse(for i from 1 to n list R0 do R0 = coefficientRing R0);
+    coefs := coefficientRing first filt;
+    ringInfo := S -> (
+        variables := first entries vars S;
+        external := externalDegreeIndices S;
+        vardegs := apply(variables, v -> (degree v)_external);
+        (variables, vardegs, ideal S)
+        );
+    ri := apply(filt, ringInfo);
+    dls := apply(ri, z -> #(first z#1));
+    S0 := coefs;
+    for i from 1 to m do (
+        variables := {};
+        vardegs := {};
+        ideals := {};
+        for j from 1 to n do (
+            if fn#(j-1) == i then (
+                {vs, vds, I} := ri#(j-1);
+                variables = variables | vs;
+                zedsA := if #vardegs == 0 then {} else 0 * (first vardegs);
+                zedsB := if #vds == 0 then {} else 0 * (first vds);
+                vardegs = apply(vardegs, deg -> deg | zedsB) | apply(vds, deg -> zedsA | deg);
+                ideals = ideals | {I};
+                );
             );
+        S0 = S0[variables, Degrees=>vardegs];
+        S0 = S0 / (sum apply(ideals, I -> sub(I, S0)));
         );
-    dls = {0} | dls;
-    idls := reverse apply(-1 + #dls, i -> -dls_i + dls_(i+1));
-    S = R;
-    batches := {};
-    for i to q - 1 do (
-        external := toList(0..<(idls_i));
-        batches = {{gens S, apply(degrees S, deg -> deg_external)}} | batches;
-        S = coefficientRing S;
+    batchcount := wts -> (
+        awts := {0} | accumulate(plus, {0} | wts);
+        apply(#wts, i->toList(awts#i..<(awts#(i+1))))
         );
-    rels := {};
-    for i to q - 1 do (
-        ovars := flatten (apply(i,j->batches_j_0) | apply(toList((i+1)..<q),j->batches_j_0));
-        ovars =  apply(ovars, v -> (
-            psi := map(FF, ring v);
-            psi(v)
-            ));
-        rels = rels | {eliminate(ovars, tI)};
+    fiberflip := wts -> (
+        flatten apply(batchcount wts, reverse)
         );
-    ll := apply(l, i -> i - 1);
-    batches = batches_ll;
-    rels = rels_ll;
-    T := S;
-    for i to q - 1 do (
-        T = T[batches_i_0, Degrees => batches_i_1];
-        psi := map(T,ring (rels_i));
-        T = T / ideal(psi ** (gens rels_i));
+    sumfibers := (wts, surj) -> (
+        apply(1 + max surj, v -> sum apply(wts, surj, (w,x) -> if x == v then w else 0))
         );
-    ie := apply(q, i -> toList((dls_i)..<(dls_(i+1))));
-    perm := inversePermutation flatten ie_ll;
-    regrade := deg -> deg_perm;
-    phi := map(R, T);
-    I := ker phi;
-    map((source phi) / I, R, DegreeMap => regrade)
-    )
+    surjcable := (wts, surj) -> (
+        m := 1 + max surj;
+        counts := new MutableList from m:0;
+        bc := batchcount(sumfibers(wts, surj));
+        cable := new MutableList from flatten apply(wts, surj, (w,v) -> toList(w:v));
+        for i in 0 ..< #cable do (
+            k := cable#i;
+            cable#i = bc#k#(counts#k);
+            counts#k = counts#k + 1;
+            );
+        toList cable
+        );
+    flipsurj := surj -> (
+        pi0 := reverse toList(0..<#surj);
+        pi1 := reverse toList(0..(max surj));
+        pi1_(surj_pi0)
+        );
+    surj := flipsurj apply(fn,v->v-1);
+    wts := reverse dls;
+    perm0 := fiberflip(wts);
+    perm1 := surjcable(wts, surj);
+    perm2 := fiberflip(sumfibers(wts, surj));
+    perm := inversePermutation(perm2_(perm1_perm0));
+    map(S0,R,DegreeMap=>(deg -> deg_perm))
+    );
+
 
 restackModule = method()
 restackModule(List, Module) := Module => (l, M) -> tensorFlat(restackRing(l, ring M), M)
