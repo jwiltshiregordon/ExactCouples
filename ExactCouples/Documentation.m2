@@ -2452,7 +2452,8 @@ doc ///
         Text
             We can also compute the action of g on relHom in these degrees:
         Example
-            eid({1}, relHom ** matrix {{g}})
+            --eid({1}, relHom ** matrix {{g}})
+            structureMap({0},{1},g,relHom)
         Text
             {\bf Contravariant functoriality}
 
@@ -2744,6 +2745,10 @@ doc ///
             and take the kernel:
         Example
             ker structureMap({0},,f,cokerg)
+        Text
+            Switching the ring to S' is called "restacking", and it is easier to do when variables are adjoined
+            in smaller batches.  It would have been better to use R[f][g] in the first place.  For more 
+            information, see @ TO restackRing @ and @ TO restackModule @.
     SeeAlso
         evaluateInDegree
         cospan

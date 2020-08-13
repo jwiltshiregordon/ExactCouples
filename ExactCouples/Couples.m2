@@ -23,25 +23,24 @@ exactCouple(Module) := Module => (M) -> (
     S := coefficientRing R;
     dege := ((degree R_0) - (degree R_1))_external;
     degf := 2 * (degree R_1)_external;
-    Q := S[e_1,f_1, Degrees => {dege, degf}]; -- TODO: use coupleRing
+    Q := S[e_1,f_1, Degrees => {dege, degf}];
     exactCouple(Q, M)
     )
 
--- TODO: fix error messages
--- no way to omit Q since it contains page information
+-- no way to omit Q argument since it contains page information
 -- exactCouple(coupleRing(?), M) is pretty easy, though
--- TODO: do examples in documentation.
 exactCouple(Ring, Module) := Module => (Q, M) -> (
     expectCoupleRing Q;
     R := ring M;
     expectChainSequenceRing R;
     T := target mapToTriangleRing R;
+    title := "computing exactCouple(Q, M) where M is an S[d,f]-module: ";
     if degree Q_0 != degree T_1 then (
-	error "degree of first generator should be (degree d) - (degree f)";
+	error(title | "degree of Q_0 should be (degree d) - (degree f)");
 	);
 
     if degree Q_1 != degree T_2 then (
-	error "external degree of f should double";
+	error(title | "degree of Q_1 should be 2 * (degree f)");
 	);
     C := distinguishedTriangle(prune M);
     T = ring C; -- update T to match C
@@ -149,7 +148,7 @@ derivedCouple(Module) := Module => M -> (
     )
 
 derivedCouple(ZZ, Module) := Module => (n, M) -> (
-    if n < 0 then error "cannot form derived couples a negative number of times";
+    if n < 0 then error("cannot form derived couples a negative number of times n=" | toString(n));
     if n == 0 then M else derivedCouple derivedCouple(n - 1, M)
     )
 
