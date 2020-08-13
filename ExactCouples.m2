@@ -87,9 +87,7 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- TODO: long exact sequence of a triple documentation example
 -- TODO: snake lemma doc using ker = Tor_1 and a couple
 -- TODO: better links in docs
--- TODO: explain external, internal degrees, and how to use evaluateInDegree to obtain a
---       desired map.
---
+-- 
 -- TODO: clean up couple code
 -- TODO: test unit-counit formulas for the adjunctions
 -- TODO: spell check docs
@@ -113,7 +111,35 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 
 restart
 needsPackage "ExactCouples"
-A=QQ[x,y, Degrees => {{1,2},{1,2}}]/(x^2+y^2);
+            R = ZZ[x,y,z];
+            p = y^2*z-x^3+17*z^3;
+            filt = {module ideal(9*p), module ideal(3*p), module ideal(p)};
+            k = max({0} | apply(filt,regularity));
+            W = module ideal(x^k,y^k,z^k);
+            couple = prune covariantExtCouple(W, filt)
+            couple' = prune evaluateInDegree({0},restackModule({2,1}, couple));
+            plotPages((-1..3,-1..3,1..2),prune@@evaluateInDegree,couple');
+
+
+R = ZZ[x,y,z]
+p = y^2*z-x^3+17*z^3
+q = y^2*z-x^3-2*x*z^2
+filt = {module ideal p, module ideal(p,q), R^1}
+for d from -3 to 3 do (
+    print("d = " | toString(d));
+    filtd = apply(filt,m->m**R^({d}));
+    k = max({0} | apply(filtd,regularity));
+    use R;
+    W = module ideal(x^k,y^k,z^k);
+    couple = prune covariantExtCouple(W, filtd);
+    couple' = prune evaluateInDegree({0},restackModule({2,1}, couple));
+    plotPages((-1..3,-1..3,1..2),prune@@evaluateInDegree,couple');
+    );
+
+
+
+Q=ZZ[r,Degrees => {{1,4,5}}];
+A=Q[x,y, Degrees => {{1,2},{1,2}}]/(x^2+y^2);
 B=A[b];
 C=B[p,q]/(p^3-2*q^3);
 D=C[d];

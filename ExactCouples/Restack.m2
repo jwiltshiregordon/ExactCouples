@@ -1,6 +1,7 @@
 restackRing = method()
 restackRing(List, Ring) := RingMap => (fn, R) -> (
     n := #fn;
+    if n == 0 then return id_R;
     m := max fn;
     R0 := R;
     filt := reverse(for i from 1 to n list R0 do R0 = coefficientRing R0);
@@ -67,6 +68,14 @@ restackRing(List, Ring) := RingMap => (fn, R) -> (
     map(S0,R,DegreeMap=>(deg -> deg_perm))
     );
 
-
 restackModule = method()
 restackModule(List, Module) := Module => (l, M) -> tensorFlat(restackRing(l, ring M), M)
+
+TEST ///
+R = ((ZZ[a,Degrees=>{{1,2,3}}])[b,c,Degrees=>{2,4}])[d,e,f,Degrees=>{{1,1},{1,2},{2,1}}];
+surjs = {{1,2,3},{1,3,2},{2,1,3},{2,3,1},{3,1,2},{3,2,1},{1,1,2},{1,2,1},{2,1,1},{1,2,2},{2,1,2},
+         {2,2,1},{1,1,1},{1,2},{2,1},{1,1},{1},{}};
+for surj in surjs do (
+    assert(isHomogeneous restackRing(surj, R));
+    );
+///

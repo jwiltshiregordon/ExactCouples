@@ -36,7 +36,13 @@ doc ///
             and thereby compute with them using Groebner bases and other standard Macaulay2 methods.
             
             This encoding strategy works generally for commuting diagrams; 
-            see @ TO "Encoding diagrams as modules" @.  This style may feel unfamilar at first.  One 
+            see @ TO "Encoding diagrams as modules" @.  This style may feel unfamiliar at first.  For example,
+            the r-page of a spectral sequence is often considered as a grid of R-modules with differentials
+            of degree \{r,1-r\}; in this package, this information is encoded as a module for a ring like
+            
+            $R[D_r, Degrees=>{{r,1-r}}]/D^2$
+            
+            so that the differential is encoded by the action of $D_r$.  See @ TO pageModule @.  One 
             benefit comes in our approach to functoriality; see @ TO "Functoriality for Tor and Ext couples" @,
             @ TO "restackRing" @ and @ TO "restackModule" @.
             
@@ -61,13 +67,13 @@ doc ///
             For the serious user of this package, there is at least one common mathematical difficulty:
             
             Even if a spectral sequence with finitely generated entries can be constructed
-            by means of a couple, the auxilliary data is often not finitely generated.  The author
+            by means of a couple, the auxiliary data is often not finitely generated.  The author
             of this package would be interested in any systematic method of replacing such couples
             with finitely generated versions that recover the same spectral sequence.  If you
             have information or ideas, please send an email!
            
     SeeAlso
-        "Elemetary introduction: solving linear equations in abelian groups"
+        "Elementary introduction: solving linear equations in abelian groups"
         "Encoding diagrams as modules"
         "Conventions and first examples"
         "Bockstein spectral sequence"
@@ -99,9 +105,16 @@ doc ///
             the coefficient ring of R
     Description
         Text
-            An "external" degree deg is one so that, give a degree deg' for the coefficient ring of
+            An "external" degree deg is one so that, given a degree deg' for the coefficient ring of
             R, the concatenation (deg | deg') is a valid degree for R.  So an external degree is a list
             of integers of length (degreeLength R) - (degreeLength coefficientRing R).
+            
+            See @ TO "Encoding diagrams as modules" @
+            for more discussion about internal and external degrees for a ring.
+            
+            If you want to evaluate at an internal degree, you will need to restack the module
+            so that the degree becomes external.  See @ TO restackModule @ and @ TO restackRing @
+            for information about how to do this.
         Example
             S = QQ[s, t, u]; R = S[x, y]; m = matrix {{s*x^2+t*x*y+u*y^2}}; M = coker m
             N = evaluateInDegree({4}, M)
@@ -111,6 +124,7 @@ doc ///
         structureMap
         extensionInDegree
         "Encoding diagrams as modules"
+        restackRing
         restackModule
 ///
 
@@ -339,13 +353,16 @@ doc ///
         cospan(elements)
     Inputs
         elements:Sequence
-            all members of the same ambient module
+            all members of the same module M
     Outputs
         :Module
-            the quotient of the ambient module by the listed elements
+            the quotient of M by the listed elements
     Description
         Text
-            Useful for building modules by generators and relations
+            Useful for building modules by generators and relations.
+            
+            Here, we build a $\ZZ[x]$-module by placing generators
+            in degrees 1, 2, and 3, and imposing two relations.
         Example
             declareGenerators(ZZ[x], {a => 1, b => 2, c => 3})
             cospan(x*a-2*b,x*b-2*c)
@@ -442,7 +459,7 @@ doc ///
         Example
             restackRing({2,1,2,1}, D)
     Caveat
-        Each stage of R may only introduce relations among the most-recent variables.  So, in the last
+        Each stage of R may only introduce relations among the most-recent variables.  So, in the
         example, C=B[p,q]/(p^3-2*q^3) was allowed, but C=B[p,q]/(x*p^3-2*y*q^3) would not be.
     SeeAlso
         restackModule
@@ -476,11 +493,11 @@ doc ///
             
             $AB = A[b]/b^2$
             
-            $BA = B[a]/a^2$
+            $BA = B[a]/a^2$.
             
-            Note that $AB$-modules are the same as cochain 
-            complexes of $A$-modules.  It may sometimes be useful to recast this data as
-            a cochain complex of $B$-modules.  This is certainly possible because the rings $AB$ and
+            An $AB$-modules is then the same as a cochain 
+            complex of $A$-modules where the differential is named "b".  It may be useful to recast this data as
+            a cochain complex of $B$-modules with differential "a".  This is certainly possible because the rings $AB$ and
             $BA$ are isomorphic.  In fact, the isomorphism $\phi$ between these rings can be computed with
             @ TO restackRing @, and the present function is then computed by
             
@@ -590,7 +607,7 @@ doc ///
             exact sequences.
 
             The output module encodes the exact couple by placing the page data
-            in degrees of the form (2*p, 2*q) and the auxilliary data at the
+            in degrees of the form (2*p, 2*q) and the auxiliary data at the
             midpoints of the differentials.  (The 2s ensure that
             these midpoints are still valid bidegrees.)
 
@@ -787,7 +804,7 @@ doc ///
 
             If we had taken A' to be the coimage of f instead of the image,
             this would have resulted in different degrees.  So either of these conventions
-            would have an assymetry: an unjustified preference for image or coimage.
+            would have an asymmetry: an unjustified preference for image or coimage.
 
             We use neither convention.  Instead, we place A' exactly halfway between
             (image f) and (coimage f).  This has the effect of giving the comparison
@@ -944,7 +961,7 @@ doc ///
             generators and $f$ annihilates page generators.  It turns out that
             the only remaining relation in the exact couple is $e*z - f*y$, which says that
             the connecting map $H_2(X_2,X_1) \to H_1(X_1)$ sends $z$ to the same place as the
-            filtation map $H_1(X_0) \to H_1(X_1)$ sends $y$.  (Depending on your choices for
+            filtration map $H_1(X_0) \to H_1(X_1)$ sends $y$.  (Depending on your choices for
                 generators, this relation may read $e*z + f*y$.)
 
             It is straightforward to give all this information to M2, but determining
@@ -1595,16 +1612,21 @@ doc ///
             Note that the differential annihilates all four generators.  We now extract the
             E^1 page with its differential, D_2:
         Example
-            prune pageModule(2,D,C)
+            E2 = prune pageModule(2,D,C)
             degree D_2
         Text
             This time, the generator in degree \{2,0} maps via D_2 to a nontrivial element in degree \{0,1}.
             Since the module has no additional generators in that degree, the differential is an isomorphism
-            between these two degrees.  Computing the next page shows the cancellation:
+            between these two degrees.  We can also compute the action of this differential directly:
+        Example
+            structureMap({2,0}, {0,1}, D_2, pageModule(2,D,C))
+        Text
+            Computing the next page shows the cancellation:
         Example
             prune pageModule(3,D,C)
     SeeAlso
         plotPages
+        structureMap
 ///
 
 doc ///
@@ -1719,7 +1741,7 @@ doc ///
         Text
             Suppose Q = R[e_r,f_r].  The derived couple ring of Q will be R[e_{r+1},f_{r+1}].
             The degree of f will not change, but the degree of e does transvect against the
-            direction of f.  Specicially, in our convention,
+            direction of f.  Specifically, in our convention,
             the degree of f is assumed to be even, and the new degree of e is given by the
             formula
 
@@ -1950,7 +1972,7 @@ doc ///
             together with a differential reflecting the action of d.
     Description
         Text
-            Suppose d has degree v.  The ouput chain complex C has C_0 = M_{0*v},
+            Suppose d has degree v.  The output chain complex C has C_0 = M_{0*v},
             and since the differential in a chain complex has degree -1, it has
             generally
 
@@ -2646,7 +2668,7 @@ doc ///
             in R-degree 3, the internal degree is \{3\}.  In total, then, the degree of $a$ is \{0,0,3\}.
             
             Similarly, let $b$, $c$, and $d$ be generators with external degrees \{0,1}, \{1,0}, and \{1,1},
-            and with interal degrees 1, 2, and 0.  This information can be given to M2 using the function
+            and with internal degrees 1, 2, and 0.  This information can be given to M2 using the function
             @ TO declareGenerators @.
         Example
             declareGenerators(S, {a => {0,0,3}, b => {0,1,1}, c => {1,0,2}, d => {1,1,0}})
@@ -2731,7 +2753,7 @@ doc ///
 
 doc ///
     Key
-        "Elemetary introduction: solving linear equations in abelian groups"
+        "Elementary introduction: solving linear equations in abelian groups"
     Headline
         a discussion of the equation 3x+6y=0.
     Description
@@ -2755,7 +2777,7 @@ doc ///
             In fact, the maps from 2) give an exact sequence $0 \to GA \to GX \to G(X/A)$ so that 
             $G$ is left exact.
             
-            Observation 3) leads to a divide-and-conquor strategy for understanding $GX$.  If $X$ is 
+            Observation 3) leads to a divide-and-conquer strategy for understanding $GX$.  If $X$ is 
             a complicated abelian group,
             and if $A \subseteq X$ is an easier subgroup, then the exact sequence from 3) says that every
             solution in $X$ is patched from solutions in $GA$ and $G(X/A)$.  One must bear in mind that 
@@ -2822,7 +2844,7 @@ doc ///
             
             Of course, we would be happier to understand the quotients $G(A_q) / G(A_{a-1})$, since from these
             the procedure for computing $GX$ is quite clear: simply pick representatives for each group 
-            $G(A_q) / G(A_{q-1})$; then, each element of $GX$ expands uniquely as a sum of repesentatives, one 
+            $G(A_q) / G(A_{q-1})$; then, each element of $GX$ expands uniquely as a sum of representatives, one 
             drawn from each successive quotient.
             
             In other words, we start with information about $(R^pG)(A_q/A_{q-1})$ with the goal of understanding
@@ -3017,7 +3039,7 @@ doc ///
             
             An exact couple is a 
             generalization of the exact sequence (*) only in that it consists in this sequence for every pair 
-            $A_{q-1} \subseteq A_q$.  In order to acccommodate so many long exact sequences, and because these
+            $A_{q-1} \subseteq A_q$.  In order to accommodate so many long exact sequences, and because these
             sequences overlap, we adjust the layout of (*) to a stackable N-shaped zig-zag
         CannedExample
             |
