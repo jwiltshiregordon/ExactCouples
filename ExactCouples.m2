@@ -20,7 +20,7 @@ newPackage(
 export {--"applyEntrywise",
   "declareGenerators", "cospan",
   "internalDegreeIndices", "externalDegreeIndices",
-  "evaluateInDegree", "structureMap",
+  "evaluateInDegree", "structureMap", "eid",
   "extensionInDegree",
   "evaluateInDegreeLaw", "extensionInDegreeLaw", "distinguishedTriangleLaw",
   "expectChainRing", "expectCoupleRing", "expectTriangleRing","expectSequenceRing",
@@ -65,6 +65,8 @@ load "./ExactCouples/covariantExtCouple.m2"
 load "./ExactCouples/TorCouple.m2"
 load "./ExactCouples/Deprecated.m2"
 
+eid = prune @@ evaluateInDegree;
+
 beginDocumentation()
 
 load "./ExactCouples/Documentation.m2"
@@ -92,13 +94,11 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- TODO: test unit-counit formulas for the adjunctions
 -- TODO: spell check docs
 
--- TODO: evaluateInDegree should check # and degree length first because if you do it wrong
---       you get a meaningless error at the moment
-
--- TODO: flatten module should accept a function instead of a permutation
 -- TODO: toChainComplex can sometimes return modules over inconsistent base rings?
 
 -- TODO: restackModule is more important than restackRing.  Change docs to reflect this.
+
+-- TODO: plotPages should default to prune @@ evaluateInDegree
 
 -- surj of exact couples has exact kernel
 -- at chain level, any map of chain sequence modules has a cone, also a chain sequence module
@@ -109,8 +109,70 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- if A->B->C->A[1]->B[1] is an exact sequence of chain complexes, then it induces a long
 -- exact sequence in homology.
 
+-- from original chain sequence module, every entry should be Tor, and the full page should be
+-- Tor against a bimodule.  Then, this should generalize with koszul duality.
+
+-- Comments on law utility
+-- TODO: explain how this setup makes writing tests easier
+-- TODO: general functoriality for adjointable laws
+-- TODO: complete adjunction from degreeLaws, one entryLaw, and the unit or counit (degreeLaw doesn't
+-- make sense until we are in adjoint scenario)  We can go direct to law without stopping at entryLaw.
+-- choose a good size of matrix, and parallelize.
+
+-- Generate adjoint pair from unit
+
+
+
 restart
 needsPackage "ExactCouples"
+eid = prune @@ evaluateInDegree
+face2 = {{1,2,4},{1,3,4},{3,4,6},{3,5,6},{2,4,8},{4,6,8},{5,6,7},{6,7,8},
+                      {1,2,8},{1,7,8},{1,3,7},{3,5,7}};
+face1 = unique(flatten(apply(subsets({0,1,2},2), s-> apply(face2, f->f_s))));
+face0 = unique(flatten(apply(subsets({0,1,2},1), s-> apply(face2, f->f_s))));
+diags = {{1,4},{3,6},{4,8},{6,7},{1,8},{3,7}};
+skel = f -> if #f != 2 then #f-1 else if member(f,diags) then 2 else 1;
+R = ZZ[t]
+free0 = R^(-apply(face0,skel))
+free1 = R^(-apply(face1,skel))
+free2 = R^(-apply(face2,skel))
+omega = (a,b)->if isSubset(a,b) then (-1)^(position(b, v->not member(v,a))) * t^(skel(b)-skel(a)) else 0
+d12 = map(free1, free2, matrix table(face1,face2,omega))
+d01 = map(free0, free1, matrix table(face0,face1,omega))
+sm = sequenceModule(R[d,Degrees=>{{-1}}]/d^2,{d12,d01,map(R^{},free0,{})})
+sm = sm ** (ring sm)^{{-2,0}}
+smm = restackModule({2,1},sm)
+M = restackModule({1,1},smm)
+couple = prune exactCouple M
+plotPages((-1..3,-1..3,1..2), prune @@ evaluateInDegree, couple)
+prune pageModule(1,D,couple)
+
+
+R = ZZ[d,t,Degrees=>{{1,0},{0,1}}]
+free = R^(-apply(faces, f->{#f-1,skel(f)}))
+
+
+
+apply(face2 | face1 | face0, skel)
+
+apply(facets, f-> d
+
+
+
+
+R = QQ[x,y,z];
+p = y^2*z-x^3+17*z^3;
+X = Proj(R/p)
+
+
+R = (ZZ/11)[x,y,z];
+p = y^2*z-x^3+17*z^3;
+F = sheaf(R^1/p)
+apply(3, k-> HH^k F)
+
+
+            
+
             R = ZZ[x,y,z];
             p = y^2*z-x^3+17*z^3;
             filt = {module ideal(9*p), module ideal(3*p), module ideal(p)};

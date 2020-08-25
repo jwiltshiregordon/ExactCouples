@@ -88,7 +88,6 @@ TEST ///
     print("total assertion entropy " | (toString entropy));
 ///
 
-
 TorLES = method()
 TorLES(ZZ, Module, Module, Module) := Net => (k, W, X, A) -> (
     expectFiltrationList {A,X};

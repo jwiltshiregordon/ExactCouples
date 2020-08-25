@@ -1,4 +1,3 @@
-
 -- TODO: let user supply output ring
 -- algorithm:
 -- Left Kan extend Y to the sequence ring, and then right Kan to chain ring.
@@ -66,10 +65,6 @@ contravariantExtCouple(List, Module) := Module => (submods, Y) -> (
     f := local f;
     F := R[f, Degrees=>{{-1}}];
     l := #submods;
-    -- the next commented line leads to many correct entries, but converges to zero
-    -- so it is incorrect.
-    -- It could be a prototype for implementing edge homomorphisms, though.
-    --submods' := submods | {(last submods)/(last submods)};
     submods' := {last submods} | apply(submods, m->(last submods)/m);
     seqmod := sequenceModule(F, apply(l, k -> inducedMap(submods'#(k+1), submods'#k)));
     contravariantExtCouple(getSymbol "e", seqmod, Y)

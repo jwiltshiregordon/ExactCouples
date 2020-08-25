@@ -76,6 +76,7 @@ doc ///
         "Elementary introduction: solving linear equations in abelian groups"
         "Encoding diagrams as modules"
         "Conventions and first examples"
+        "Cellular chains as an E1 page"
         "Bockstein spectral sequence"
         "Serre spectral sequence in homology"
         "Exact couples for Tor and Ext"
@@ -436,9 +437,34 @@ doc ///
             every number 1..m for some m <= n.
     Outputs
         :RingMap
-            from R to a new ring with m levels where the variables are adjoined in the order determined by p
+            from R to a new ring S with m levels where the variables are adjoined in the order determined by p
     Description
         Text
+            We explain the meaning of the argument p.
+            
+            Suppose R looks like this:
+        CannedExample
+            R = k[ ... vars_0 ... ][ ... vars_1 ... ]...[ ... vars_(n-1) ... ]
+        Text
+            and suppose that I_k = \{ i | p#i = k \}.  
+            Then, the target ring S looks like this:
+        CannedExample
+            S = k[ ... vars_(I_1) ... ][ ... vars_(I_2) ... ]...[ ... vars_(I_m) ... ]
+            
+            where
+            
+            vars_I = { vars_i | i \in I }
+        Text
+            The length of p must not exceed the number of levels of the ring tower R.  
+            
+            
+            This is because its entries
+            correspond to these levels.  The first entry, p#0, tells where to send the 
+            The meaning of the argument p is as follows.  Recall that m is the largest value that appears in
+            p, appearing, say, in positions \{i_1, ..., i_k\}.  Then, the outermost variables in the target ring
+            S will be those that were adjoined 
+            
+            
             Here's an example restacking a ring that is four levels deep.
         Example
             A=QQ[x,y, Degrees => {{1,2},{1,2}}]/(x^2+y^2);
@@ -3132,12 +3158,12 @@ doc ///
             needsPackage "SpechtModule"
             lambda = {3,2}
             R = QQ[x,y,Degrees=>{{1,0},{0,1}}]
-            I = ideal apply(lambda | {0}, 0..#lambda, (k,l)->x^l*y^k)
+            I = ideal apply(lambda | {0}, 0..#lambda, (k,l)->y^l*x^k)
             boxes = flatten apply(#lambda,r->apply(lambda#r,c->(r,c)))
             p = new Partition from lambda
             tableaux = toListOfTableaux(standardTableaux p)
             filts = apply(tableaux, t -> reverse apply(1 + sum lambda, k -> 
-                    module(I + ideal apply(boxes, b -> (if t_b >= k then x^(b#0)*y^(b#1) else 0_R)))))
+                    module(I + ideal apply(boxes, b -> (if t_b >= k then y^(b#0)*x^(b#1) else 0_R)))))
             disp = (deg,E) -> prune pushFwd(map(R,QQ),evaluateInDegree(deg,E))
             for i in 0..<#tableaux do (
                 print(tableaux#i);
@@ -3155,4 +3181,129 @@ doc ///
                 couple = prune TorCouple(coker vars R, filt);
                 plotPages((-1..3,-1..6,1..(sum lambda)), disp, couple);
                 )
+///
+
+doc ///
+    Key
+        "Cellular chains as an E1 page"
+    Headline
+        A spectral sequence construction of the usual cellular differential
+    Description
+        Text
+            One way to define the cellular chain complex of a CW-complex uses
+            the spectral sequence associated to its skeletal filtration.
+            
+            Consider, for example, an empty cube with its usual CW-structure:
+            8 vertices, 12 edges, and 6 faces.  We depict the cube unfolded.
+        CannedExample
+            |   1 ________ 2
+            |    |        |
+            |    |        |
+            |    |        |
+            |    |________|________ 2
+            |   3|       4|        |
+            |    |        |        |
+            |    |        |        |
+            |    |________|________|________ 2
+            |   5        6|       8|        |
+            |             |        |        |
+            |             |        |        |
+            |             |________|________|
+            |            5        7|        |1
+            |                      |        |
+            |                      |        |
+            |                      |________|
+            |                     5          3
+        Text
+            By introducing diagonals 
+            on every square facet (crudely indicated below), 
+            we obtain a simplicial complex with 8 vertices, 
+            18 edges, and 12 faces.
+        CannedExample
+            |   1 ________ 2
+            |    |\       |
+            |    |   \    |
+            |    |      \ |
+            |    |________|________ 2
+            |   3|\      4|\       |
+            |    |   \    |   \    |
+            |    |      \ |      \ |
+            |    |________|________|________ 2
+            |   5        6|\      8|\       |
+            |             |   \    |   \    |
+            |             |      \ |      \ |
+            |             |________|________|
+            |            5        7|\       |1
+            |                      |   \    |
+            |                      |      \ |
+            |                      |________|
+            |                     5          3
+        Text
+            The facets are now triangles.  We list these, and use them to populate the lists of
+            edges and vertices.
+        Example
+            face2 = {{1,2,4},{1,3,4},{3,4,6},{3,5,6},{2,4,8},{4,6,8},{5,6,7},{6,7,8},
+                                  {1,2,8},{1,7,8},{1,3,7},{3,5,7}};
+            face1 = unique(flatten(apply(subsets({0,1,2},2), s-> apply(face2, f->f_s))));
+            face0 = unique(flatten(apply(subsets({0,1,2},1), s-> apply(face2, f->f_s))));
+        Text
+            Here are the diagonal edges that we added
+        Example
+            diags = {{1,4},{3,6},{4,8},{6,7},{1,8},{3,7}};
+        Text
+            We now write the function that takes a simplex and returns the CW-skeleton
+            to which it belongs.  The vertices are in the 0-skeleton, and the faces are
+            in the 2-skeleton, but the diagonal edges we added are not actually present
+            in the 1-skeleton of the original CW-structure on the cube.  So these edges
+            have skeletal degree 2.
+        Example
+            skel = f -> if #f != 2 then #f-1 else if member(f,diags) then 2 else 1;
+        Text
+            Let t be the variable that's in charge of recording filtration degree.  We
+            build free modules for the 0-, 1-, and 2-chains for simplicial homology
+            using the function skel to determine degrees:
+        Example
+            R = ZZ[t]
+            free0 = R^(-apply(face0,skel))
+            free1 = R^(-apply(face1,skel))
+            free2 = R^(-apply(face2,skel))
+        Text
+            The usual differential for simplicial chains must be modified by powers of t 
+            to maintain homogeneity.  
+            These powers appear when a simplex has a face of lower filtration degree.
+        Example
+            omega = (a,b)->if isSubset(a,b) then (-1)^(position(b, v->not member(v,a))) * t^(skel(b)-skel(a)) else 0
+            d12 = map(free1, free2, matrix table(face1,face2,omega))
+            d01 = map(free0, free1, matrix table(face0,face1,omega))
+        Text
+            We build the chain complex, shift it appropriately, and restack until it is a 
+            module for the ring
+            $\ZZ[d,t]/d^2$.
+        Example
+            sm = sequenceModule(R[d,Degrees=>{{-1}}]/d^2,{d12,d01,map(R^{},free0,{})});
+            sm = sm ** (ring sm)^{{-2,0}};
+            smm = restackModule({2,1},sm);
+            M = restackModule({1,1},smm)
+        Text
+            The module M records the simplicial chain complex of the (empty interior, faces triangulated) cube 
+            with t acting by the filtration inclusions coming from the usual CW structure of the
+            empty cube.
+            
+            To build the corresponding exact couple, use @ TO exactCouple @.
+        Example
+            couple = prune exactCouple M
+            plotPages((-1..3,-1..3,1..2), prune @@ evaluateInDegree, couple)
+        Text
+            Page 1 consists of the CW-chains, and page 2 consists of the CW-homology, which
+            is therefore isomorphic to the simplicial homology.
+    SeeAlso
+        restackModule
+        exactCouple
+        plotPages
+        "Encoding diagrams as modules"
+        "Conventions and first examples"
+        "Bockstein spectral sequence"
+        "Serre spectral sequence in homology"
+        "Exact couples for Tor and Ext"
+        "Functoriality for Tor and Ext couples"
 ///

@@ -1,6 +1,6 @@
 -- This file, LawUtility.m2, is about exact functors that take R-modules
 -- to S-modules.  Such a functor is determined by its operation on free
--- S-modules, indeed, on free S-modules of rank one.
+-- S-modules.
 
 -- If F : (R-mod) --> (S-mod) is exact, then let "law" be a FunctionClosure
 -- giving the operation of F on maps of free modules.  Specifically, given
@@ -125,26 +125,3 @@ applyLawToChainComplex(Ring, FunctionClosure, ChainComplex) := ChainComplex => (
     ret.ring = Q;
     ret
     )
-
--- TODO: explain how this setup makes writing tests easier
--- TODO: general functoriality for adjointable laws
--- TODO: complete adjunction from degreeLaws, one entryLaw, and the unit or counit (degreeLaw doesn't
--- make sense until we are in adjoint scenario)  We can go direct to law without stopping at entryLaw.
--- choose a good size of matrix, and parallelize.
-
--- Generate adjoint pair from unit
-
---MatrixLaw = new Type of MutableHashTable
---RingAdjunction = new Type of MutableHashTable
-
--- A MatrixLaw object takes maps between free modules to maps between free modules
-
---buildMatrixLaw = method()
---buildMatrixLaw(Ring, Ring, FunctionClosure) := MatrixLaw => (R, S, law) ->
-
-
-
-
---generateAdjunction = method()
---generateAdjunction(Ring, Ring, FunctionClosure, FunctionClosure) := 
---    Adjunction => (R, S, eta, G, 

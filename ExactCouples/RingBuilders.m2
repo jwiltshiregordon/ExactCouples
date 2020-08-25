@@ -7,7 +7,7 @@ triangleRing(Ring, Symbol, Symbol, Symbol) := Ring => o -> (R, dvar, evar, fvar)
 
 coupleRing = method(Options => {Degrees => {{1,0},{-2,2}}})
 coupleRing(Ring, ZZ, Symbol, Symbol) := Ring => o -> (R, r, e, f) -> (
-    Q := R[e_r, f_r, Degrees=>o.Degrees];
+    Q := R[{e_r, f_r}, Degrees=>o.Degrees];
     expectCoupleRing Q; -- installs Q.Page, Q.isEvenDegree, and Q.isOddDegree
     Q
     )
