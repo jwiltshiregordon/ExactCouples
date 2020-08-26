@@ -82,6 +82,8 @@ doc ///
         "Exact couples for Tor and Ext"
         "Functoriality for Tor and Ext couples"
         "An exact couple associated to a Young tableau"
+        "Mayer-Vietoris Spectral Sequence"
+        "Homology of a combinatorial filtration of $X^n$"
 ///
 
 
@@ -3306,4 +3308,116 @@ doc ///
         "Serre spectral sequence in homology"
         "Exact couples for Tor and Ext"
         "Functoriality for Tor and Ext couples"
+///
+
+doc ///
+    Key
+        "Mayer-Vietoris Spectral Sequence"
+    Headline
+        A spectral sequence that assembles homology from an open cover
+    Description
+        Text
+            Let $X_n$ be the topological space parametrizing n-tuples of pairwise distinct complex numbers
+            
+            $$X_n = \{ (z_1, ..., z_n) \in \CC^n | z_i \neq z_j if i \neq j\}$$
+            
+            There is a map
+            
+            $$X_4 \to X_2 \times X_2$$
+            
+            given by $(x_1, x_2, x_3, x_4) \mapsto ((x_1, x_2), (x_3, x_4))$.  Since the space $X_2$ is 
+            homotopy equivalent to a circle by the normalization map $(x_1, x_2) \mapsto (x_2-x_1)/|x_2-x_1|$,
+            we know that the homology of $X_2 \times X_2$ is free with ranks $1, 2, 1$ in degrees $0,1,2$.
+            
+            The space $X_2$ has a natural open cover that we now describe.  For $i, j \in \{1, 2\}$, define
+            
+            $$U_{ij} = \{ (z_1, z_2) \in X_2 | Re(z_i) < Re(z_j) \}$$
+            
+            $$V_{ij} = \{ (z_1, z_2) \in X_2 | Im(z_i) < Im(z_j) \}$$
+            
+            Then,
+            
+            $$X_2 = U_{12} \cup U_{21} \cup V_{12} \cup V_{21}$$
+            
+            since distinct complex numbers must not be equal in both real and imaginary parts.  We have a 
+            similar cover for $X_4$, 
+///
+
+doc ///
+    Key
+        "Homology of a combinatorial filtration of $X^n$"
+    Headline
+        A spectral sequence that assembles absolute homology from relative
+    Description
+        Text
+            Let $X$ be a simplicial complex, and let $n \in \NN$.  The n-fold
+            product $X^n$ is filtered by $(x_1, ..., x_n) \mapsto  |\{x_1, ..., x_n\}|-1$,
+            one less than the number of unique points of $X$ that appear in an $n$-tuple.
+            We compute the resulting homology spectral sequence.
+            
+            First, give the n and facets of $X$.
+        Example
+            n = 2;
+            facets = {{1,2},{1,3},{2,3}};
+        Text
+            Now we compute the dimension and a list of all the faces.
+        Example
+            d = -1 + max apply(facets, f -> #f);
+            faces = k -> unique flatten apply(facets, f -> subsets(f, k));
+            ff = flatten apply(2 + d, faces);
+        Text
+            The next functions build the product complex.
+        Example
+            nextsteps = f -> select(unique flatten select(facets, g -> isSubset(f, g)), v -> #f == 0 or v >= last f);
+
+            pe = mat -> (
+                q := numrows mat;
+                nxts := apply(q, r -> nextsteps unique first entries mat^{r});
+                prod := apply(fold((a,b)->a**b,nxts), flatten);
+                ret := {mat};
+                for p in prod do (
+                    col := map(ZZ^q,ZZ^1,apply(p,v->{v}));
+                    if numcols mat == 0 or col != mat_{-1 + numcols mat} then (
+                        ret = ret | pe(mat | col);
+                        );
+                    );
+                ret
+                );
+
+            cs = m -> apply(numcols m, c -> m_{c});
+            prod = apply(pe(map(ZZ^n,ZZ^0,{})),cs)
+        Text
+            We compute the dimension of $X^n$, and check that it matches $n * d$:
+        Example
+            pd = -1 + max apply(prod, f -> #f);
+            assert(pd == n * d)
+        Text
+            Now we build the intended filtration, which we compute by counting
+            the number of unique rows in a matrix.
+        Example
+            filt = f -> (
+                m = fold((a,b)->a|b,f);
+                urows = unique apply(numrows m, r -> m^{r});
+                -1 + #urows
+                );
+        Text
+            Now comes the hard computational work.  We generate the faces of $X^n$, build the
+            chain groups, compute the differentials, and return a module $M$ that encodes
+            the filtered complex.
+        Example
+            R = ZZ[t];
+            prodfaces = apply(1 + pd, k -> select(prod, f -> #f - 1 == k));
+            chains = apply(1+pd,k->R^(-apply(prodfaces#k, filt)));
+            omega = (a,b)->if isSubset(a,b) then (-1)^(position(b, v->not member(v,a))) * t^(filt(b)-filt(a)) else 0;
+            diffs = apply(pd,k->map(chains#k, chains#(k+1), matrix table(prodfaces#k,prodfaces#(k+1),omega)));
+            cx = chainComplex diffs;
+            sm = sequenceModule(R[D,Degrees=>{{-1}}]/D^2,(reverse diffs) | {map(R^{}, first chains, {})});
+            sm = sm ** (ring sm)^{{-pd,0}};
+            smm = restackModule({2,1},sm);
+            M = prune restackModule({1,1},smm);
+        Text
+            From here, we build the exact couple and plot the frist two pages of the spectral sequence:
+        Example
+            couple = prune exactCouple M;
+            plotPages((-1..(pd+1),-1..n,1..2), prune @@ evaluateInDegree, couple)
 ///

@@ -121,10 +121,127 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 
 -- Generate adjoint pair from unit
 
+-- sheaf cohomology example
+-- Leray/MVSS example: Conf(4,R^2) --> Conf(2,R^2)xConf(2,R^2)
+-- Cech cover of target, preimage, then refine.
+--
+-- 
+-- 
+-- 
+-- 
 
 
 restart
 needsPackage "ExactCouples"
+R = QQ[x_1..x_4,y_1..y_4]
+
+
+point = ideal(x_2-x_1,x_3-x_2,x_4-x_3,y_2-y_1,y_3-y_2,y_4-y_3)
+parallelogram = ideal(x_2-x_1+x_4-x_3,x_3-x_2+x_1-x_4,
+                      y_2-y_1+y_4-y_3,y_3-y_2+y_1-y_4)
+square = parallelogram + ideal(y_4-y_1+x_2-x_1,x_1-x_4+y_2-y_1)
+rectangle = parallelogram + ideal((x_1-x_3)^2+(y_1-y_3)^2-(x_2-x_4)^2-(y_2-y_4)^2)
+filt = module \ {rectangle,square,point}
+k = max(regularity \ filt)
+W = module ideal(x_1^k,x_2^k,x_3^k,x_4^k,y_1^k,y_2^k,y_3^k,y_4^k)
+couple covariantExtCouple(W, filt)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+loadPackage "PruneComplex"
+facets = {{1,2},{1,3},{2,3},{2,4},{3,4}};
+n = 3;
+d = -1 + max apply(facets, f -> #f);
+faces = k -> unique flatten apply(facets, f -> subsets(f, k));
+ff = flatten apply(2 + d, faces);
+nextsteps = f -> select(unique flatten select(facets, g -> isSubset(f, g)), v -> #f == 0 or v >= last f);
+
+pe = mat -> (
+    q := numrows mat;
+    nxts := apply(q, r -> nextsteps unique first entries mat^{r});
+    prod := apply(fold((a,b)->a**b,nxts), flatten);
+    ret := {mat};
+    for p in prod do (
+        col := map(ZZ^q,ZZ^1,apply(p,v->{v}));
+        if numcols mat == 0 or col != mat_{-1 + numcols mat} then (
+            ret = ret | pe(mat | col);
+            );
+        );
+    ret
+    );
+
+cs = m -> apply(numcols m, c -> m_{c});
+prod = apply(pe(map(ZZ^n,ZZ^0,{})),cs);
+pd = -1 + max apply(prod, f -> #f);
+--filt = f -> #f - 1
+filt = f -> (
+    m = fold((a,b)->a|b,f);
+    urows = unique apply(numrows m, r -> m^{r});
+    #urows - 1
+    );
+R = ZZ[t];
+print("generating prodfaces");
+prodfaces = apply(1 + pd, k -> select(prod, f -> #f - 1 == k));
+chains = apply(1+pd,k->R^(-apply(prodfaces#k, filt)));
+omega = (a,b)->if isSubset(a,b) then (-1)^(position(b, v->not member(v,a))) * t^(filt(b)-filt(a)) else 0;
+print("computing differentials");
+diffs = apply(pd,k->map(chains#k, chains#(k+1), matrix table(prodfaces#k,prodfaces#(k+1),omega)));
+cx = chainComplex diffs;
+sm = sequenceModule(R[D,Degrees=>{{-1}}]/D^2,(reverse diffs) | {map(R^{}, first chains, {})});
+sm = sm ** (ring sm)^{{-pd,0}};
+smm = restackModule({2,1},sm);
+print("pruning module");
+M = prune restackModule({1,1},smm);
+print("computing couple");
+couple = prune exactCouple M;
+plotPages((-1..(pd+1),-1..n,1..2), prune @@ evaluateInDegree, couple)
+
+
+
+
+n = 4
+ordring = (n,x) -> (
+    ijs = apply(flatten(apply(subsets(1..n,2),ij->{ij,reverse ij})), toSequence);
+    xs = apply(ijs,ij->x_ij);
+    R = ZZ[xs];
+    I = ideal(flatten(apply(ijs,ij->{((x_ij)_R)^2,(x_ij)_R * (x_(reverse ij))_R})));
+    R/I
+    )
+
+ordring(4,u)
+
+
+
+us = flatten(apply(subsets(1..n,2),ij->{u_ij,u_(reverse ij)}))
+vs = flatten(apply(subsets(1..n,2),ij->{v_ij,v_(reverse ij)}))
+cov = ZZ[us|vs]
+cov/ideal(apply(us|vs,x->(x_cov)^2) | apply(subsets(1..n,2),ij->u_ij * u_(reverse ij)) | 
+
+
+
+
+
+
+
+
+
+
+
 eid = prune @@ evaluateInDegree
 face2 = {{1,2,4},{1,3,4},{3,4,6},{3,5,6},{2,4,8},{4,6,8},{5,6,7},{6,7,8},
                       {1,2,8},{1,7,8},{1,3,7},{3,5,7}};
