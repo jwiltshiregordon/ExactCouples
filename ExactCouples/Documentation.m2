@@ -1,4 +1,3 @@
-
 doc ///
     Key
         ExactCouples
@@ -2428,7 +2427,7 @@ doc ///
         Example
             R = QQ[z]; S = R[g][t]; declareGenerators(S,{a=>{0,0,3},x=>{1,0,1},b=>{0,1,2},y=>{1,1,0}});
             M = cospan(z^13*a,z^15*x,z^6*b,z^8*y,g*a-z*b,g*x-z*y,t*a-z^2*x,t*b-z^2*y); isHomogeneous M
-            eid = prune @@ evaluateInDegree; (dt, dg) = degree \ (S_0, S_1);
+            (dt, dg) = degree \ (S_0, S_1);
             {A,X,B,Y} = (deg -> prune eid({deg#1},eid({deg#0},M))) \ ({0,0},dt,dg,dt+dg);
             netList {{A, X}, {B, Y}}
         Text
@@ -2548,7 +2547,7 @@ doc ///
             n = 2;
             R = QQ[z]; S = (R[g]/g^n)[t]; declareGenerators(S,{x=>{0,0,5},y=>{0,1,0}});
             M = cospan(z^6*x,z^3*t*x,z^10*y,z^7*t*y,g*x-z^5*y,t^2*x,t^2*y); isHomogeneous M
-            eid = prune @@ evaluateInDegree; (dt, dg) = degree \ (S_0, S_1);
+            (dt, dg) = degree \ (S_0, S_1);
             {X,C,Y,D} = (deg -> prune eid({deg#1},eid({deg#0},M))) \ ({0,0},dt,dg,dt+dg);
             netList {{X, C}, {Y, D}}
         Text
@@ -3317,30 +3316,45 @@ doc ///
         A spectral sequence that assembles homology from an open cover
     Description
         Text
-            Let $X_n$ be the topological space parametrizing n-tuples of pairwise distinct complex numbers
-            
-            $$X_n = \{ (z_1, ..., z_n) \in \CC^n | z_i \neq z_j if i \neq j\}$$
-            
-            There is a map
-            
-            $$X_4 \to X_2 \times X_2$$
-            
-            given by $(x_1, x_2, x_3, x_4) \mapsto ((x_1, x_2), (x_3, x_4))$.  Since the space $X_2$ is 
-            homotopy equivalent to a circle by the normalization map $(x_1, x_2) \mapsto (x_2-x_1)/|x_2-x_1|$,
-            we know that the homology of $X_2 \times X_2$ is free with ranks $1, 2, 1$ in degrees $0,1,2$.
-            
-            The space $X_2$ has a natural open cover that we now describe.  For $i, j \in \{1, 2\}$, define
-            
-            $$U_{ij} = \{ (z_1, z_2) \in X_2 | Re(z_i) < Re(z_j) \}$$
-            
-            $$V_{ij} = \{ (z_1, z_2) \in X_2 | Im(z_i) < Im(z_j) \}$$
-            
-            Then,
-            
-            $$X_2 = U_{12} \cup U_{21} \cup V_{12} \cup V_{21}$$
-            
-            since distinct complex numbers must not be equal in both real and imaginary parts.  We have a 
-            similar cover for $X_4$, 
+            Let $X$ be a simplicial complex, and suppose $U_1, ..., U_n$ is
+            an open cover of $X$ where each $U_i$ is itself a union of open
+            stars, and moreover, each closed face of $X$ sits inside some $U_u$.
+            The following code initializes one possible $X$ and cover.
+        Example
+            Xfacets = {{1,2,3},{1,3,4},{1,4,5},{1,2,5},{2,3,6},{3,4,6},{4,5,6},{2,5,6},{1,6}};
+            Usets = {{1,2,3,4,5},{2,3,4,5,6},{1,2,6}};
+        Text
+            In the example, $X$ is an octahedron with an extra segment connecting two antipodal
+            points, 1 and 6.  The open cover is the complement of 1, the complement of 6, and
+            the union of the open stars around 1, 2, and 6.
+        Example
+            Xfaces = k -> unique flatten apply(Xfacets, f -> subsets(f, k+1));
+            Xdim = max apply(Xfacets, f -> #f - 1);
+            Xfacelist = flatten apply(Xdim + 1, Xfaces);
+            MVfacets = flatten for f in Xfacelist list {f|select(Usets, us->isSubset(f,us))}
+            MVdim = max apply(MVfacets, f -> #f - 1)
+            rowfilt = f -> #select(f,e->instance(e,ZZ)) - 1;
+            colfilt = f -> #select(f,e->not instance(e,ZZ)) - 1;
+            MVfaces = k -> if k == -1 then {{}} else select(unique flatten apply(MVfacets, f -> subsets(f, k+2)), (
+                    f -> (rowfilt(f) >= 0 and colfilt(f) >= 0)
+                    ));
+            R = ZZ[t];
+            chains = apply(1+MVdim,k->R^(-apply(MVfaces k, colfilt)))
+            omega = (a,b)->if isSubset(a,b) then (-1)^(position(b, v->not member(v,a))) * t^(colfilt(b)-colfilt(a)) else 0;
+            diffs = apply(MVdim-1,k->map(chains#k, chains#(k+1), matrix table(MVfaces k, MVfaces (k+1),omega)));
+            sm = sequenceModule(R[D,Degrees=>{{-1}}]/D^2, (reverse diffs) | {map(R^{}, first chains, {})});
+            sm = sm ** (ring sm)^{{1-MVdim,0}};
+            smm = restackModule({2,1},sm);
+            print("pruning module");
+            M = prune restackModule({1,1},smm);
+            print("computing couple");
+            couple = prune exactCouple M;
+            plotPages((-1..(MVdim+1),-3..3,1..2), eid, couple)
+        Text
+            The q=0 row gives the sum of the homologies of the opens individually.
+            Generally, row q is the sum of the homologies of the (q+1)-fold overlaps
+            among the opens, with a rightward shift of q so that the total homology
+            appears in columns on page infinity.
 ///
 
 doc ///

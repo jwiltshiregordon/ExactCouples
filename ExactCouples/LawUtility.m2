@@ -89,13 +89,37 @@ applyEntrywise(Ring, FunctionClosure, FunctionClosure, Matrix) := Matrix => (S, 
         );
     rows := toList(0..(-1 + numgens target m));
     cols := toList(0..(-1 + numgens source m));
-    rowdegs := flatten apply(degrees target m, d -> degreeLaw(d));
-    coldegs := flatten apply(degrees source m, d -> degreeLaw(d));
+    rowbatches := apply(degrees target m, d -> degreeLaw(d));
+    colbatches := apply(degrees source m, d -> degreeLaw(d));
+    rowdegs := flatten rowbatches;
+    coldegs := flatten colbatches;
     if #rows == 0 or #cols == 0 then (
         return map(S^(-rowdegs), S^(-coldegs), {});
         );
-    rawEntries := matrix for r in rows list for c in cols list entryLaw(submatrix(m, {r}, {c}));
+    ret := mutableMatrix(S, #rowdegs, #coldegs, Dense=>true);  -- already tried false
+    rowwidths := apply(rowbatches, e->#e);
+    colwidths := apply(colbatches, e->#e);
+    --i := 0;
+    --j := 0; -- keep track of current upper left entry of block
+    --for r in rows do (
+    --    for c in cols do (
+    --       if m_(r,c) != 0 then (
+    --            blk := entryLaw(submatrix(m, {r}, {c}));
+    --            for i' from 0 to rowwidths#r - 1 do (
+    --                for j' from 0 to colwidths#c - 1 do (
+    --                    ret_(i + i', j + j') = sub(blk_(i',j'),S);
+    --                    );
+    --                );
+    --            );
+    --        j = j + colwidths#c;
+    --        );
+    --    j = 0;
+    --    i = i + rowwidths#r;
+    --    );
+    rawEntries := matrix for r in rows list for c in cols list 
+        if m_(r,c) != 0 then entryLaw(submatrix(m, {r}, {c})) else map(S^(-rowbatches#r),S^(-colbatches#c),{});
     map(S^(-rowdegs), S^(-coldegs), sub(rawEntries, S))
+    --map(S^(-rowdegs), S^(-coldegs), matrix ret)
     )
 
 

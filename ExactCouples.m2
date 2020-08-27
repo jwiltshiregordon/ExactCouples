@@ -126,16 +126,70 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 -- Cech cover of target, preimage, then refine.
 --
 -- 
+-- First column: sum of cech of each open
+-- Second column: sum of cech of each overlap...
+-- so write each p-fold intersection of opens as a good union
+-- and include all.
+--
+-- So in original good cover of X, draw poset of all overlaps.  
+-- Start with an intersection-closed good open cover of X.
+-- Now pick several subsets of these... partial unions.
+-- So each tiny open is in at least one of these unions.
+-- New simplicial cx? (,,,several original opens,,,;,,several collections,,)
+-- every open in first part is in every collection.
 -- 
 -- 
+-- For example, given a good cover of a genus 3 surface
+-- we can use three open sets.
 -- 
+
+
+
 
 
 restart
 needsPackage "ExactCouples"
-R = QQ[x_1..x_4,y_1..y_4]
+facets = {{1,2},{1,3},{2,3},{2,4},{3,4},{5}};
+vsets = {{1,2,3},{1,2,3,4},{5}};
+-- every facet must appear in at least one of the vsets.
+faces = k -> unique flatten apply(facets, f -> subsets(f, k+1));
+Xdim = max apply(facets, f -> #f - 1);
+facelist = flatten apply(Xdim + 1, faces)
+
+mvfacets = flatten for f in facelist list {f|select(vsets, vs->isSubset(f,vs))}
+mvd = max apply(mvfacets, f -> #f - 1)
+rowfilt = f -> #select(f,e->instance(e,ZZ)) - 1;
+colfilt = f -> #select(f,e->not instance(e,ZZ)) - 1;
+mvfaces = k -> select(unique flatten apply(mvfacets, f -> subsets(f, k+1)), (
+        f -> (rowfilt(f) >= 0 and colfilt(f) >= f)
+        ));
+R = ZZ[t];
+chains = apply(1+mvd,k->R^(-apply(mvfaces k, filt)))
+omega = (a,b)->if isSubset(a,b) then (-1)^(position(b, v->not member(v,a))) * t^(colfilt(b)-colfilt(a)) else 0;
+diffs = apply(mvd,k->map(chains#k, chains#(k+1), matrix table(mvfaces k, mvfaces (k+1),omega)));
+
+sm = sequenceModule(R[D,Degrees=>{{-1}}]/D^2, reverse diffs);
+sm = sm ** (ring sm)^{{1-mvd,0}};
+smm = restackModule({2,1},sm);
+print("pruning module");
+M = prune restackModule({1,1},smm);
+print("computing couple");
+couple = prune exactCouple M;
+plotPages((-1..(mvd+1),-3..3,1..2), eid, couple)
+
+-- given simplicial cx
+-- and several subsets of variables with full union
+-- build new complex with faces
+-- (v_1,...,v_k;V_1,...,V_l)
+-- with v_i \in V_j for all i,j
+-- Then filter this space by V stuff.
 
 
+
+
+
+
+R = QQ[x_1..x_4,y_1..y_4] -- must cut down number of vars.
 point = ideal(x_2-x_1,x_3-x_2,x_4-x_3,y_2-y_1,y_3-y_2,y_4-y_3)
 parallelogram = ideal(x_2-x_1+x_4-x_3,x_3-x_2+x_1-x_4,
                       y_2-y_1+y_4-y_3,y_3-y_2+y_1-y_4)
@@ -145,19 +199,6 @@ filt = module \ {rectangle,square,point}
 k = max(regularity \ filt)
 W = module ideal(x_1^k,x_2^k,x_3^k,x_4^k,y_1^k,y_2^k,y_3^k,y_4^k)
 couple covariantExtCouple(W, filt)
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
