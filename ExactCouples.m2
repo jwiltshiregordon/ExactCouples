@@ -41,7 +41,8 @@ export {--"applyEntrywise",
   "canonicalFiltration", "expectFiltrationList",
   "contravariantExtCouple", "contravariantExtLES", "covariantExtCouple", "covariantExtLES",
   "TorCouple", "TorLES",
-  "chainModule", "mapToTriangleRing"
+  "chainModule", "mapToTriangleRing",
+  "filteredSimplicialComplexCouple"
   --,"generateLaw"
   }
 exportMutable {}
@@ -63,7 +64,9 @@ load "./ExactCouples/SpectralSequences.m2"
 load "./ExactCouples/contravariantExtCouple.m2"
 load "./ExactCouples/covariantExtCouple.m2"
 load "./ExactCouples/TorCouple.m2"
+load "./ExactCouples/SimplicialComplexes.m2"
 load "./ExactCouples/Deprecated.m2"
+
 
 eid = prune @@ evaluateInDegree;
 
@@ -75,8 +78,10 @@ end--
 
 check ExactCouples
 
-installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Programming/Macaulay2/ExactCouples/ExactCouples.m2")
-installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Programming/Macaulay2/ExactCouples/ExactCouples.m2", RerunExamples=>true)
+installPackage("ExactCouples",FileName => "/Users/jwg/Dropbox/Programming/Macaulay2/ExactCouples/ExactCouples.m2")
+installPackage("ExactCouples",FileName => "/Users/jwg/Dropbox/Programming/Macaulay2/ExactCouples/ExactCouples.m2", RerunExamples=>true)
+
+-- Scratch:
 
 -- Local Variables:
 -- compile-command: "make -C $M2BUILDDIR/Macaulay2/packages PACKAGES=ExactCouples pre-install"
@@ -149,33 +154,38 @@ installPackage("ExactCouples",FileName => "/Users/jwiltshiregordon/Dropbox/Progr
 
 restart
 needsPackage "ExactCouples"
-facets = {{1,2},{1,3},{2,3},{2,4},{3,4},{5}};
-vsets = {{1,2,3},{1,2,3,4},{5}};
--- every facet must appear in at least one of the vsets.
-faces = k -> unique flatten apply(facets, f -> subsets(f, k+1));
-Xdim = max apply(facets, f -> #f - 1);
-facelist = flatten apply(Xdim + 1, faces)
+Xfacets = {{1,2,3},{1,3,4},{1,4,5},{1,2,5},{2,3,6},{3,4,6},{4,5,6},{2,5,6},{1,6}}
+Usets = {{1,2,3,4,5},{2,3,4,5,6}};
+-- every vertex must appear in at least one of the Usets.
+Xfaces = k -> unique flatten apply(Xfacets, f -> subsets(f, k+1));
+Xdim = max apply(Xfacets, f -> #f - 1);
+Xfacelist = flatten apply(Xdim + 1, Xfaces)
 
-mvfacets = flatten for f in facelist list {f|select(vsets, vs->isSubset(f,vs))}
-mvd = max apply(mvfacets, f -> #f - 1)
+MVfacets = flatten for f in Xfacelist list {f|select(Usets, us->isSubset(f,us))}
+MVdim = max apply(MVfacets, f -> #f - 1)
 rowfilt = f -> #select(f,e->instance(e,ZZ)) - 1;
 colfilt = f -> #select(f,e->not instance(e,ZZ)) - 1;
-mvfaces = k -> select(unique flatten apply(mvfacets, f -> subsets(f, k+1)), (
-        f -> (rowfilt(f) >= 0 and colfilt(f) >= f)
+MVfaces = k -> if k == -1 then {{}} else select(unique flatten apply(MVfacets, f -> subsets(f, k+2)), (
+        f -> (rowfilt(f) >= 0 and colfilt(f) >= 0)
         ));
 R = ZZ[t];
-chains = apply(1+mvd,k->R^(-apply(mvfaces k, filt)))
+chains = apply(1+MVdim,k->R^(-apply(MVfaces k, colfilt)))
 omega = (a,b)->if isSubset(a,b) then (-1)^(position(b, v->not member(v,a))) * t^(colfilt(b)-colfilt(a)) else 0;
-diffs = apply(mvd,k->map(chains#k, chains#(k+1), matrix table(mvfaces k, mvfaces (k+1),omega)));
+diffs = apply(MVdim-1,k->map(chains#k, chains#(k+1), matrix table(MVfaces k, MVfaces (k+1),omega)));
 
-sm = sequenceModule(R[D,Degrees=>{{-1}}]/D^2, reverse diffs);
-sm = sm ** (ring sm)^{{1-mvd,0}};
+ch = chainComplex(diffs)
+prune homology eid({0},ch)
+prune homology eid({1},ch)
+prune homology eid({2},ch)
+
+sm = sequenceModule(R[D,Degrees=>{{-1}}]/D^2, (reverse diffs) | {map(R^{}, first chains, {})});
+sm = sm ** (ring sm)^{{1-MVdim,0}};
 smm = restackModule({2,1},sm);
 print("pruning module");
 M = prune restackModule({1,1},smm);
 print("computing couple");
 couple = prune exactCouple M;
-plotPages((-1..(mvd+1),-3..3,1..2), eid, couple)
+plotPages((-1..(MVdim+1),-3..3,1..2), eid, couple)
 
 -- given simplicial cx
 -- and several subsets of variables with full union

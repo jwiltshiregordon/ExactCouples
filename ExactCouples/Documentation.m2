@@ -27,7 +27,8 @@ doc ///
             the resulting spectral sequence converges to the
             homology of $C_*$.
             For example, several standard exact sequences for Tor and Ext are of this form; see 
-            @ TO "Exact couples for Tor and Ext" @.
+            @ TO "Exact couples for Tor and Ext" @.  Another example is the spectral sequence of a
+	    filtered simplicial complex; see @ TO "filteredSimplicialComplexCouple" @.
             
             Since an exact couple of R-modules is itself an R-module with some extra action maps, it
             can be considered a module for a larger ring with new variables acting by these extra maps.
@@ -37,25 +38,25 @@ doc ///
             This encoding strategy works generally for commuting diagrams; 
             see @ TO "Encoding diagrams as modules" @.  This style may feel unfamiliar at first.  For example,
             the r-page of a spectral sequence is often considered as a grid of R-modules with differentials
-            of degree \{r,1-r\}; in this package, this information is encoded as a module for a ring like
+            of degree {r,1-r}; in this package, this information is encoded as a module for a ring like
             
-            $R[D_r, Degrees=>{{r,1-r}}]/D^2$
-            
+            R[$D_r$, Degrees => {{r,1-r}} ] / $(D_r)^2$
+	                
             so that the differential is encoded by the action of $D_r$.  See @ TO pageModule @.  One 
             benefit comes in our approach to functoriality; see @ TO "Functoriality for Tor and Ext couples" @,
             @ TO "restackRing" @ and @ TO "restackModule" @.
             
-            If this encoding makes sense, then @ TO "Conventions and first examples" @ explains the specifics
+            If this encoding makes sense to you, read @ TO "Conventions and first examples" @ for the specifics
             of our approach to exact couples.
             
             {\bf A common complaint}
             
             It may seem strange or useless to compute a spectral sequence converging to
-            $H_* C_*$, since in our context, it would be much easier to compute these modules directly.
+            $H_* C_*$, since under our assumptions it would be much easier to compute these modules directly.
             However, it is a misconception that the purpose of a spectral sequence
             is to compute its abutment.
             
-            Rather, a spectral sequence is a tool for proving, and this proving is easier if you can look at 
+            Rather, spectral sequences enable proofs, which are easier to construct if you can look at 
             examples.
             --For instance, a skillful filtration of $C_*$ could clarify its
             --homology.  Or perhaps the map $f$ is
@@ -265,7 +266,7 @@ doc ///
             whose ring is of the form R[d]/d^2 for some coefficient ring R
     Outputs
         M:Module
-            for a ring of the form R[e,f,Degrees=>\{\{1,0},\{-2,2}}]
+            for a ring of the form R[e,f,Degrees=>{{1,0},{-2,2}}]
     Description
         Text
             Suppose $m:A \to B$ where $A$ and $B$ are both $R[d]/d^2$-modules considered as cochain complexes.
@@ -276,16 +277,16 @@ doc ///
 
             The output module M is bigraded, and encodes this sequence as follows:
 
-            $\cdots \to M_{\{1,2p\}} \to M_{\{-1,2p+2\}} \to M_{\{0,2p+2\}} \to M_{\{1,2p+2\}} \to \cdots $
+            $\cdots \to M_{(1,2p)} \to M_{(-1,2p+2)} \to M_{(0,2p+2)} \to M_{(1,2p+2)} \to \cdots $
 
             where the maps are multiplication by $e$ or $f$, in the repeating pattern $...,e,f,e,e,f,e,e,f,e...$.
             In other words, for all $p \in \ZZ$,
 
-            $M_{\{1,2p\}} = H^p A$
+            $M_{(1,2p)} = H^p A$
 
-            $M_{\{-1,2p\}} = H^{p-1} B$
+            $M_{(-1,2p)} = H^{p-1} B$
 
-            $M_{\{0,2p\}} = H^{p-1} B$;
+            $M_{(0,2p)} = H^{p-1} B$;
 
             Multiplication by e induces the maps $H^{p-1} B \to H^{p-1} C(m) \to H^{p}A$ and
 
@@ -324,7 +325,7 @@ doc ///
         R:Ring
             the coefficients
         genList:List
-            of the form \{ ... , x => deg, ... \} where x is a symbol and deg is a degree
+            of the form { ... , x => deg, ... } where x is a symbol and deg is a degree
     Outputs
         :Module
             free on the generating set of variables in their various degrees, and with coefficients drawn from R
@@ -433,7 +434,7 @@ doc ///
         R:Ring
             whose coefficient ring has a coefficient ring, etc, for at least n levels
         p:List
-            the desired reordering of these levels as a permutation of the list \{1..n\},
+            the desired reordering of these levels as a permutation of the list {1..n},
             or more generally, a list of length n that contains
             every number 1..m for some m <= n.
     Outputs
@@ -447,7 +448,7 @@ doc ///
         CannedExample
             R = k[ ... vars_0 ... ][ ... vars_1 ... ]...[ ... vars_(n-1) ... ]
         Text
-            and suppose that I_k = \{ i | p#i = k \}.  
+            and suppose that I_k = { i | p#i = k }.  
             Then, the target ring S looks like this:
         CannedExample
             S = k[ ... vars_(I_1) ... ][ ... vars_(I_2) ... ]...[ ... vars_(I_m) ... ]
@@ -462,7 +463,7 @@ doc ///
             This is because its entries
             correspond to these levels.  The first entry, p#0, tells where to send the 
             The meaning of the argument p is as follows.  Recall that m is the largest value that appears in
-            p, appearing, say, in positions \{i_1, ..., i_k\}.  Then, the outermost variables in the target ring
+            p, appearing, say, in positions {i_1, ..., i_k}.  Then, the outermost variables in the target ring
             S will be those that were adjoined 
             
             
@@ -504,7 +505,7 @@ doc ///
         M:Module
             whose ring has a coefficient ring, which has a coefficient ring, etc, for at least n levels
         p:List
-            the desired reordering of these levels as a permutation of the list \{1..n\},
+            the desired reordering of these levels as a permutation of the list {1..n},
             or more generally, a list of length n that contains
             every number 1..m for some m <= n.
     Outputs
@@ -544,7 +545,7 @@ doc ///
             However, the function @ TO evaluateInDegree @
             always eliminates the outermost level of the acting ring.  So in this case, we
             can evaluate at an external bidegree of (ring couple).  This will return one of the
-            constituent modules of the couple.  For example, the page entry E_1^\{1,2\} may
+            constituent modules of the couple.  For example, the page entry $E_1^{1,2}$ may
             be computed
         Example
             prune evaluateInDegree(2*{1,2},couple)
@@ -592,7 +593,7 @@ doc ///
     Description
         Text
             We build the cochain complex for the simplicial complex with
-            vertices \{a,b,c\}  and facets \{ab,ac,bc\}.  Topologically, this
+            vertices {a,b,c}  and facets {ab,ac,bc}.  Topologically, this
             is a circle, so the cohomology is QQ^1 in degrees 0 and 1.
         Example
             C = QQ[d]/d^2;
@@ -639,7 +640,7 @@ doc ///
             these midpoints are still valid bidegrees.)
 
             We build the cochain complex for the simplicial complex with vertices
-            \{a,b,c\} and facets \{ab,ac,bc\}, placing it in row 0.  In row 1,
+            {a,b,c} and facets {ab,ac,bc}, placing it in row 0.  In row 1,
             we mod out by (bc); in row 2, by (ac,bc), continuing until every simplex
             is annihilated in row 7.
         Example
@@ -1000,19 +1001,19 @@ doc ///
             do this by hand rather than relying on the default degrees provided by @ TO coupleRing @.
 
             The usual Serre spectral sequence has $E^1_{pq} = H_{p+q}(X_p , X_{p-1})$, so we place
-            this module in degree \{2p,2q}.  The module $A^1_{pq} = H_{p+q} X_p$ sits
-            halfway along the map $E^1_{pq} \to E^1_{(p-1)q}$, so it has degree \{2p-1,2q}.
+            this module in degree $(2p,2q)$.  The module $A^1_{pq} = H_{p+q} X_p$ sits
+            halfway along the map $E^1_{pq} \to E^1_{(p-1)q}$, so it has degree $(2p-1,2q)$.
 
-            In usual indexing, the differential has degree \{-1,0}, so our differential has degree
-            \{-2,0}.  On the other hand, since the differential is given by $e^2$, this means that
-            the degree of $e$ itself is \{-1,0}.  (And in general, the degree of e in our conventions
+            In usual indexing, the differential has degree $(-1,0)$, so our differential has degree
+            $(-2,0)$.  On the other hand, since the differential is given by $e^2$, this means that
+            the degree of $e$ itself is $(-1,0)$.  (And in general, the degree of e in our conventions
             should be the degree of the differential in the usual conventions.)
 
             Everything so far has been about the first page, $E^1$.  However, the easiest way to
             determine the degree of $f$ is to consider the second page.  The usual conventions give
-            that the differential on $E^2$ has degree \{-2,1}, and so (by the same argument as above)
+            that the differential on $E^2$ has degree $(-2,1)$, and so (by the same argument as above)
             this is the degree of $e_2$.  We have generally $deg e_{k+1} = deg e_k - (deg f_k)/2$.
-            Solving, we see that the degree of $f = f_1$ is 2 * (\{-1,0\} - \{-2,1\}) = \{2,-2}.
+            Solving, we see that the degree of $f = f_1$ is $2 ((-1,0) - (-2,1)) = (2,-2)$.
 
             We conclude the general rule that{\bf ... the degree of e_k in our convention equals the
                 degree of the page-k differential in the standard convention; the degree of f_k is then
@@ -1192,7 +1193,7 @@ doc ///
         W:Module
             for some ring R, giving a functor Hom(W,-)
         submods:List
-            of R-modules \{A_0, A_1, ..., A_m} with each A_i inside A_{i+1}
+            of R-modules {A_0, A_1, ..., A_m} with each A_i inside A_{i+1}
     Outputs
         M:Module
             an exact couple
@@ -1203,16 +1204,16 @@ doc ///
             by setting $A_i = 0$ for $i < 0$, and $A_i = X$ for $i > m$.
 
             The returned couple $M$ is a module for
-            the ring R[e_1,f_1,Degrees=>\{\{1,-1},\{0,2}}].
-            We describe the module $M$ in every bidegree $\{s,t}$.  The description
+            the ring R[e_1,f_1,Degrees=>{{1,-1},{0,2}}].
+            We describe the module $M$ in every bidegree $(s,t)$.  The description
             depends on the parity of $s$ and $t$.
 
 
-            If $s$ and $t$ are both even, say $\{s,t} = \{2p 2q}$, then
+            If $s$ and $t$ are both even, say $(s,t) = (2p, 2q)$, then
 
             $M_{s,t} = Ext^p(W, A_q/A_{q-1})$;
 
-            if $s$ and $t$ are both odd, say $\{s,t} = \{2p-1,2q+1}$, then
+            if $s$ and $t$ are both odd, say $(s,t) = (2p-1,2q+1)$, then
 
             $M_{s,t} = Ext^p(W, A_q)$;
 
@@ -1227,7 +1228,7 @@ doc ///
             {\bf Associated spectral sequence}
 
             The spectral sequence associated to this couple converges to $Ext^p(W,X)$.
-            The differential on page $r$ has bidegree \{1,-r}.  The first page has
+            The differential on page $r$ has bidegree $(1,-r)$.  The first page has
 
             $E^{pq}_1 = Ext^p(W,A_q/A_{q-1})$.
 
@@ -1266,7 +1267,7 @@ doc ///
         Y:Module
             for some ring R, giving a functor Hom(-,Y)
         submods:List
-            of R-modules \{A_0, A_1, ..., A_m} with each A_i inside A_{i+1}
+            of R-modules {A_0, A_1, ..., A_m} with each A_i inside A_{i+1}
     Outputs
         M:Module
             an exact couple
@@ -1277,16 +1278,16 @@ doc ///
             by setting $A_i = 0$ for $i < 0$, and $A_i = X$ for $i > m$.
 
             The returned couple $M$ is a module for
-            the ring R[e_1,f_1,Degrees=>\{\{1,1},\{0,-2}}].
-            We describe the module $M$ in every bidegree $\{s,t}$.  The description
+            the ring R[e_1,f_1,Degrees=>{{1,1},{0,-2}}].
+            We describe the module $M$ in every bidegree $(s,t)$.  The description
             depends on the parity of $s$ and $t$.
 
 
-            If $s$ and $t$ are both even, say $\{s,t} = \{2p 2q}$, then
+            If $s$ and $t$ are both even, say $(s,t) = (2p, 2q)$, then
 
             $M_{s,t} = Ext^p(A_q / A_{q-1}, Y)$;
 
-            if $s$ and $t$ are both odd, say $\{s,t} = \{2p-1,2q-1}$, then
+            if $s$ and $t$ are both odd, say $(s,t) = (2p-1,2q-1)$, then
 
             $M_{s,t} = Ext^p(X / A_{q-1}, Y)$;
 
@@ -1301,7 +1302,7 @@ doc ///
             {\bf Associated spectral sequence}
 
             The spectral sequence associated to this couple converges to $Ext^p(X,Y)$.
-            The differential on page $r$ has bidegree \{1,r}.  The first page has
+            The differential on page $r$ has bidegree $(1,r)$.  The first page has
 
             $E^{p,q}_1 = Ext^p(A_q/A_{q-1},Y)$.
 
@@ -1348,7 +1349,7 @@ doc ///
         Q:Ring
             of the form R[t] for some coefficient ring R and variable t
         L:List
-            of the form \{ M_0, M_1, ..., M_k \}  for some k > 0
+            of the form { M_0, M_1, ..., M_k }  for some k > 0
             with each M_i $\subseteq$ M_{i+1} an inclusion of R-modules
     Outputs
         :Module
@@ -1503,7 +1504,7 @@ doc ///
         f:Symbol
     Outputs
         :Ring
-            R[d,e,f,Degrees=>\{\{0,2},\{1,0},\{-2,2}}]/(d^2,e^3)
+            R[d,e,f,Degrees=>{{0,2},{1,0},{-2,2}}]/(d^2,e^3)
     Description
         Text
            These default degrees are chosen to meet the conditions of expectTriangleRing.
@@ -1534,7 +1535,7 @@ doc ///
         f:Symbol
     Outputs
         :Ring
-            R[e_r,f_r,Degrees=>\{\{1,0},\{-2,2}}]
+            R[e_r,f_r,Degrees=>{{1,0},{-2,2}}]
     Description
         Text
            These default degrees are chosen to meet the conditions of expectCoupleRing.
@@ -1582,7 +1583,7 @@ doc ///
             couple = prune covariantExtCouple(W,A)
             expectExactCouple couple
         Text
-            We check that \{0,4} is an even degree, and then use excerptCouple
+            We check that {0,4} is an even degree, and then use excerptCouple
         Example
             Q = ring couple
             Q.isEvenDegree({0,4})
@@ -1591,8 +1592,8 @@ doc ///
             The middle column of the displayed long exact sequence is in even degrees; in other
             words, its entries appear on the E_1 page of the couple.  Specifically,
             $E_1^{pq} = Ext^p(W,A_q/A_{q-1})$
-            can be found in degree \{2p,2q}.  The bottom element of the middle
-            column is degree \{0,4}, which is then $Ext^0(W,A_2/A_1)$.
+            can be found in degree $(2p,2q)$.  The bottom element of the middle
+            column is degree $(0,4)$, which is then $Ext^0(W,A_2/A_1)$.
             The top element of the middle column is $Ext^1(W,A_2/A_1)$.
         Example
             prune Ext^0(W,A_2/A_1)
@@ -1642,7 +1643,7 @@ doc ///
             E2 = prune pageModule(2,D,C)
             degree D_2
         Text
-            This time, the generator in degree \{2,0} maps via D_2 to a nontrivial element in degree \{0,1}.
+            This time, the generator in degree $(2,0)$ maps via D_2 to a nontrivial element in degree $(0,1)$.
             Since the module has no additional generators in that degree, the differential is an isomorphism
             between these two degrees.  We can also compute the action of this differential directly:
         Example
@@ -1720,11 +1721,11 @@ doc ///
         Q:Ring
             a couple ring
         pageClasses:List
-            of the form \{... , generatorName => degree, ...} with generatorName a Symbol and degree a List.
+            of the form {... , generatorName => degree, ...} with generatorName a Symbol and degree a List.
             The degrees should be external degrees for the ring Q.  Since these classes appear on the page
             of the spectral sequence, their degrees should be even, i.e., Q.isEvenDegree(degree) should return true.
         auxClasses:List
-            also of the form \{... , generatorName => degree, ...}; the degrees should be odd external degrees
+            also of the form {... , generatorName => degree, ...}; the degrees should be odd external degrees
             for Q.
     Outputs
         :Module
@@ -1829,7 +1830,7 @@ doc ///
         expectFiltrationList L
     Inputs
         L:List
-            of the form \{..., M_i, M_{i+1}, ...}; M_i modules for the same ring, and M_i \subseteq M_{i+1}.
+            of the form {..., M_i, M_{i+1}, ...}; M_i modules for the same ring, and M_i \subseteq M_{i+1}.
     Consequences
         Item
             causes an error if L is not of the indicated form, or if L is empty
@@ -1857,7 +1858,7 @@ doc ///
             with some coefficient ring R
     Outputs
         :List
-            given by \{0, ..., (degreeLength Q) - (degreeLength R) - 1}
+            given by {0, ..., (degreeLength Q) - (degreeLength R) - 1}
     Description
         Text
             We build a polynomial ring with coefficients in a polynomial ring
@@ -1890,7 +1891,7 @@ doc ///
             with some coefficient ring R
     Outputs
         :List
-            given by \{(degreeLength Q) - (degreeLength R), ..., (degreeLength Q) - 1}
+            given by {(degreeLength Q) - (degreeLength R), ..., (degreeLength Q) - 1}
     Description
         Text
             We build a polynomial ring with coefficients in a polynomial ring
@@ -1976,9 +1977,7 @@ doc ///
             degree \ {Q_0, Q_1}
             degree \ {T_0, T_1, T_2}
     Caveat
-        The input ring Q must be valid for @ TO expectChainSequenceRing @.
-    SeeAlso
-        expectChainSequenceRing
+        The input ring Q must be valid for expectChainSequenceRing.
 ///
 
 
@@ -2029,7 +2028,7 @@ doc ///
         W:Module
             for some ring R, giving a functor Tor(W,-)
         submods:List
-            of R-modules \{A_0, A_1, ..., A_m} with each A_i inside A_{i+1}
+            of R-modules {A_0, A_1, ..., A_m} with each A_i inside A_{i+1}
     Outputs
         M:Module
             an exact couple
@@ -2040,16 +2039,16 @@ doc ///
             by setting $A_i = 0$ for $i < 0$, and $A_i = X$ for $i > m$.
 
             The returned couple $M$ is a module for
-            the ring R[e_1,f_1,Degrees=>\{\{-1,-1},\{0,2}}].
-            We describe the module $M$ in every bidegree $\{s,t}$.  The description
+            the ring R[e_1,f_1,Degrees=>{{-1,-1},{0,2}}].
+            We describe the module $M$ in every bidegree $(s,t)$.  The description
             depends on the parity of $s$ and $t$.
 
 
-            If $s$ and $t$ are both even, say $\{s,t} = \{2p, 2q}$, then
+            If $s$ and $t$ are both even, say $(s,t) = (2p, 2q)$, then
 
             $M_{s,t} = Tor_p(W,A_q/A_{q-1})$;
 
-            if $s$ and $t$ are both odd, say $\{s,t} = \{2p+1,2q+1}$, then
+            if $s$ and $t$ are both odd, say $(s,t) = (2p+1,2q+1)$, then
 
             $M_{s,t} = Tor_p(W,A_q)$;
 
@@ -2064,7 +2063,7 @@ doc ///
             {\bf Associated spectral sequence}
 
             The spectral sequence associated to this couple converges to $Tor_p(W,X)$.
-            The differential on page $r$ has bidegree \{-1,-r}.  The first page has
+            The differential on page $r$ has bidegree $(-1,-r)$.  The first page has
 
             $E^{pq}_1 = Tor_p(W,A_q/A_{q-1})$.
 
@@ -2215,7 +2214,7 @@ doc ///
         Q:Ring
             of the form R[t]; if omitted, a suitable ring is supplied
         L:List
-            of maps $\{A_0 \to A_1, A_1 \to A_2, ..., A_{k-1} \to A_k\}$
+            of maps $(A_0 \to A_1, A_1 \to A_2, ..., A_{k-1} \to A_k)$
     Outputs
         M:Module
             with an action of Q
@@ -2276,6 +2275,64 @@ doc ///
         this value must be installed by hand or by expectCoupleRing(Q)
     SeeAlso
         expectCoupleRing
+///
+
+doc ///
+    Key
+        filteredSimplicialComplexCouple
+        (filteredSimplicialComplexCouple,List,Function)
+    Headline
+        builds the exact couple associated to a filtered simplicial complex
+    Usage
+        filteredSimplicialComplexCouple(facets, filtration)
+    Inputs
+        facets:List
+	    a list of maximal faces of a simplicial complex
+	filtration:Function
+	    sending a face to its filtration degree
+    Outputs
+        couple:Module
+	    an exact couple
+    Description
+        Text
+	    Suppose X is an abstract simplicial complex whose vertices are integers.  
+	    We specify X by listing its facets:
+	Example
+	    Xfacets = {{1,2},{2,3},{3,4},{1,4},{1,3}};
+	Text
+	    In this example, X is one-dimensional.  It is a square with vertices {1,2,3,4} 
+	    and with a diagonal edge connecting 1 to 3.
+	    
+	    To specify a filtration of X, we write a function that takes a face to its
+	    filtration degree.  In this example, we set each vertex to have degree 0,
+	    the square to have degree 1, and the diagonal edge {1,3} to have degree 2.
+	Example
+	    filt = f -> if #f == 1 then 0 else if f == {1,3} then 2 else 1;
+	Text
+	    We can now build the exact couple and view the corresponding spectral sequence.
+	Example
+	    couple = filteredSimplicialComplexCouple(Xfacets, filt);
+	    plotPages((-1..3,-1..3,1..2), prune @@ evaluateInDegree, couple)
+	Text
+	    Here is how to interpret the output.  The "p" coordinate is homological degree,
+	    and the "q" coordinate is filtration degree.
+	    
+	    On page 1, we see four 0-dimensional classes in filtration degree 0, and five
+	    1-dimensional classes spread between filtration degree 0 and 1.  The differential
+	    on page 1 has bidegree $(-1,-1)$.
+	    
+	    On page 2, we see that three 1-dimensional classes have cancelled three 0-dimensional
+	    classes, and we are left with fewer classes.  The differential now has bidegree $(-1,-2)$.
+	    
+	    In fact, the sequence is converged: column $p$ now gives the associated graded of 
+	    the filtration on $H_p$.
+    Caveat
+        The filtration must be increasing: if $A, B \subseteq X$ are faces with $A \subseteq B$,
+	then the filtration degree of $A$ must not exceed the filtration degree of $B$.
+    SeeAlso
+        exactCouple
+	plotPages
+	evaluateInDegree
 ///
 
 doc ///
@@ -2413,7 +2470,7 @@ doc ///
             |   v            v
             |   B - - t - -> Y
         Text
-            by giving a presentation over the ring R[g][t], placing A in bidegree \{0,0}.  The example square
+            by giving a presentation over the ring R[g][t], placing A in bidegree $(0,0)$.  The example square
             we have in mind:
         CannedExample
             |  cokernel {3} | z13 | - z^2 -> cokernel {1} | z15 |
@@ -2461,7 +2518,7 @@ doc ///
         Example
             relHom = eid({0,2},couple)
         Text
-            The degree \{0,2} comes from the conventions explained at @ TO covariantExtCouple @, which
+            The degree $(0,2)$ comes from the conventions explained at @ TO covariantExtCouple @, which
             also explains that relHom, when expanded along
             its g action, should look like this:
         CannedExample
@@ -2563,7 +2620,7 @@ doc ///
         Text
             It may be alarming to see non-zero entries in positions that appear at the point in
             the sequence that should hold Ext^3.  Fortunately, these entries disappear after
-            evaluation at the two degrees \{0} and \{-1}, which are the two long exact sequences
+            evaluation at the two degrees $(0)$ and $(-1)$, which are the two long exact sequences
             we are trying to relate.  (The degrees are negated because of
             contravariance.  Alternatively, we could have set the degree of g to be -1)
 
@@ -2617,17 +2674,17 @@ doc ///
         Text
             A graded S-module is an infinite grid of R-modules connected by maps induced by multiplication
             by the variables f and g.  In particular, it encodes an infinite number of commuting squares!
-            To specify a single commuting square, we restrict attention to the four bidegrees \{0,0\}, \{1,0\}, 
-            \{0,1\}, and \{1,1\}.  (We could ask that the module vanish away from these degrees, but in
+            To specify a single commuting square, we restrict attention to the four bidegrees $(0,0)$, $(1,0)$, 
+            $(0,1)$, and $(1,1)$.  (We could ask that the module vanish away from these degrees, but in
             practice it is more efficient to just say "we don't care what happens in other degrees".)
             
             {\bf Internal and external degrees}
             
             Some terminology, since the ring R may itself have some grading.  We call this grading 
             "internal" since it happens inside the coefficients.  The
-            variables f and g have internal degree zero, even though their external degrees are \{1,0} and
-            \{0,1} respectively.  When building a ring, the Degrees option specifies external degrees.  Suppose
-            that R has degree length three so that deg(1_R) = \{0,0,0}, for example.  We have then
+            variables f and g have internal degree zero, even though their external degrees are $(1,0)$ and
+            $(0,1)$ respectively.  When building a ring, the Degrees option specifies external degrees.  Suppose
+            that R has degree length three so that deg(1_R) = $(0,0,0)$, for example.  We have then
         CannedExample
             deg(f) = {1,0,0,0,0}
             deg(g) = {0,1,0,0,0}
@@ -2682,7 +2739,7 @@ doc ///
             We aim to encode this commuting square as an S-module.  
             The external degree will give
             the position in the commuting square, and the internal degree will record the R-degree.  Then,
-            in a multidegree \{r,c,d\}, r gives the row (0 or 1 in our case), c gives the column (also
+            in a multidegree $(r,c,d)$, r gives the row (0 or 1 in our case), c gives the column (also
                 0 or 1), and d gives the internal degree (usual grading on R=QQ[z]).
             
             {\bf Declaring generators}
@@ -2692,10 +2749,10 @@ doc ///
             |  A = cokernel {3} | z13 |
         Text
             Let us name the generator of this module $a$.  Since we
-            are in the upper left corner, the external degree is \{0,0\}.  And since the generator appears
-            in R-degree 3, the internal degree is \{3\}.  In total, then, the degree of $a$ is \{0,0,3\}.
+            are in the upper left corner, the external degree is $(0,0)$.  And since the generator appears
+            in R-degree 3, the internal degree is $(3)$.  In total, then, the degree of $a$ is $(0,0,3)$.
             
-            Similarly, let $b$, $c$, and $d$ be generators with external degrees \{0,1}, \{1,0}, and \{1,1},
+            Similarly, let $b$, $c$, and $d$ be generators with external degrees $(0,1)$, $(1,0)$, and $(1,1)$,
             and with internal degrees 1, 2, and 0.  This information can be given to M2 using the function
             @ TO declareGenerators @.
         Example
@@ -2793,7 +2850,7 @@ doc ///
             Suppose we are interested in solving the equation $3a_1 + 6a_2 = 0$ for pairs of elements 
             $a_1, a_2$ drawn from an abelian group $A$.  Introduce notation for the solution set
             
-            $GA := \{ (a_1, a_2) \in A^2 | 3a_1 + 6a_2 = 0 \}$
+            $GA := { (a_1, a_2) \in A^2 | 3a_1 + 6a_2 = 0 }$
             
             We make three observations about G:
             
@@ -2836,7 +2893,7 @@ doc ///
             
             By a short homological argument, we shall prove an isomorphism
             
-            $(R^1G)(A) = A / \{ 3a_1 + 6a_2 | a_1, a_2 \in A \}$ for any abelian group $A$.
+            $(R^1G)(A) = A / { 3a_1 + 6a_2 | a_1, a_2 \in A }$ for any abelian group $A$.
             
             Proof:
             
@@ -2911,7 +2968,7 @@ doc ///
             |    ||p=-1|p=0              |p=1              |p=2|
             +----++----+-----------------+-----------------+---+
         Text
-            This is a table of (R^pG)(A_q / A_{q-1}), essentially.  There are maps (not pictured) of degree \{1,-1}
+            This is a table of (R^pG)(A_q / A_{q-1}), essentially.  There are maps (not pictured) of degree $(1,-1)$
             relating the groups in the p=0 column to those in the p=1 column.  They are called differentials,
             and their degree changes depending on the page number.  The differentials on page one are given
             by the composite
@@ -2962,7 +3019,7 @@ doc ///
             
             In our example, the r=1 page is concentrated in the columns p=0,1, so every subsequent page
             is similarly bounded; and the 
-            differential on page $r$ has degree \{1,-r}, so degree considerations ensure the square-zero
+            differential on page $r$ has degree $(1,-r)$, so degree considerations ensure the square-zero
             property.  
             Taking homology replaces the p=0 groups with kernels and the p=1 groups with
             cokernels.  This operation is therefore responsible for removing the extraneous solutions that 
@@ -3051,7 +3108,7 @@ doc ///
         Text
             Each of these modules is over a different ring.  Specifically, page $r$ is a module for 
             $\ZZ[D_r]/(D_r)^2$ where the
-            degree of $D_r$ is \{1,-r}.
+            degree of $D_r$ is $(1,-r)$.
             
             We may compute the interesting differential on page two using the following command.
         Example
@@ -3121,7 +3178,7 @@ doc ///
             --If x and y are even, say, (x,y) = (2p,2q), we have the group $(R^pG)(A_q/A_{q-1})$.  And if they
             --are odd, say (x,y) = (2p-1,2q+1), then we have $R^pA_q$.
             
-            If we introduce a ring R = \ZZ[e,f, Degrees=>\{\{1,-1},\{0,2}}], then
+            If we introduce a ring R = \ZZ[e,f, Degrees=>{{1,-1},{0,2}}], then
             the diagram becomes a graded R-module where e acts by the diagonal maps, 
             and f acts by the upwards maps.  
             
@@ -3153,7 +3210,7 @@ doc ///
             $I \subseteq ... \subseteq R$
             
             We compute the resulting homology spectral sequence for every standard tableau
-            of shape \{3,2\}, where homology means Tor(coker vars R, -).
+            of shape $(3,2)$, where homology means Tor(coker vars R, -).
         Example
             needsPackage "PushForward"
             needsPackage "SpechtModule"
