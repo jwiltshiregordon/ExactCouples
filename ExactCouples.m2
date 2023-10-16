@@ -8,7 +8,7 @@ newPackage(
        Name => "John D. Wiltshire-Gordon",
        Email => "jwiltshiregordon@gmail.com"}
        },
-      HomePage => "https://sites.google.com/wisc.edu/jwg/home",
+      HomePage => "https://jwiltshiregordon.github.io",
       Headline => "spectral sequences by Massey's method of exact couples",
   AuxiliaryFiles => true, -- set to true if package comes with auxiliary files
       DebuggingMode => true,     -- set to true only during development
@@ -26,7 +26,7 @@ export {--"applyEntrywise",
   "expectChainRing", "expectCoupleRing", "expectTriangleRing","expectSequenceRing",
   "chainModuleHomology",
   "toChainComplex",
-  "triangleRing", --"distinguishedTriangle",
+  "triangleRing", "distinguishedTriangle",
   "longExactSequence", "excerptLES", --"longExactSequenceToChainComplex",
   "restackRing", "restackModule",
   --"arrowAbove", "arrowBelow",
